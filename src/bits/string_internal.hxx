@@ -24,6 +24,8 @@
 
 namespace ansak {
 
+namespace internal {
+
 ///////////////////////////////////////////////////////////////////////////
 // Local Types
 
@@ -174,7 +176,7 @@ inline EncodingTypeFlags getRangeFlag(char16_t firstChar)
 //=========================================================================
 // Utility overloaded functions to convert 2-byte UTF-8 sequences to a single value
 
-inline char16_t decodeUtf8(char c0, char c1)
+inline char16_t rawDecodeUtf8(char c0, char c1)
 {
     unsigned char uc0 = c0, uc1 = c1;
     return ((uc0 & 0x1f) << 6) + (uc1 & 0x3f);
@@ -184,7 +186,7 @@ inline char16_t decodeUtf8(char c0, char c1)
 // Utility overloaded functions to convert 3-byte UTF-8 sequences to a single value.
 // (Doesn't understand/handle d800-dbff/dc00-dfff pairs in UTF-16)
 
-inline char16_t decodeUtf8(char c0, char c1, char c2)
+inline char16_t rawDecodeUtf8(char c0, char c1, char c2)
 {
     unsigned char uc0 = c0, uc1 = c1, uc2 = c2;
     return ((uc0 & 0x0f) << 12) + ((uc1 & 0x3f) << 6) + (uc2 & 0x3f);
@@ -194,7 +196,7 @@ inline char16_t decodeUtf8(char c0, char c1, char c2)
 // Utility overloaded functions to convert 4-byte UTF-8 sequences to a single value.
 // (Doesn't understand 11000 and up are not Unicode)
 
-inline char32_t decodeUtf8(char c0, char c1, char c2, char c3)
+inline char32_t rawDecodeUtf8(char c0, char c1, char c2, char c3)
 {
     unsigned char uc0 = c0, uc1 = c1, uc2 = c2, uc3 = c3;
     return ((uc0 & 0x07) << 18) + ((uc1 & 0x3f) << 12) + ((uc2 & 0x3f) << 6) +
@@ -205,7 +207,7 @@ inline char32_t decodeUtf8(char c0, char c1, char c2, char c3)
 // Utility overloaded functions to convert 5-byte UTF-8 sequences to a single value.
 // (Doesn't understand that these chars are not Unicode)
 
-inline char32_t decodeUtf8(char c0, char c1, char c2, char c3, char c4)
+inline char32_t rawDecodeUtf8(char c0, char c1, char c2, char c3, char c4)
 {
     unsigned char uc0 = c0, uc1 = c1, uc2 = c2, uc3 = c3, uc4 = c4;
     char32_t wc0 = uc0, wc1 = uc1, wc2 = uc2, wc3 = uc3, wc4 = uc4;
@@ -217,7 +219,7 @@ inline char32_t decodeUtf8(char c0, char c1, char c2, char c3, char c4)
 // Utility overloaded functions to convert 6-byte UTF-8 sequences to a single value.
 // (Doesn't understand that these chars are not Unicode)
 
-inline char32_t decodeUtf8(char c0, char c1, char c2, char c3, char c4, char c5)
+inline char32_t rawDecodeUtf8(char c0, char c1, char c2, char c3, char c4, char c5)
 {
     unsigned char uc0 = c0, uc1 = c1, uc2 = c2, uc3 = c3, uc4 = c4, uc5 = c5;
     char32_t wc0 = uc0, wc1 = uc1, wc2 = uc2, wc3 = uc3, wc4 = uc4, wc5 = uc5;
@@ -312,6 +314,8 @@ void rawEncodeUtf16
         adder(static_cast<char16_t>(0xd800 + ((c >> 10) & 0x3ff)));
         adder(static_cast<char16_t>(0xdc00 + (c & 0x3ff)));
     }
+}
+
 }
 
 }

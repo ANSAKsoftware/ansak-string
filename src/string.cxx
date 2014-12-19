@@ -24,9 +24,10 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "string.hxx"
-#include "string_internal.hxx"
+#include "bits/string_internal.hxx"
 
 using namespace std;
+using namespace ansak::internal;
 
 namespace ansak {
 
@@ -106,7 +107,7 @@ static char32_t decodeUtf8
     {
         auto uc1 = static_cast<unsigned char>(*++p); if (uc1 == 0) { return 0; }
         if (uc1 < 0x80 || uc1 > 0xbf) { p = 0; return 0; }
-        auto r = decodeUtf8(uc, uc1);
+        auto r = rawDecodeUtf8(uc, uc1);
         if (r < 0x80)
         {
             p = 0; return 0;
@@ -119,7 +120,7 @@ static char32_t decodeUtf8
         if (uc1 < 0x80 || uc1 > 0xbf) { p = 0; return 0; }
         auto uc2 = static_cast<unsigned char>(*++p); if (uc2 == 0) { return 0; }
         if (uc2 < 0x80 || uc2 > 0xbf) { p = 0; return 0; }
-        char32_t w = decodeUtf8(uc, uc1, uc2);
+        char32_t w = rawDecodeUtf8(uc, uc1, uc2);
         if (isFirstHalfUtf16(w))
         {
             auto uc3 = static_cast<unsigned char>(*++p); if (uc3 == 0) { return 0; }
@@ -128,7 +129,7 @@ static char32_t decodeUtf8
             if (uc4 < 0x80 || uc4 > 0xbf) { p = 0; return 0; }
             auto uc5 = static_cast<unsigned char>(*++p); if (uc5 == 0) { return 0; }
             if (uc5 < 0x80 || uc5 > 0xbf) { p = 0; return 0; }
-            char32_t w2 = decodeUtf8(uc3, uc4, uc5);
+            char32_t w2 = rawDecodeUtf8(uc3, uc4, uc5);
             if (isSecondHalfUtf16(w2))
             {
                 return 0x10000 + ((w & 0x3ff) << 10) + (w2 & 0x3ff);
@@ -155,7 +156,7 @@ static char32_t decodeUtf8
         if (uc2 < 0x80 || uc2 > 0xbf) { p = 0; return 0; }
         auto uc3 = static_cast<unsigned char>(*++p); if (uc3 == 0) { return 0; }
         if (uc3 < 0x80 || uc3 > 0xbf) { p = 0; return 0; }
-        auto r = decodeUtf8(uc, uc1, uc2, uc3);
+        auto r = rawDecodeUtf8(uc, uc1, uc2, uc3);
         if (r < 0x10000)
         {
             p = 0; return 0;
@@ -172,7 +173,7 @@ static char32_t decodeUtf8
         if (uc3 < 0x80 || uc3 > 0xbf) { p = 0; return 0; }
         auto uc4 = static_cast<unsigned char>(*++p); if (uc4 == 0) { return 0; }
         if (uc4 < 0x80 || uc4 > 0xbf) { p = 0; return 0; }
-        auto r = decodeUtf8(uc, uc1, uc2, uc3, uc4);
+        auto r = rawDecodeUtf8(uc, uc1, uc2, uc3, uc4);
         if (r < 0x200000)
         {
             p = 0; return 0;
@@ -191,7 +192,7 @@ static char32_t decodeUtf8
         if (uc4 < 0x80 || uc4 > 0xbf) { p = 0; return 0; }
         auto uc5 = static_cast<unsigned char>(*++p); if (uc5 == 0) { return 0; }
         if (uc5 < 0x80 || uc5 > 0xbf) { p = 0; return 0; }
-        auto r = decodeUtf8(uc, uc1, uc2, uc3, uc4, uc5);
+        auto r = rawDecodeUtf8(uc, uc1, uc2, uc3, uc4, uc5);
         if (r < 0x4000000)
         {
             p = 0; return 0;
@@ -274,7 +275,7 @@ bool isFirstHalfUtf16AsUtf8
     }
     auto uc1 = static_cast<unsigned char>(p[1]);
     auto uc2 = static_cast<unsigned char>(p[2]);
-    char16_t oneWord = decodeUtf8(uc0, uc1, uc2);
+    char16_t oneWord = rawDecodeUtf8(uc0, uc1, uc2);
     return isFirstHalfUtf16(oneWord);
 }
 
