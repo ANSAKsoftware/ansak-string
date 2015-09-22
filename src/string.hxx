@@ -32,9 +32,9 @@ namespace ansak {
 ///////////////////////////////////////////////////////////////////////////
 // String Types
 
-typedef std::basic_string<char16_t> utf16String;
-typedef std::basic_string<char16_t> ucs2String;
-typedef std::basic_string<char32_t> ucs4String;
+using utf16String = std::basic_string<char16_t>;
+using ucs2String = std::basic_string<char16_t>;
+using ucs4String = std::basic_string<char32_t>;
 
 ///////////////////////////////////////////////////////////////////////////
 // Enumerations

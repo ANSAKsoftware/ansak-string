@@ -1,3 +1,13 @@
+# The author (Arthur N. Klassen) disclaims all copyright to this source code.
+# In place of a legal notice, here is a blessing:
+#
+#    May you do good and not evil.
+#    May you find forgiveness for yourself and forgive others.
+#    May you share freely, never taking more than you give.
+#
+# The above text with a date will be included in headings for all the files in
+# this repository. It would be considered a kindness if you would retain it in
+# whatever environment you use it. Thank you.
 
 # For the poor sods who are stuck on earlier cmakes comment out "3.1" and
 # uncomment the other comments below this one.
