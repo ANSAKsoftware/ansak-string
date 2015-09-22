@@ -34,7 +34,7 @@ namespace ansak {
 ///////////////////////////////////////////////////////////////////////////
 // Local Data
 
-constexpr EncodingTypeFlags encodingToFlag[kUnicode + 1] =
+EncodingTypeFlags encodingToFlag[kUnicode + 1] =
     { kAsciiFlag, kUtf8Flag, kUcs2Flag, kUtf16Flag, kUcs4Flag, kUnicodeFlag };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -66,6 +66,8 @@ inline bool isUtf16EscapedRange
     return isFirstHalfUtf16(c) || isSecondHalfUtf16(c);
 }
 
+namespace {
+
 //=========================================================================
 // Utility function to decode a single UCS-4 character from "the next
 // character" in a 0-terminated string, assumed to be UTF-8.
@@ -88,7 +90,7 @@ inline bool isUtf16EscapedRange
 // 5. UTF-8 sequence leading to broken UTF-16 sequence -- starting with 0xd800..0xdbff
 //                               but not continued with 0xdc00..0xdfff
 
-static char32_t decodeUtf8
+char32_t decodeUtf8
 (
     const char*&        p       // I/O - points to current non-null character
 )
@@ -305,7 +307,7 @@ bool isSecondHalfUtf16AsUtf8
 //
 // Called by all public variations of isUtf8
 
-static bool isUtf8
+bool isUtf8
 (
     const char*     test,               // I - pointer to bytes to be scanned
     unsigned int    testLength,         // I - length (if not 0-terminated) to scan
@@ -341,7 +343,8 @@ static bool isUtf8
         // sequence, quit, now
         if (lengthTerminated)
         {
-            auto seqStarts = sequenceSizeCharStarts(p);
+            // result will always be positive, p is never nullptr
+            unsigned int seqStarts = sequenceSizeCharStarts(p);
             // "3" long sequences might be UTF-16 parts
             if (seqStarts == 3)
             {
@@ -405,6 +408,8 @@ static bool isUtf8
 
     // falling out due to nulls is good -- except for length-terminated
     return !lengthTerminated;
+}
+
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -573,7 +578,6 @@ string toUtf8(const char16_t* src)
                 {
                     return string();
                 }
-                char32_t c_32 = c, c1_32 = c1;
                 char32_t c32 = rawDecodeUtf16(c, c1);
                 encodeUtf8(c32, adder);
             }
@@ -792,7 +796,6 @@ ucs4String toUcs4(const char16_t* src)
                 {
                     return ucs4String();
                 }
-                char32_t c_32 = c, c1_32 = c1;
                 char32_t c32 = rawDecodeUtf16(c, c1);
                 result.push_back(c32);
             }
@@ -826,6 +829,11 @@ unsigned int unicodeLength(const std::string& src)
 
 unsigned int unicodeLength(const char* src, unsigned int testLength)
 {
+    if (!src || !*src)
+    {
+        return 0;
+    }
+
     // some behaviour is changed if the scan is length terminated
     bool lengthTerminated = testLength != 0;
 
@@ -833,7 +841,7 @@ unsigned int unicodeLength(const char* src, unsigned int testLength)
     auto pLast = src - 1;
     unsigned int usedThisTime = 0;
     unsigned int r = 0;
-    constexpr EncodingTypeFlags restrictToUnicode = encodingToFlag[kUnicode];
+    EncodingTypeFlags restrictToUnicode = encodingToFlag[kUnicode];
 
     for (auto p = src; *p; ++p, ++r)
     {
@@ -841,7 +849,8 @@ unsigned int unicodeLength(const char* src, unsigned int testLength)
         // sequence, quit, now
         if (lengthTerminated)
         {
-            auto seqStarts = sequenceSizeCharStarts(p);
+            // result will always be positive, p is never nullptr
+            unsigned int seqStarts = sequenceSizeCharStarts(p);
             // "3" long sequences might be UTF-16 parts
             if (seqStarts == 3)
             {
@@ -936,7 +945,7 @@ unsigned int unicodeLength(const char16_t* src, unsigned int testLength)
 
         // is this the first of two parts?
         bool isFirstHalf = isFirstHalfUtf16(c);
-        int wordsNeeded = isFirstHalf ? 2 : 1;
+        unsigned int wordsNeeded = isFirstHalf ? 2 : 1;
 
         // have we got another half to deal with it?
         if (lengthTerminated && wordsNeeded > lengthLeft)
@@ -993,7 +1002,6 @@ unsigned int unicodeLength(const ucs4String& src)
 unsigned int unicodeLength(const char32_t* src, unsigned int testLength)
 {
     // some behaviour is changed if the scan is length terminated
-    auto length = testLength;
     bool lengthTerminated = testLength != 0;
 
     unsigned int r = 0;

@@ -227,6 +227,12 @@ inline char32_t rawDecodeUtf8(char c0, char c1, char c2, char c3, char c4, char 
            ((wc3 & 0x3f) << 12) + ((wc4 & 0x3f) << 6) + (wc5 & 0x3f);
 }
 
+#if defined(_MSC_VER)
+// MSVC can't figure out that some code never gets run when the associated
+// shift would be too wide and warns needlessly.
+#pragma warning( disable : 4333 )
+#endif
+
 //=========================================================================
 // Utility template function to encode a single UCS-4 character into UTF-8,
 // regardless of its value
@@ -278,6 +284,10 @@ void encodeUtf8
         adder(static_cast<char>((c & 0x3f) | 0x80));
     }
 }
+
+#if defined(_MSC_VER)
+#pragma warning( default : 4333 )
+#endif
 
 //=========================================================================
 // Utility function to decode a single UCS-4 character from known UTF-16
