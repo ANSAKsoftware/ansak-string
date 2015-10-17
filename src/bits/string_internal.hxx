@@ -32,7 +32,7 @@ namespace internal {
 //=========================================================================
 // flags that show what classifications a particular character can fit into
 
-enum EncodingTypeFlags {
+enum EncodingTypeFlags : int {
     kNoFlag = 0,
     kAsciiFlag = 0x0001,
     kUtf8Flag  = 0x0002,
@@ -325,6 +325,10 @@ void rawEncodeUtf16
         adder(static_cast<char16_t>(0xdc00 + (c & 0x3ff)));
     }
 }
+
+char32_t toLower(char32_t c);
+
+char32_t turkicToLower(char32_t c);
 
 }
 

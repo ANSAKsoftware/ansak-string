@@ -12,16 +12,16 @@
 // (Is it too much to suggest retaining this header on this file?)
 ///////////////////////////////////////////////////////////////////////////
 //
-// stringTest.cxx -- CPPUNIT-compatible tests to exercise string.hxx/.cxx
-//                   If you find new conditions that I missed, please let
-//                   me make my version of this better, too.
+// string_test.cxx -- CPPUNIT-compatible tests to exercise string.hxx/.cxx
+//                    If you find new conditions that I missed, please let
+//                    me make my version of this better, too.
 //
 ///////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 // compile from within ANSAK development environment (pending CMake files) with
-// g++ -std=c++11 -I .. ../../unittest/UnitTest.cpp stringTest.cxx ../string.cxx `cppunit-config --libs` -o stringTest
-// g++11 -I .. ../../unittest/UnitTest.cpp stringTest.cxx ../string.cxx `cppunit-config --libs` -o stringTest
+// g++ -std=c++11 -I .. ../../unittest/UnitTest.cpp string_test.cxx ../string.cxx `cppunit-config --libs` -o string_test
+// g++11 -I .. ../../unittest/UnitTest.cpp string_test.cxx ../string.cxx `cppunit-config --libs` -o string_test
 ///////////////////////////////////////////////////////////////////////////
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -255,97 +255,104 @@ void StringTestFixture::testGetRangeFlag()
     CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getRangeFlag(c));
 }
 
+#if defined(WIN32)
+#pragma warning( disable : 4309 )
+#endif
+
 void StringTestFixture::testDecodeUtf8()
 {
-    char16_t d;
-    CPPUNIT_ASSERT_EQUAL(d = 0x80, rawDecodeUtf8(0xc2, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x100, rawDecodeUtf8(0xc4, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x200, rawDecodeUtf8(0xc8, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x400, rawDecodeUtf8(0xd0, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x600, rawDecodeUtf8(0xd8, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x700, rawDecodeUtf8(0xdc, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x780, rawDecodeUtf8(0xde, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x7c0, rawDecodeUtf8(0xdf, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x7e0, rawDecodeUtf8(0xdf, 0xa0));
-    CPPUNIT_ASSERT_EQUAL(d = 0x7f0, rawDecodeUtf8(0xdf, 0xb0));
-    CPPUNIT_ASSERT_EQUAL(d = 0x7f8, rawDecodeUtf8(0xdf, 0xb8));
-    CPPUNIT_ASSERT_EQUAL(d = 0x7fc, rawDecodeUtf8(0xdf, 0xbc));
-    CPPUNIT_ASSERT_EQUAL(d = 0x7fe, rawDecodeUtf8(0xdf, 0xbe));
-    CPPUNIT_ASSERT_EQUAL(d = 0x7ff, rawDecodeUtf8(0xdf, 0xbf));
-    CPPUNIT_ASSERT_EQUAL(d = 0x1000, rawDecodeUtf8(0xe1, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x2000, rawDecodeUtf8(0xe2, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x4000, rawDecodeUtf8(0xe4, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0x8000, rawDecodeUtf8(0xe8, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xc000, rawDecodeUtf8(0xec, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xe000, rawDecodeUtf8(0xee, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xf000, rawDecodeUtf8(0xef, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xf800, rawDecodeUtf8(0xef, 0xa0, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xfc00, rawDecodeUtf8(0xef, 0xb0, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xfe00, rawDecodeUtf8(0xef, 0xb8, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xff00, rawDecodeUtf8(0xef, 0xbc, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xff80, rawDecodeUtf8(0xef, 0xbe, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xffc0, rawDecodeUtf8(0xef, 0xbf, 0x80));
-    CPPUNIT_ASSERT_EQUAL(d = 0xffe0, rawDecodeUtf8(0xef, 0xbf, 0xa0));
-    CPPUNIT_ASSERT_EQUAL(d = 0xfff0, rawDecodeUtf8(0xef, 0xbf, 0xb0));
-    CPPUNIT_ASSERT_EQUAL(d = 0xfff8, rawDecodeUtf8(0xef, 0xbf, 0xb8));
-    CPPUNIT_ASSERT_EQUAL(d = 0xfffc, rawDecodeUtf8(0xef, 0xbf, 0xbc));
-    CPPUNIT_ASSERT_EQUAL(d = 0xfffe, rawDecodeUtf8(0xef, 0xbf, 0xbe));
-    CPPUNIT_ASSERT_EQUAL(d = 0xffff, rawDecodeUtf8(0xef, 0xbf, 0xbf));
-    char32_t e;
-    CPPUNIT_ASSERT_EQUAL(e = 0x10000, rawDecodeUtf8(0xf0, 0x90, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x20000, rawDecodeUtf8(0xf0, 0xa0, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x40000, rawDecodeUtf8(0xf1, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x80000, rawDecodeUtf8(0xf2, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x100000, rawDecodeUtf8(0xf4, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x180000, rawDecodeUtf8(0xf6, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1c0000, rawDecodeUtf8(0xf7, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1e0000, rawDecodeUtf8(0xf7, 0xa0, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1f0000, rawDecodeUtf8(0xf7, 0xb0, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1f8000, rawDecodeUtf8(0xf7, 0xb8, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1fc000, rawDecodeUtf8(0xf7, 0xbc, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1fe000, rawDecodeUtf8(0xf7, 0xbe, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ff000, rawDecodeUtf8(0xf7, 0xbf, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ff800, rawDecodeUtf8(0xf7, 0xbf, 0xa0, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ffc00, rawDecodeUtf8(0xf7, 0xbf, 0xb0, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ffe00, rawDecodeUtf8(0xf7, 0xbf, 0xb8, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1fff00, rawDecodeUtf8(0xf7, 0xbf, 0xbc, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1fff80, rawDecodeUtf8(0xf7, 0xbf, 0xbe, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1fffc0, rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1fffe0, rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xa0));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ffff0, rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xb0));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ffff8, rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xb8));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ffffc, rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xbc));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1ffffe, rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xbe));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1fffff, rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xbf));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x80), rawDecodeUtf8(0xc2, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x100), rawDecodeUtf8(0xc4, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x200), rawDecodeUtf8(0xc8, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x400), rawDecodeUtf8(0xd0, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x600), rawDecodeUtf8(0xd8, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x700), rawDecodeUtf8(0xdc, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x780), rawDecodeUtf8(0xde, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x7c0), rawDecodeUtf8(0xdf, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x7e0), rawDecodeUtf8(0xdf, 0xa0));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x7f0), rawDecodeUtf8(0xdf, 0xb0));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x7f8), rawDecodeUtf8(0xdf, 0xb8));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x7fc), rawDecodeUtf8(0xdf, 0xbc));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x7fe), rawDecodeUtf8(0xdf, 0xbe));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x7ff), rawDecodeUtf8(0xdf, 0xbf));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x1000), rawDecodeUtf8(0xe1, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x2000), rawDecodeUtf8(0xe2, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x4000), rawDecodeUtf8(0xe4, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0x8000), rawDecodeUtf8(0xe8, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xc000), rawDecodeUtf8(0xec, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xe000), rawDecodeUtf8(0xee, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xf000), rawDecodeUtf8(0xef, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xf800), rawDecodeUtf8(0xef, 0xa0, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xfc00), rawDecodeUtf8(0xef, 0xb0, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xfe00), rawDecodeUtf8(0xef, 0xb8, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xff00), rawDecodeUtf8(0xef, 0xbc, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xff80), rawDecodeUtf8(0xef, 0xbe, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xffc0), rawDecodeUtf8(0xef, 0xbf, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xffe0), rawDecodeUtf8(0xef, 0xbf, 0xa0));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xfff0), rawDecodeUtf8(0xef, 0xbf, 0xb0));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xfff8), rawDecodeUtf8(0xef, 0xbf, 0xb8));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xfffc), rawDecodeUtf8(0xef, 0xbf, 0xbc));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xfffe), rawDecodeUtf8(0xef, 0xbf, 0xbe));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char16_t>(0xffff), rawDecodeUtf8(0xef, 0xbf, 0xbf));
 
-    CPPUNIT_ASSERT_EQUAL(e = 0x200000, rawDecodeUtf8(0xf8, 0x88, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x400000, rawDecodeUtf8(0xf8, 0x90, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x800000, rawDecodeUtf8(0xf8, 0xa0, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x1000000, rawDecodeUtf8(0xf9, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x2000000, rawDecodeUtf8(0xfa, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3000000, rawDecodeUtf8(0xfb, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3800000, rawDecodeUtf8(0xfb, 0xa0, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3c00000, rawDecodeUtf8(0xfb, 0xb0, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3e00000, rawDecodeUtf8(0xfb, 0xb8, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3f00000, rawDecodeUtf8(0xfb, 0xbc, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3f80000, rawDecodeUtf8(0xfb, 0xbe, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3fc0000, rawDecodeUtf8(0xfb, 0xbf, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3fff000, rawDecodeUtf8(0xfb, 0xbf, 0xbf, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x3ffffff, rawDecodeUtf8(0xfb, 0xbf, 0xbf, 0xbf, 0xbf));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x10000), rawDecodeUtf8(0xf0, 0x90, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x20000), rawDecodeUtf8(0xf0, 0xa0, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x40000), rawDecodeUtf8(0xf1, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x80000), rawDecodeUtf8(0xf2, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x100000), rawDecodeUtf8(0xf4, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x180000), rawDecodeUtf8(0xf6, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1c0000), rawDecodeUtf8(0xf7, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1e0000), rawDecodeUtf8(0xf7, 0xa0, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1f0000), rawDecodeUtf8(0xf7, 0xb0, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1f8000), rawDecodeUtf8(0xf7, 0xb8, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1fc000), rawDecodeUtf8(0xf7, 0xbc, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1fe000), rawDecodeUtf8(0xf7, 0xbe, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ff000), rawDecodeUtf8(0xf7, 0xbf, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ff800), rawDecodeUtf8(0xf7, 0xbf, 0xa0, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ffc00), rawDecodeUtf8(0xf7, 0xbf, 0xb0, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ffe00), rawDecodeUtf8(0xf7, 0xbf, 0xb8, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1fff00), rawDecodeUtf8(0xf7, 0xbf, 0xbc, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1fff80), rawDecodeUtf8(0xf7, 0xbf, 0xbe, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1fffc0), rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1fffe0), rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xa0));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ffff0), rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xb0));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ffff8), rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xb8));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ffffc), rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xbc));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1ffffe), rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xbe));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1fffff), rawDecodeUtf8(0xf7, 0xbf, 0xbf, 0xbf));
 
-    CPPUNIT_ASSERT_EQUAL(e = 0x4000000, rawDecodeUtf8(0xfc, 0x84, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x8000000, rawDecodeUtf8(0xfc, 0x88, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x10000000, rawDecodeUtf8(0xfc, 0x90, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x20000000, rawDecodeUtf8(0xfc, 0xa0, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x40000000, rawDecodeUtf8(0xfd, 0x80, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x60000000, rawDecodeUtf8(0xfd, 0xa0, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x70000000, rawDecodeUtf8(0xfd, 0xb0, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x7f000000, rawDecodeUtf8(0xfd, 0xbf, 0x80, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x7ffc0000, rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0x80, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x7ffff000, rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0xbf, 0x80, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x7fffffc0, rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0xbf, 0xbf, 0x80));
-    CPPUNIT_ASSERT_EQUAL(e = 0x7fffffff, rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x200000), rawDecodeUtf8(0xf8, 0x88, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x400000), rawDecodeUtf8(0xf8, 0x90, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x800000), rawDecodeUtf8(0xf8, 0xa0, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x1000000), rawDecodeUtf8(0xf9, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x2000000), rawDecodeUtf8(0xfa, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3000000), rawDecodeUtf8(0xfb, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3800000), rawDecodeUtf8(0xfb, 0xa0, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3c00000), rawDecodeUtf8(0xfb, 0xb0, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3e00000), rawDecodeUtf8(0xfb, 0xb8, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3f00000), rawDecodeUtf8(0xfb, 0xbc, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3f80000), rawDecodeUtf8(0xfb, 0xbe, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3fc0000), rawDecodeUtf8(0xfb, 0xbf, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3fff000), rawDecodeUtf8(0xfb, 0xbf, 0xbf, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x3ffffff), rawDecodeUtf8(0xfb, 0xbf, 0xbf, 0xbf, 0xbf));
+
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x4000000), rawDecodeUtf8(0xfc, 0x84, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x8000000), rawDecodeUtf8(0xfc, 0x88, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x10000000), rawDecodeUtf8(0xfc, 0x90, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x20000000), rawDecodeUtf8(0xfc, 0xa0, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x40000000), rawDecodeUtf8(0xfd, 0x80, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x60000000), rawDecodeUtf8(0xfd, 0xa0, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x70000000), rawDecodeUtf8(0xfd, 0xb0, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x7f000000), rawDecodeUtf8(0xfd, 0xbf, 0x80, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x7ffc0000), rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0x80, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x7ffff000), rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0xbf, 0x80, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x7fffffc0), rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0xbf, 0xbf, 0x80));
+    CPPUNIT_ASSERT_EQUAL(static_cast<char32_t>(0x7fffffff), rawDecodeUtf8(0xfd, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf));
 }
+
+#if defined(WIN32)
+#pragma warning( default : 4309 )
+#endif
 
 void StringTestFixture::testEncodeUtf8()
 {

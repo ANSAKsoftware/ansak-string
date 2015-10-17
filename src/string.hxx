@@ -32,9 +32,10 @@ namespace ansak {
 ///////////////////////////////////////////////////////////////////////////
 // String Types
 
-using utf16String = std::basic_string<char16_t>;
-using ucs2String = std::basic_string<char16_t>;
-using ucs4String = std::basic_string<char32_t>;
+using utf8String = std::string;
+using utf16String = std::u16string;
+using ucs2String = std::u16string;
+using ucs4String = std::u32string;
 
 ///////////////////////////////////////////////////////////////////////////
 // Enumerations
@@ -47,7 +48,7 @@ using ucs4String = std::basic_string<char32_t>;
 //
 ///////////////////////////////////////////////////////////////////////////
 
-enum EncodingType {
+enum EncodingType : int {
     kAscii,                 // 0x00..0x7f
     kUtf8,                  // 8-bit encoding of 0x00000000 .. 0x7fffffff
     kUcs2,                  // 0x0000..0xd7ff; 0xe000..0xffff
@@ -63,7 +64,7 @@ enum EncodingType {
 //
 ///////////////////////////////////////////////////////////////////////////
 
-enum SourceEncoding {
+enum SourceEncoding : int {
     kSrcUnicode,
     kSrcCP1252,
     kSrcCP1250
@@ -71,9 +72,6 @@ enum SourceEncoding {
 
 ///////////////////////////////////////////////////////////////////////////
 // Public Methods
-typedef std::basic_string<char16_t> utf16String;
-typedef std::basic_string<char16_t> ucs2String;
-typedef std::basic_string<char32_t> ucs4String;
 
 ///////////////////////////////////////////////////////////////////////////
 // is<EncodingType> functions
@@ -93,7 +91,7 @@ typedef std::basic_string<char32_t> ucs4String;
 
 bool isUtf8
 (
-    const std::string&  test,                   // I - the source
+    const utf8String&   test,                   // I - the source
     EncodingType        targetEncoding = kUtf8  // I - the intended target
 );
 
@@ -139,32 +137,32 @@ bool isUcs4(const char32_t* test, EncodingType targetEncoding = kUcs4);
 // basic_string<C> type. Incomplete but potentially valid encoding sequences
 // at end-of-string are ignored. 
 
-std::string toUtf8
+utf8String toUtf8
 (
     const utf16String&      src         // I - A source basic_string
 );
 
-std::string toUtf8
+utf8String toUtf8
 (
     const char16_t*         src         // I - A null-term'd source
 );
 
 // Passim
 
-std::string toUtf8(const ucs4String& src);
-std::string toUtf8(const char32_t* src);
+utf8String toUtf8(const ucs4String& src);
+utf8String toUtf8(const char32_t* src);
 
-ucs2String toUcs2(const std::string& src);
+ucs2String toUcs2(const utf8String& src);
 ucs2String toUcs2(const char* src);
 ucs2String toUcs2(const ucs4String& src);
 ucs2String toUcs2(const char32_t* src);
 
-utf16String toUtf16(const std::string& src);
+utf16String toUtf16(const utf8String& src);
 utf16String toUtf16(const char* src);
 utf16String toUtf16(const ucs4String& src);
 utf16String toUtf16(const char32_t* src);
 
-ucs4String toUcs4(const std::string& src);
+ucs4String toUcs4(const utf8String& src);
 ucs4String toUcs4(const char* src);
 ucs4String toUcs4(const utf16String& src);
 ucs4String toUcs4(const char16_t* src);
@@ -177,7 +175,7 @@ ucs4String toUcs4(const char16_t* src);
 
 unsigned int unicodeLength
 (
-    const std::string&      src         // I - A source basic_string
+    const utf8String&       src         // I - A source basic_string
 );
 unsigned int unicodeLength
 (
@@ -194,11 +192,47 @@ unsigned int unicodeLength(const ucs4String& src);
 unsigned int unicodeLength(const char32_t* src, unsigned int testLength = 0);
 
 ///////////////////////////////////////////////////////////////////////////
+// toLower function
+//
+// Lower-cases a string, with sensitivity to an incoming language ID. Only
+// Azerbaizhani, Turkish, Tatar and Kazakh are tracked in order to support
+// dotted/dotless-I behaviour; all other languages seem to peacefully
+// co-exist. This is "officially correct" for Azeri and Turkish and Crimean
+// Tatar. Tatar-in-Russia officially uses Cyrillic but adopted Turkish
+// behaviour in Latin alphabets in the past. Kazakh officially uses
+// Cyrillic but official documents that use a Latin alphabet also follow
+// Turkish behaviour.
+//
+// Turkish behaviour is selected by passing in a pointer to "az", "aze",
+// "azj", "azb", "kk", "kaz", "tt", "tat", "tr" or "tur". Any other value
+// selects non-Turkish behaviour.
+///////////////////////////////////////////////////////////////////////////
+
+utf8String toLower
+(
+    const utf8String&       src,            // I - the source
+    const char*             lang = nullptr  // I - the optional language code
+);
+
+utf16String toLower
+(
+    const utf16String&      src,            // I - the source
+    const char*             lang = nullptr  // I - the optional language code
+);
+
+ucs4String toLower
+(
+    const ucs4String&       src,            // I - the source
+    const char*             lang = nullptr  // I - the optional language code
+);
+
+
+///////////////////////////////////////////////////////////////////////////
 // toUtf8 function
 //
 // Converts a single-byte-encoded string to UTF-8, returns as STL string.
 
-std::string toUtf8
+utf8String toUtf8
 (
     const char*         src,            // I - A source single-byte, null-terminated string
     SourceEncoding      srcType         // I - The source encoding type

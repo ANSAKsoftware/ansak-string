@@ -21,6 +21,9 @@ include( CTest )
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library( ansakString STATIC src/string.cxx
+                                src/string_tolower.cxx
+                                src/string_toutf8.cxx
+                                src/bits/char_to_lower.cxx
                                 src/string.hxx
                                 src/string_splitjoin.hxx
                                 src/bits/string_internal.hxx )
@@ -33,6 +36,7 @@ target_include_directories( ansakString PRIVATE src/bits
 
 add_executable( ansakStringTest src/unitTests/UnitTest.cxx
                                 src/unitTests/string_splitjoin_test.cxx
+                                src/unitTests/string_tolower_test.cxx 
                                 src/unitTests/string_test.cxx )
 # target_compile_options( ansakStringTest PRIVATE "-std=c++11" )
 target_link_libraries( ansakStringTest PRIVATE ansakString 
