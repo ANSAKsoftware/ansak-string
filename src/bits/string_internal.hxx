@@ -31,33 +31,49 @@ namespace internal {
 
 //=========================================================================
 // flags that show what classifications a particular character can fit into
+// (by range)
 
-enum EncodingTypeFlags : int {
-    kNoFlag = 0,
-    kAsciiFlag = 0x0001,
-    kUtf8Flag  = 0x0002,
-    kUcs2Flag  = 0x0004,
-    kUtf16Flag = 0x0008,
-    kUcs4Flag  = 0x0010,
-    kUnicodeFlag = 0x0020,
-    kInvalidRangeFlag = 0x0040,
+enum RangeTypeFlags : int {
+    kNoFlag =              0x0000,
+    kAsciiFlag =           0x0001,
+    kUtf8Flag  =           0x0002,
+    kUcs2Flag  =           0x0004,
+    kUtf16Flag =           0x0008,
+    kUcs4Flag  =           0x0010,
+    kUnicodeFlag =         0x0020,
+    kInvalidRangeFlag =    0x8000,
 
     k7BitFlags  = kAsciiFlag | kUtf8Flag | kUcs2Flag | kUtf16Flag | kUcs4Flag | kUnicodeFlag,   // 0x3f
     k16BitFlags =              kUtf8Flag | kUcs2Flag | kUtf16Flag | kUcs4Flag | kUnicodeFlag,   // 0x3e
-    k21BitFlags =              kUtf8Flag |             kUtf16Flag | kUcs4Flag,   // 0x1a, many are kUnicodeFlag, too, (0x3a) but not all
+    k21BitFlags =              kUtf8Flag |             kUtf16Flag | kUcs4Flag,                  // 0x1a
+
     k21BitUnicodeFlags = k21BitFlags | kUnicodeFlag,                             // 0x3a,
     k31BitFlags =              kUtf8Flag |                          kUcs4Flag,   // 0x12
     k32BitFlags =                                                   kUcs4Flag    // 0x10
 };
 
 //=========================================================================
+// flags that show what classifications a particular character can fit into
+// (by value type)
+
+enum EncodingTypeFlags : int {
+    kNoneFlag =             0x0000,
+    kIsAssignedFlag =       0x0001,
+    kIsPrivateFlag =        0x0002,
+    kIsControlFlag =        0x0004,
+    kIsWhiteSpaceFlag =     0x0008
+};
+
+//=========================================================================
 // A utility functor for appending encoded characters to a growing string
 
-template< typename C >
-class CharacterAdder : public std::unary_function<void, C >
+template <typename C>
+class CharacterAdder : public std::unary_function<void, C>
 {
+    static_assert(std::is_integral<C>::value, "CharacterAdder needs an integral type.");
+
 public:
-    CharacterAdder(std::basic_string< C >& result) : std::unary_function<void, C>(),
+    CharacterAdder(std::basic_string<C>& result) : std::unary_function<void, C>(),
                                                      m_destination(result) {}
     void operator()(C c) { m_destination.push_back(c); }
 private:
@@ -68,11 +84,34 @@ private:
 // Local Functions
 
 //=========================================================================
+// Returns true if the character is in the Unicode 8.0 standard, false
+// otherwise. Note, all 8-bit values are in the standard. Gaps first begin
+// after U+0377
+
+inline bool isUnicode8Assigned(char c) { return true; }
+bool isUnicode8Assigned(char16_t c);
+bool isUnicode8Assigned(char32_t c);
+
+inline bool isUnicode8Private(char c) { return false; }
+bool isUnicode8Private(char16_t c);
+bool isUnicode8Private(char32_t c);
+
+bool isControlChar(char c);
+bool isControlChar(char16_t c);
+bool isControlChar(char32_t c);
+
+bool isWhitespaceChar(char c);
+bool isWhitespaceChar(char16_t c);
+bool isWhitespaceChar(char32_t c);
+
+//=========================================================================
 // A utility function to check if a character is allowed within Unicode
 
 template <typename C>
-EncodingTypeFlags getUnicodeEncodableFlag(C c)
+RangeTypeFlags getUnicodeEncodableRangeFlag(C c)
 {
+    static_assert(std::is_integral<C>::value, "getUnicodeEncodableRangeFlag needs an integral type.");
+
     if (sizeof(C) == 1 || (c != 0 && (c < 0xd800 || c > 0xdfff) && c < 0x110000))
     {
         return kUnicodeFlag;
@@ -85,11 +124,10 @@ EncodingTypeFlags getUnicodeEncodableFlag(C c)
 // to
 
 template <typename C>
-EncodingTypeFlags getCharEncodableFlags(C c)
+RangeTypeFlags getCharEncodableRangeFlags(C c)
 {
-    // TODO: add compiler assert to make sure this is used with the right types
-    // only valid for unsigned char, char16_t, char32_t; only useful for
-    // char16_t and char32_t
+    static_assert(std::is_integral<C>::value, "getCharEncodableRangeFlags needs an integral type.");
+
     if (sizeof(C) == 1)
     {
         return ((c & 0x80) == 0) ? k7BitFlags : k16BitFlags;
@@ -108,7 +146,7 @@ EncodingTypeFlags getCharEncodableFlags(C c)
     }
     else if (c < 0x200000)
     {
-        return static_cast<EncodingTypeFlags>(k21BitFlags | getUnicodeEncodableFlag(c));
+        return static_cast<RangeTypeFlags>(k21BitFlags | getUnicodeEncodableRangeFlag(c));
     }
     else
     {
@@ -120,7 +158,7 @@ EncodingTypeFlags getCharEncodableFlags(C c)
 // A utility function to check what families of values a character once
 // decoded will belong to
 
-inline EncodingTypeFlags getRangeFlag(char firstChar)
+inline RangeTypeFlags getRangeFlag(char firstChar)
 {
     auto f = static_cast<unsigned char>(firstChar);
     // start of 2-byte escapes -- anything but ASCII
@@ -155,7 +193,7 @@ inline EncodingTypeFlags getRangeFlag(char firstChar)
 // A utility function to check what families of values a character once
 // decoded will belong to
 
-inline EncodingTypeFlags getRangeFlag(char16_t firstChar)
+inline RangeTypeFlags getRangeFlag(char16_t firstChar)
 {
     // start of 21-bit escapes: only work for 21-bit and Unicode
     if (firstChar >= 0xd800 && firstChar <= 0xdbff)
@@ -171,6 +209,21 @@ inline EncodingTypeFlags getRangeFlag(char16_t firstChar)
         return k7BitFlags;
     }
     return k16BitFlags;
+}
+
+//=========================================================================
+// A template to generate an encoding mask (isAssigned? isPrivate? isControl?
+// isWhitespace?) for any character
+
+template<typename C>
+uint32_t charToEncodingTypeMask(C c)
+{
+    static_assert(std::is_integral<C>::value, "charToEncodingTypeMask needs an integral type.");
+
+    return (isUnicode8Assigned(c) ? kIsAssignedFlag : 0) |
+           (isUnicode8Private(c) ? kIsPrivateFlag : 0) |
+           (isControlChar(c) ? kIsControlFlag : 0) |
+           (isWhitespaceChar(c) ? kIsWhiteSpaceFlag : 0);
 }
 
 //=========================================================================
@@ -237,13 +290,15 @@ inline char32_t rawDecodeUtf8(char c0, char c1, char c2, char c3, char c4, char 
 // Utility template function to encode a single UCS-4 character into UTF-8,
 // regardless of its value
 
-template< typename C >
+template <typename C>
 void encodeUtf8
 (
     C                       c,          // I - A UCS-4 character to encode
     CharacterAdder<char>&   adder       // I/O - A character collecter to add it to
 )
 {
+    static_assert(std::is_integral<C>::value, "encodeUtf8 needs an integral type.");
+
     if ((c & 0xffffff80) == 0)
     {
         adder(static_cast<char>(c));
@@ -314,6 +369,8 @@ void rawEncodeUtf16
     CharacterAdder<char16_t>    adder       // I/O - A character collecter to add it to
 )
 {
+    static_assert(std::is_integral<C>::value, "rawEncodeUtf16 needs an integral type.");
+
     if (c < 0x10000)
     {
         adder(static_cast<char16_t>(c));
@@ -326,9 +383,14 @@ void rawEncodeUtf16
     }
 }
 
-char32_t toLower(char32_t c);
+//=========================================================================
+// toLower of one character, from a Turkic and non-Turkic point of view.
+//
+// Returns the value of the lower case form, if any, of the input parameter;
+// returns the same character otherwise.
 
 char32_t turkicToLower(char32_t c);
+char32_t toLower(char32_t c);
 
 }
 

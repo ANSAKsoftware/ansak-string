@@ -18,12 +18,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////
-// compile from within ANSAK development environment (pending CMake files) with
-// g++ -std=c++11 -I .. ../../unittest/UnitTest.cpp string_test.cxx ../string.cxx `cppunit-config --libs` -o string_test
-// g++11 -I .. ../../unittest/UnitTest.cpp string_test.cxx ../string.cxx `cppunit-config --libs` -o string_test
-///////////////////////////////////////////////////////////////////////////
-
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "string.hxx"
@@ -153,14 +147,15 @@ void StringTestFixture::testGetUnicodeEncodableFlag()
     {
         if (c >= 0xd800 && c < 0xe000)
         {
-            CPPUNIT_ASSERT_EQUAL(kNoFlag, getUnicodeEncodableFlag(c));
+            CPPUNIT_ASSERT_EQUAL(kNoFlag, getUnicodeEncodableRangeFlag(c));
         }
         else
         {
-            CPPUNIT_ASSERT_EQUAL(kUnicodeFlag, getUnicodeEncodableFlag(c));
+            CPPUNIT_ASSERT_EQUAL(static_cast<int>(kUnicodeFlag),
+                                 static_cast<int>(kUnicodeFlag & getUnicodeEncodableRangeFlag(c)));
         }
     }
-    CPPUNIT_ASSERT_EQUAL(kNoFlag, getUnicodeEncodableFlag(c));
+    CPPUNIT_ASSERT_EQUAL(kNoFlag, getUnicodeEncodableRangeFlag(c));
 }
 
 void StringTestFixture::testGetCharEncodableFlags()
@@ -168,65 +163,67 @@ void StringTestFixture::testGetCharEncodableFlags()
     char c;
     for (c = 0; c != '\x80'; ++c)
     {
-        CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableFlags(c));
+        CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableRangeFlags(c));
     }
     for ( ; c != 0; ++c)
     {
-        CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableFlags(c));
+        CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableRangeFlags(c));
     }
 
     char16_t d;
     for (d = 0; d <= 0x7f; ++d)
     {
-        CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableFlags(d));
+        CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableRangeFlags(d));
     }
     for ( ; d < 0xd800; ++d)
     {
-        CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableFlags(d));
+        CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableRangeFlags(d));
     }
     for ( ; d < 0xe000; ++d)
     {
-        CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableFlags(d));
+        CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableRangeFlags(d));
     }
     for ( ; d != 0; ++d)
     {
-        CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableFlags(d));
+        CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableRangeFlags(d));
     }
 
     char32_t e = 1;
-    CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableRangeFlags(e));
     e = 0x7f;
-    CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k7BitFlags, getCharEncodableRangeFlags(e));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableRangeFlags(e));
     e = 0xd7ff;
-    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableRangeFlags(e));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableRangeFlags(e));
     e = 0xdbff;
-    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableRangeFlags(e));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableRangeFlags(e));
     e = 0xdfff;
-    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(kInvalidRangeFlag, getCharEncodableRangeFlags(e));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableRangeFlags(e));
     e = 0xffff;
-    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k16BitFlags, getCharEncodableRangeFlags(e));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(k21BitUnicodeFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(k21BitUnicodeFlags),
+                         static_cast<int>(k21BitUnicodeFlags & getCharEncodableRangeFlags(e)));
     e = 0x10ffff;
-    CPPUNIT_ASSERT_EQUAL(k21BitUnicodeFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(k21BitUnicodeFlags),
+                         static_cast<int>(k21BitUnicodeFlags & getCharEncodableRangeFlags(e)));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(k21BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k21BitFlags, getCharEncodableRangeFlags(e));
     e = 0x1fffff;
-    CPPUNIT_ASSERT_EQUAL(k21BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k21BitFlags, getCharEncodableRangeFlags(e));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(k31BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k31BitFlags, getCharEncodableRangeFlags(e));
     e = 0x7fffffff;
-    CPPUNIT_ASSERT_EQUAL(k31BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k31BitFlags, getCharEncodableRangeFlags(e));
     ++e;
-    CPPUNIT_ASSERT_EQUAL(k32BitFlags, getCharEncodableFlags(e));
+    CPPUNIT_ASSERT_EQUAL(k32BitFlags, getCharEncodableRangeFlags(e));
 }
 
 void StringTestFixture::testGetRangeFlag()
@@ -570,7 +567,7 @@ void StringTestFixture::testIsUtf8AsAscii()
     CPPUNIT_ASSERT(isUtf8(0, kAscii));
     CPPUNIT_ASSERT(isUtf8("", kAscii));
     CPPUNIT_ASSERT(isUtf8(std::string(), kAscii));
-    CPPUNIT_ASSERT(!isUtf8(0, static_cast<EncodingType>(kUnicode + 1)));
+    CPPUNIT_ASSERT(!isUtf8(0, kFirstInvalidRange));
 
     char good[] = "This is a string that will pass.";
     CPPUNIT_ASSERT(isUtf8(good, kAscii));
@@ -818,7 +815,7 @@ void StringTestFixture::testIsUcs2AsAscii()
     CPPUNIT_ASSERT(isUcs2(0, kAscii));
     CPPUNIT_ASSERT(isUcs2(nullString, kAscii));
     CPPUNIT_ASSERT(isUcs2(ucs2String(), kAscii));
-    CPPUNIT_ASSERT(!isUcs2(0, static_cast<EncodingType>(kUnicode + 1)));
+    CPPUNIT_ASSERT(!isUcs2(0, kFirstInvalidRange));
 
     char16_t ucs2AsAsciiGood[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
                                    'i', 'm', 'e', ' ', 'f', 'o', 'r', ' ', 'a', 'l', 'l', ' ',
@@ -901,7 +898,7 @@ void StringTestFixture::testIsUtf16AsAscii()
     CPPUNIT_ASSERT(isUtf16(0, kAscii));
     CPPUNIT_ASSERT(isUtf16(nullString, kAscii));
     CPPUNIT_ASSERT(isUcs2(utf16String(), kAscii));
-    CPPUNIT_ASSERT(!isUtf16(0, static_cast<EncodingType>(kUnicode + 1)));
+    CPPUNIT_ASSERT(!isUtf16(0, kFirstInvalidRange));
 
     char16_t utf16AsAsciiGood[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
                                    'i', 'm', 'e', ' ', 'f', 'o', 'r', ' ', 'a', 'l', 'l', ' ',
@@ -991,7 +988,7 @@ void StringTestFixture::testIsUcs4AsAscii()
     CPPUNIT_ASSERT(isUcs4(0, kAscii));
     CPPUNIT_ASSERT(isUcs4(nullString, kAscii));
     CPPUNIT_ASSERT(isUcs4(ucs4String(), kAscii));
-    CPPUNIT_ASSERT(!isUcs4(0, static_cast<EncodingType>(kUnicode + 1)));
+    CPPUNIT_ASSERT(!isUcs4(0, kFirstInvalidRange));
 
     char32_t ucs4AsAsciiGood[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
                                    'i', 'm', 'e', ' ', 'f', 'o', 'r', ' ', 'a', 'l', 'l', ' ',
@@ -1645,6 +1642,17 @@ void StringTestFixture::testUnicodeLengthUtf16()
     CPPUNIT_ASSERT_EQUAL(58u, unicodeLength(hard, 59));
     CPPUNIT_ASSERT_EQUAL(58u, unicodeLength(hard, 58));
     CPPUNIT_ASSERT_EQUAL(57u, unicodeLength(hard, 57));
+
+    char16_t boundaryConditions[] = u"Now is the time for all good men t\xd800\xdeab.";
+    CPPUNIT_ASSERT_EQUAL(36u, unicodeLength(boundaryConditions));
+    CPPUNIT_ASSERT_EQUAL(36u, unicodeLength(boundaryConditions, 37));
+    CPPUNIT_ASSERT_EQUAL(35u, unicodeLength(boundaryConditions, 36));
+    CPPUNIT_ASSERT_EQUAL(34u, unicodeLength(boundaryConditions, 35));
+    CPPUNIT_ASSERT_EQUAL(34u, unicodeLength(boundaryConditions, 34));
+    CPPUNIT_ASSERT_EQUAL(33u, unicodeLength(boundaryConditions, 33));
+    CPPUNIT_ASSERT_EQUAL(32u, unicodeLength(boundaryConditions, 32));
+    CPPUNIT_ASSERT_EQUAL(31u, unicodeLength(boundaryConditions, 31));
+    CPPUNIT_ASSERT_EQUAL(30u, unicodeLength(boundaryConditions, 30));
 }
 
 void StringTestFixture::testUnicodeLengthUcs4()

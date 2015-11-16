@@ -36,6 +36,8 @@ namespace ansak
 template <typename C>
 std::vector< std::basic_string<C> > split(const std::basic_string<C>& src, C delim)
 {
+    static_assert(std::is_integral<C>::value, "split needs an integral type.");
+
     typedef std::basic_string<C> elem_type;
     typedef typename elem_type::size_type size_type;
     typedef std::vector< elem_type > return_type;
@@ -91,6 +93,8 @@ std::vector< std::basic_string<C> > split(const std::basic_string<C>& src, C del
 template <typename C>
 std::basic_string<C> join(const std::vector< std::basic_string<C> >& src, C delim)
 {
+    static_assert(std::is_integral<C>::value, "join needs an integral type.");
+
     typedef std::basic_string<C> return_type;
 
     if (src.empty())
