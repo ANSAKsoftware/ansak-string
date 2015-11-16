@@ -17,9 +17,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-// compile from here with
-// g++ -std=c++11 -I .. ../../unittest/UnitTest.cpp stringSplitJoinTest.cxx `cppunit-config --libs` -o stringSplitJoinTest
-
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "string_splitjoin.hxx"

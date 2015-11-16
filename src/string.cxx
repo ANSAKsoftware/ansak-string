@@ -36,7 +36,7 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////
 // Local Data
 
-EncodingTypeFlags encodingToFlag[kUnicode + 1] =
+RangeTypeFlags rangeTypeToRangeFlag[RangeType::kFirstInvalidRange] =
     { kAsciiFlag, kUtf8Flag, kUcs2Flag, kUtf16Flag, kUcs4Flag, kUnicodeFlag };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -54,6 +54,8 @@ bool isFirstHalfUtf16
     C                   c       // I - character to test
 )
 {
+    static_assert(std::is_integral<C>::value, "isFirstHalfUtf16 needs an integral type.");
+
     return c >= 0xd800 && c <= 0xdbff;
 }
 
@@ -69,6 +71,8 @@ bool isSecondHalfUtf16
     C                   c       // I - character to test
 )
 {
+    static_assert(std::is_integral<C>::value, "isSecondHalfUtf16 needs an integral type.");
+
     return c >= 0xdc00 && c <= 0xdfff;
 }
 
@@ -83,6 +87,8 @@ bool isUtf16Encodable
     C                   c       // I - character to test
 )
 {
+    static_assert(std::is_integral<C>::value, "isUtf16Encodable needs an integral type.");
+
     // don't depend on signed-ness -- first half covers unsigned case,
     // second half covers negative numbers without calling them so.
     return c <= 0x10ffff && (c & ~0x1fffff) == 0;
@@ -360,14 +366,16 @@ bool isUtf8
 (
     const char*     test,               // I - pointer to bytes to be scanned
     unsigned int    testLength,         // I - length (if not 0-terminated) to scan
-    EncodingType    targetEncoding      // I - a target encoding
+    RangeType       targetRange,        // I - a target encoding
+    const EncodingCheckPredicate&       // I - optional validity check (def. no-check)
+                    pred
 )
 {
     // some behaviour is changed if the scan is length terminated
     bool lengthTerminated = testLength != 0;
 
     // validate encoding and length parameters
-    if (targetEncoding < kAscii || targetEncoding > kUnicode)
+    if (targetRange < kAscii || targetRange > kUnicode)
     {
         return false;
     }
@@ -376,14 +384,15 @@ bool isUtf8
         return true;
     }
 
-    EncodingTypeFlags restrictToThis = encodingToFlag[targetEncoding];
+    RangeTypeFlags restrictToThis = rangeTypeToRangeFlag[targetRange];
+    bool isNullPred = pred == EncodingCheckPredicate();
 
     auto lengthLeft = testLength;
     auto pLast = test - 1;
     unsigned int usedThisTime = 0;
     for (auto p = test; *p; ++p)
     {
-        EncodingTypeFlags rangeFlag = getRangeFlag(*p);
+        RangeTypeFlags rangeFlag = getRangeFlag(*p);
         if ((rangeFlag & restrictToThis) == 0)
         {
             return false;
@@ -435,10 +444,10 @@ bool isUtf8
             usedThisTime = static_cast<unsigned int>(p - pLast);
             pLast = p;
         }
-        EncodingTypeFlags charFlag = getCharEncodableFlags(c);
+        RangeTypeFlags charFlag = getCharEncodableRangeFlags(c);
 
         // target encoding cannot be satisfied
-        if ((charFlag & restrictToThis) == 0)
+        if ((charFlag & restrictToThis) == 0 || (!isNullPred && !pred(c)))
         {
             return false;
         }
@@ -466,31 +475,31 @@ bool isUtf8
 
 //////////// Is it (valid) UTF-8, compatible with this encoding?
 
-bool isUtf8(const std::string& test, EncodingType targetEncoding)
+bool isUtf8(const std::string& test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    return isUtf8(test.c_str(), 0, targetEncoding);
+    return isUtf8(test.c_str(), 0, targetRange, pred);
 }
 
-bool isUtf8(const char* test, EncodingType targetEncoding)
+bool isUtf8(const char* test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    return isUtf8(test, 0, targetEncoding);
+    return isUtf8(test, 0, targetRange, pred);
 }
 
-bool isUtf8(const char* test, unsigned int testLength)
+bool isUtf8(const char* test, unsigned int testLength, const EncodingCheckPredicate& pred)
 {
-    return isUtf8(test, testLength, kUtf8);
+    return isUtf8(test, testLength, kUtf8, pred);
 }
 
 //////////////////// Is it (valid) UTF-16, compatible with this encoding?
 
-bool isUtf16(const utf16String& test, EncodingType targetEncoding)
+bool isUtf16(const utf16String& test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    return isUtf16(test.c_str(), targetEncoding);
+    return isUtf16(test.c_str(), targetRange, pred);
 }
 
-bool isUtf16(const char16_t* test, EncodingType targetEncoding)
+bool isUtf16(const char16_t* test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    if (targetEncoding < kAscii || targetEncoding > kUnicode)
+    if (targetRange < kAscii || targetRange > kUnicode)
     {
         return false;
     }
@@ -499,17 +508,18 @@ bool isUtf16(const char16_t* test, EncodingType targetEncoding)
         return true;
     }
 
-    EncodingTypeFlags restrictToThis = encodingToFlag[targetEncoding];
+    RangeTypeFlags restrictToThis = rangeTypeToRangeFlag[targetRange];
+    bool isNullPred = pred == EncodingCheckPredicate();
     
     for (auto p = test; *p; ++p)
     {
-        EncodingTypeFlags rangeFlag = getRangeFlag(*p);
+        RangeTypeFlags rangeFlag = getRangeFlag(*p);
         if ((rangeFlag & restrictToThis) == 0)
         {
             return false;
         }
         auto c = *p;
-        EncodingTypeFlags charFlag;
+        RangeTypeFlags charFlag;
         if (isSecondHalfUtf16(c))
         {
             return false;
@@ -522,14 +532,14 @@ bool isUtf16(const char16_t* test, EncodingType targetEncoding)
                 return false;
             }
             // Could make this function call but it is unnecessary
-            // charFlag = getCharEncodableFlags(rawDecodeUtf16(c, c1));
+            // charFlag = getCharEncodableRangeFlags(rawDecodeUtf16(c, c1));
             charFlag = k21BitUnicodeFlags;
         }
         else
         {
-            charFlag = getCharEncodableFlags(c);
+            charFlag = getCharEncodableRangeFlags(c);
         }
-        if ((charFlag & restrictToThis) == 0)
+        if ((charFlag & restrictToThis) == 0 || (!isNullPred && !pred(c)))
         {
             return false;
         }
@@ -540,14 +550,14 @@ bool isUtf16(const char16_t* test, EncodingType targetEncoding)
 
 //////////////////// Is it (valid) UCS-2, compatible with this encoding?
 
-bool isUcs2(const ucs2String& test, EncodingType targetEncoding)
+bool isUcs2(const ucs2String& test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    return isUcs2(test.c_str(), targetEncoding);
+    return isUcs2(test.c_str(), targetRange, pred);
 }
 
-bool isUcs2(const char16_t* test, EncodingType targetEncoding)
+bool isUcs2(const char16_t* test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    if (targetEncoding < kAscii || targetEncoding > kUnicode)
+    if (targetRange < kAscii || targetRange > kUnicode)
     {
         return false;
     }
@@ -556,17 +566,18 @@ bool isUcs2(const char16_t* test, EncodingType targetEncoding)
         return true;
     }
 
-    EncodingTypeFlags restrictToThis = encodingToFlag[targetEncoding];
+    RangeTypeFlags restrictToThis = rangeTypeToRangeFlag[targetRange];
+    bool isNullPred = pred == EncodingCheckPredicate();
     
     for (auto p = test; *p; ++p)
     {
         auto c = *p;
-        EncodingTypeFlags charFlag = getCharEncodableFlags(c);
+        RangeTypeFlags charFlag = getCharEncodableRangeFlags(c);
         if (isUtf16EscapedRange(c))
         {
             return false;
         }
-        if ((charFlag & restrictToThis) == 0)
+        if ((charFlag & restrictToThis) == 0 || (!isNullPred && !pred(c)))
         {
             return false;
         }
@@ -577,14 +588,14 @@ bool isUcs2(const char16_t* test, EncodingType targetEncoding)
 
 //////////////////// Is it (valid) UCS-4, compatible with this encoding?
 
-bool isUcs4(const ucs4String& test, EncodingType targetEncoding)
+bool isUcs4(const ucs4String& test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    return isUcs4(test.c_str(), targetEncoding);
+    return isUcs4(test.c_str(), targetRange, pred);
 }
 
-bool isUcs4(const char32_t* test, EncodingType targetEncoding)
+bool isUcs4(const char32_t* test, RangeType targetRange, const EncodingCheckPredicate& pred)
 {
-    if (targetEncoding < kAscii || targetEncoding > kUnicode)
+    if (targetRange < kAscii || targetRange > kUnicode)
     {
         return false;
     }
@@ -593,12 +604,13 @@ bool isUcs4(const char32_t* test, EncodingType targetEncoding)
         return true;
     }
 
-    EncodingTypeFlags restrictToThis = encodingToFlag[targetEncoding];
+    RangeTypeFlags restrictToThis = rangeTypeToRangeFlag[targetRange];
+    bool isNullPred = pred == EncodingCheckPredicate();
     
     for (auto p = test; *p; ++p)
     {
         auto c = *p;
-        if ((getCharEncodableFlags(c) & restrictToThis) == 0)
+        if ((getCharEncodableRangeFlags(c) & restrictToThis) == 0 || (!isNullPred && !pred(c)))
         {
             return false;
         }
@@ -890,7 +902,7 @@ unsigned int unicodeLength(const char* src, unsigned int testLength)
     auto pLast = src - 1;
     unsigned int usedThisTime = 0;
     unsigned int r = 0;
-    EncodingTypeFlags restrictToUnicode = encodingToFlag[kUnicode];
+    RangeTypeFlags restrictToUnicode = rangeTypeToRangeFlag[kUnicode];
 
     for (auto p = src; *p; ++p, ++r)
     {
@@ -926,7 +938,7 @@ unsigned int unicodeLength(const char* src, unsigned int testLength)
         auto c = decodeUtf8(p);
 
         // how did decoding go?
-        if (p == nullptr || (restrictToUnicode & getCharEncodableFlags(c)) == 0 )
+        if (p == nullptr || (restrictToUnicode & getCharEncodableRangeFlags(c)) == 0 )
         {
             return 0;
         }
@@ -995,8 +1007,6 @@ unsigned int unicodeLength(const char16_t* src, unsigned int testLength)
 
         // is this the first of two parts?
         bool isFirstHalf = isFirstHalfUtf16(c);
-        // TODO: write a test of this routine where the last two char16_t's of a
-        //       length-terminated string are a UTF-16 pair
         unsigned int wordsNeeded = isFirstHalf ? 2 : 1;
 
         // have we got another half to deal with it?

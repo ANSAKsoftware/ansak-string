@@ -41,21 +41,139 @@ using ucs4String = std::u32string;
 // Enumerations
 
 ///////////////////////////////////////////////////////////////////////////
-// enum EncodingType
+// enum RangeType
 //
 // Enumeration values to communicate what kind of a string one wants to
-// validation
+// validate to.
 //
 ///////////////////////////////////////////////////////////////////////////
 
-enum EncodingType : int {
+enum RangeType : int {
     kAscii,                 // 0x00..0x7f
     kUtf8,                  // 8-bit encoding of 0x00000000 .. 0x7fffffff
     kUcs2,                  // 0x0000..0xd7ff; 0xe000..0xffff
     kUtf16,                 // 16-bit encoding of 0x0000..0xd7ff; 0xe000..0x10ffff
     kUcs4,                  // 0x00000000..0xffffffff
     kUnicode,               // 0x000000-0x00d7ff; 0x00e000..0x10ffff
+
+    kFirstInvalidRange
 };
+
+///////////////////////////////////////////////////////////////////////////
+// enum EncodingType
+//
+// Enumeration values to communicate what validation, beyond ranges of
+// values one wants to validate to.
+//
+///////////////////////////////////////////////////////////////////////////
+
+enum EncodingType : int {
+    kIsNone,
+    kIsAssigned,
+    kIsPrivate,
+    kIsControl,
+    kIsWhitespace,
+
+    kFirstInvalidEncoding
+};
+
+///////////////////////////////////////////////////////////////////////////
+// class EncodingCheckPredicate
+//
+// A functor to validate individual characters based on EncodingType.
+//
+///////////////////////////////////////////////////////////////////////////
+
+class EncodingCheckPredicate {
+
+    // private constructor (called by factory method "checkIf" and "checkIfNot"
+    EncodingCheckPredicate
+    (
+        EncodingType    t,                  // I - what range to check for
+        bool            checkForIt = true   // I - for presence? or absence
+    );
+
+public:
+
+    // default constructor gives a no-check-predicate
+    EncodingCheckPredicate() : m_mask(0), m_value(0) {}
+
+    // Creates a functor to check if a character IS of a certain type
+    static EncodingCheckPredicate checkIf(EncodingType toCheckFor)
+    {
+        return EncodingCheckPredicate(toCheckFor);
+    }
+    // Creates a functor to check if a character IS NOT of a certain type
+    static EncodingCheckPredicate checkIfNot(EncodingType toCheckFor)
+    {
+        return EncodingCheckPredicate(toCheckFor, false);
+    }
+
+    // Appendors to narrow the functor to check if a character IS (or IS NOT)
+    // ALSO of a certain type
+    EncodingCheckPredicate andIf
+    (
+        EncodingType    toCheckFor      // I - an additional range to check for
+    );
+    EncodingCheckPredicate andIfNot
+    (
+        EncodingType    toCheckFor      // I - an additional range to check for
+    );
+
+    // EncodingCheckPredicate orIf(EncodingCheckPredicate other);
+
+    // Comparision, mostly to short-circuit checking for a null predicate once
+    // outside a tight loop (!= also provided by convention)
+    bool operator==(const EncodingCheckPredicate& other) const;
+    bool operator!=(const EncodingCheckPredicate& other) const { return !operator==(other); }
+
+    // Invoke the functor (not a template to keep the implementation private)
+    bool operator()(char c) const;
+    bool operator()(char16_t c) const;
+    bool operator()(char32_t c) const;
+
+private:
+
+    uint32_t                m_mask;         // one predicate's mask value
+    uint32_t                m_value;        // masked result to check for
+};
+
+///////////////////////////////////////////////////////////////////////////
+// EncodingCheckPredicate out-of-class factories (syntactic sugar)
+//
+// Delegates to the class factories (so they don't have to be friends) so that
+// users don't have to type the class name which would cloud their meaning at
+// point of use.
+//
+// When constructing predicates for isUtf8, isUcs2, isUtf16 and isUcs4, use
+// validIf or validIfNot and append additional simultaneous conditions as '.' +
+// andIf() or andIfNot as needed.
+//
+// So, to check if an incoming UCS-4 string is valid and could be re-encoded
+// as UCS-2 (Basic Multilingual Plane only), you could write:
+//
+// if (isUcs4(inputString, kUcs2, validIf(kIsAssigned)
+//                                  .andIfNot(kIsControl)
+//                                  .andIfNot(kIsWhitespace))
+// {
+//      return toUcs4(inputString);
+// }
+//
+// see the Unit Test file, string_with_predicate_test.cxx and the
+// testCombinedFlagsPredicate method in encode_predicate_test.cxx for more
+// examples.
+//
+///////////////////////////////////////////////////////////////////////////
+
+inline EncodingCheckPredicate validIf(EncodingType toCheckFor)
+{
+    return EncodingCheckPredicate::checkIf(toCheckFor);
+}
+
+inline EncodingCheckPredicate validIfNot(EncodingType toCheckFor)
+{
+    return EncodingCheckPredicate::checkIfNot(toCheckFor);
+}
 
 ///////////////////////////////////////////////////////////////////////////
 // enum SourceEncoding
@@ -74,10 +192,21 @@ enum SourceEncoding : int {
 // Public Methods
 
 ///////////////////////////////////////////////////////////////////////////
-// is<EncodingType> functions
+// getUnicodeVersion function
+//
+// Report what Unicode version is supported.
+///////////////////////////////////////////////////////////////////////////
+
+inline utf8String getUnicodeVersionSupported()
+{
+    return "8.0";
+}
+
+///////////////////////////////////////////////////////////////////////////
+// is<RangeType> functions
 //
 // Each of these scans the incoming data-type, basic_string<C> and const C*
-// type, and determines if the data is valid for the EncodingType, further
+// type, and determines if the data is valid for the RangeType, further
 // checking to see if the result is compatible with a target encodoing type.
 //
 // Using the defaulted parameter, the result is a bare check of the correct-
@@ -87,44 +216,91 @@ enum SourceEncoding : int {
 // entirely correctly when the resulting target values are entirely
 // compatible with the target encoding type parameter. Incomplete encoding
 // sequences at the end-of-string are ignored if they could have been
-// completed for the intended targetEncoding. They return false otherwise.
+// completed for the intended targetRange. They return false otherwise.
+//
+// Added syntactic-sugar so that string + encoding check predicate is all
+// that is required, if the target stays the same.
 
 bool isUtf8
 (
     const utf8String&   test,                   // I - the source
-    EncodingType        targetEncoding = kUtf8  // I - the intended target
+    RangeType           targetRange = kUtf8,    // I - optional target range
+    const EncodingCheckPredicate&               // I - optional validity check
+                        pred = EncodingCheckPredicate()
 );
+
+inline bool isUtf8
+(
+    const utf8String&               test,       // I - the source
+    const EncodingCheckPredicate&   pred        // I - validity check
+) { return isUtf8(test, kUtf8, pred); }
 
 bool isUtf8
 (
     const char*     test,                   // I - the 0-terminated source
-    EncodingType    targetEncoding = kUtf8  // I - the intended target
+    RangeType       targetRange = kUtf8,    // I - optional target range
+    const EncodingCheckPredicate&           // I - optional validity check
+                    pred = EncodingCheckPredicate()
 );
+
+inline bool isUtf8
+(
+    const char*                     test,       // I - the source
+    const EncodingCheckPredicate&   pred        // I - validity check
+) { return isUtf8(test, kUtf8, pred); }
 
 bool isUtf8
 (
     const char*     test,                   // I - the length terminated source
-    unsigned int    testLength //,          // I - the length
-//  EncodingType    encoding = kUnicode     // I - always targets kUnicode
+    unsigned int    testLength,             // I - the length
+//  RangeType       encoding = kUnicode,    // I - always targets kUnicode
+    const EncodingCheckPredicate&           // I - optional validity check
+                    pred = EncodingCheckPredicate()
 );
 
 // passim
 
-bool isUtf16(const utf16String& test, EncodingType targetEncoding = kUtf16);
-bool isUtf16(const char16_t* test, EncodingType targetEncoding = kUtf16);
+bool isUtf16(const utf16String& test,
+             RangeType targetRange = kUtf16,
+             const EncodingCheckPredicate& pred = EncodingCheckPredicate());
+bool isUtf16(const char16_t* test,
+             RangeType targetRange = kUtf16,
+             const EncodingCheckPredicate& pred = EncodingCheckPredicate());
 
-bool isUcs2(const ucs2String& test, EncodingType targetEncoding = kUcs2);
-bool isUcs2(const char16_t* test, EncodingType targetEncoding = kUcs2);
+inline bool isUtf16(const utf16String& test,
+            const EncodingCheckPredicate&  pred) { return isUtf16(test, kUtf16, pred); }
+inline bool isUtf16(const char16_t* test,
+                    const EncodingCheckPredicate& pred) { return isUtf16(test, kUtf16, pred); }
 
-bool isUcs4(const ucs4String& test, EncodingType targetEncoding = kUcs4);
-bool isUcs4(const char32_t* test, EncodingType targetEncoding = kUcs4);
+bool isUcs2(const ucs2String& test,
+            RangeType targetRange = kUcs2,
+            const EncodingCheckPredicate& pred = EncodingCheckPredicate());
+bool isUcs2(const char16_t* test,
+            RangeType targetRange = kUcs2,
+            const EncodingCheckPredicate& pred = EncodingCheckPredicate());
 
+inline bool isUcs2(const utf16String& test,
+                   const EncodingCheckPredicate& pred) { return isUcs2(test, kUcs2, pred); }
+inline bool isUcs2(const char16_t* test,
+                   const EncodingCheckPredicate& pred) { return isUcs2(test, kUcs2, pred); }
+
+bool isUcs4(const ucs4String& test,
+            RangeType targetRange = kUcs4,
+            const EncodingCheckPredicate& pred = EncodingCheckPredicate());
+bool isUcs4(const char32_t* test,
+            RangeType targetRange = kUcs4,
+            const EncodingCheckPredicate& pred = EncodingCheckPredicate());
+
+inline bool isUcs4(const ucs4String& test,
+                   const EncodingCheckPredicate& pred) { return isUcs4(test, kUcs4, pred); }
+inline bool isUcs4(const char32_t* test,
+                   const EncodingCheckPredicate& pred) { return isUcs4(test, kUcs4, pred); }
 
 ///////////////////////////////////////////////////////////////////////////
-// to<EncodingType> functions
+// to<RangeType> functions
 //
 // Each of these scans the incoming data-type, basic_string<C> and const C*
-// type, re-encoding it as it goes along into EncodingType.
+// type, re-encoding it as it goes along into RangeType.
 //
 // The return type is always a value of the appropriate basic_string<D> type.
 //

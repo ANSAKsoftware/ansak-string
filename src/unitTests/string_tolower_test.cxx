@@ -18,12 +18,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////
-// compile from within ANSAK development environment (pending CMake files) with
-// g++ -std=c++11 -I .. ../../unittest/UnitTest.cpp stringTest.cxx ../string.cxx `cppunit-config --libs` -o stringTest
-// g++11 -I .. ../../unittest/UnitTest.cpp stringTest.cxx ../string.cxx `cppunit-config --libs` -o stringTest
-///////////////////////////////////////////////////////////////////////////
-
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "string.hxx"
