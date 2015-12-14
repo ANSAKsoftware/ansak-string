@@ -9,17 +9,24 @@
 # this repository. It would be considered a kindness if you would retain it in
 # whatever environment you use it. Thank you.
 
-# For the poor sods who are stuck on earlier cmakes comment out "3.1" and
-# uncomment the other comments below this one.
+# This project requires CMake 3.1 or later with a C++11-compatible compiler.
+# On MS-Windows, this project requires VS2012 or later to use it, requires VS2015
+# or later to run the Unit Tests (If you use CLANG your mileage will CERTAINLY vary.
+
 cmake_minimum_required(VERSION 3.1)
-# cmake_minimum_required(VERSION 2.8)
+
+list( INSERT CMAKE_MODULE_PATH
+      0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules )
 
 project(ansakString)
 
 include( CTest )
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (UNIX)
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 add_library( ansakString STATIC src/string.cxx
                                 src/string_tolower.cxx
                                 src/string_toutf8.cxx
@@ -32,9 +39,6 @@ add_library( ansakString STATIC src/string.cxx
 
 target_include_directories( ansakString PRIVATE src/bits
                                         PUBLIC src )
-
-# target_compile_options( ansakString PRIVATE "-std=c++11" )
-# target_compile_options( ansakString PRIVATE "-Wall" "-Wextra" "-Werror" )
 
 add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
 target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
