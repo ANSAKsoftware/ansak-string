@@ -732,7 +732,7 @@ ucs2String toUcs2(const char32_t* src)
             {
                 return ucs2String();
             }
-            result.push_back(*p);
+            result.push_back(static_cast<char16_t>(*p));
         }
     }
 
