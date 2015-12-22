@@ -16,7 +16,9 @@
 # On MS-Windows, in order to run CPPUNIT, install the binaries compatible with your
 # compiler and architecture and include definitions for CPPUNIT_INCLUDE_DIRS to point
 # to your CPPUnit header files and CPPUNIT_LIBRARY_DIRS to point to your CPPUnit binary
-# files.
+# files on the cmake command line, like this:
+#    -DCPPUNIT_INCLUDE_DIRS=<path to your cppunit install's include files>
+#    -DCPPUNIT_LIBRARY_DIRS=<path to your cppunit install's lib files>
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -45,40 +47,23 @@ add_library( ansakString STATIC src/string.cxx
 target_include_directories( ansakString PRIVATE src/bits
                                         PUBLIC src )
 
-add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
-target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
-
-# TODO: Unify the code paths below a bit more
 if (WIN32)
-    add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-        COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
-                "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt"
-                "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-        COMMENT "Generating test data for charIsUnicode test"
-        DEPENDS "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt"
-        VERBATIM )
     find_package( CPPUnit )
-    if (CPPUNIT_FOUND)
-        add_executable( ansakStringTest src/unitTests/UnitTest.cxx
-                                        src/unitTests/encode_predicate_test.cxx
-                                        src/unitTests/string_splitjoin_test.cxx
-                                        src/unitTests/string_tolower_test.cxx
-                                        src/unitTests/string_test.cxx
-                                        src/unitTests/string_with_predicate_test.cxx
-                                        src/unitTests/char_is_unicode_test.cxx
-                                        "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                                        )
-        add_dependencies( ansakStringTest mkUnicodeTestData "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx" )
-        target_include_directories( ansakStringTest PRIVATE "${CMAKE_INCLUDE_DIR}" "${CPPUNIT_INCLUDE_DIR}" "${PROJECT_BINARY_DIR}")
-        target_link_libraries( ansakStringTest PRIVATE ansakString "${CPPUNIT_LIBRARY}" )
-        add_test( NAME ansakStringTest COMMAND ansakStringTest )
-    endif()
 else()
+    set(CPPUNIT_LIBRARY cppunit)
+    set(CPPUNIT_FOUND TRUE)
+endif()
+
+if (CPPUNIT_FOUND)
+    add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
+    target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
+
     add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                COMMAND ./mkUnicodeTestData "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt" char_is_unicode_test_data.hxx
-                        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
+                        "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt"
+                        "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                         COMMENT "Generating test data for charIsUnicode test"
-                        DEPENDS "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt"
+                        DEPENDS "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt" mkUnicodeTestData
                         VERBATIM )
 
     add_executable( ansakStringTest src/unitTests/UnitTest.cxx
@@ -88,13 +73,9 @@ else()
                                     src/unitTests/string_test.cxx
                                     src/unitTests/string_with_predicate_test.cxx
                                     src/unitTests/char_is_unicode_test.cxx
-                                    "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                                    )
-    add_dependencies( ansakStringTest mkUnicodeTestData )
-    target_include_directories( ansakStringTest PRIVATE "${PROJECT_BINARY_DIR}" )
-
-# target_compile_options( ansakStringTest PRIVATE "-std=c++11" )
-    target_link_libraries( ansakStringTest PRIVATE ansakString
-                                                   cppunit )
+                                    "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx")
+    target_include_directories( ansakStringTest PRIVATE "${CPPUNIT_INCLUDE_DIR}" "${PROJECT_BINARY_DIR}")
+    target_link_libraries( ansakStringTest PRIVATE ansakString "${CPPUNIT_LIBRARY}" )
     add_test( NAME ansakStringTest COMMAND ansakStringTest )
 endif()
+
