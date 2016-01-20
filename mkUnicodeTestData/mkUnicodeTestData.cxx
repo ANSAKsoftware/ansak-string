@@ -52,7 +52,6 @@ void process(filebuf& inbuf, filebuf& outbuf)
     if (!fields.empty())
     {
         outStream << "char32_t validUnicode8CodePoints[] = {" << endl << "    ";
-        int thisLine = 0;
         bool firstOne = true;
         int nCount = 0;
         while (oneLine.size() > 10)

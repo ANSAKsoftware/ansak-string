@@ -20,6 +20,9 @@
 #    -DCPPUNIT_INCLUDE_DIRS=<path to your cppunit install's include files>
 #    -DCPPUNIT_LIBRARY_DIRS=<path to your cppunit install's lib files>
 
+# If you have gcov and lcov installed on a Linux system, code coverage is provided via
+#   cmake -DCMAKE_BUILD_TYPE=Coverage for this target to work properly
+
 cmake_minimum_required(VERSION 3.1)
 
 list( INSERT CMAKE_MODULE_PATH
@@ -28,21 +31,39 @@ list( INSERT CMAKE_MODULE_PATH
 project(ansakString)
 
 include( CTest )
+if (CMAKE_BUILD_TYPE STREQUAL "Coverage" )
+    if (NOT UNIX)
+        message("Trying to build code coverage on a non-Linux system isn't going to end well.")
+    endif()
+    include( CodeCoverage )
+endif()
 
 if (UNIX)
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    add_compile_options(-Wall -Wextra -Werror)
+                        # -Wno-multichar -Wno-attributes -Wno-unknown-pragmas -Wno-switch )
+    if (COVERAGE)
+        add_compile_options(-O0 -fprofile-arcs -ftest-coverage)
+        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs -ftest-coverage -lgcov")
+    endif()
+    if ( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
+        add_compile_options(-Wno-missing-field-initializers)
+    endif()
 endif()
 
-add_library( ansakString STATIC src/string.cxx
-                                src/string_tolower.cxx
-                                src/string_toutf8.cxx
-                                src/encoding_check_predicate.cxx
-                                src/bits/char_to_lower.cxx
-                                src/bits/char_is_unicode.cxx
-                                src/string.hxx
-                                src/string_splitjoin.hxx
-                                src/bits/string_internal.hxx )
+set( ansakString_src )
+list( APPEND ansakString_src src/string.cxx
+                             src/string_tolower.cxx
+                             src/string_toutf8.cxx
+                             src/encoding_check_predicate.cxx
+                             src/bits/char_to_lower.cxx
+                             src/bits/char_is_unicode.cxx
+                             src/string.hxx
+                             src/string_splitjoin.hxx
+                             src/bits/string_internal.hxx )
+
+add_library( ansakString STATIC ${ansakString_src} )
 
 target_include_directories( ansakString PRIVATE src/bits
                                         PUBLIC src )
@@ -79,3 +100,6 @@ if (CPPUNIT_FOUND)
     add_test( NAME ansakStringTest COMMAND ansakStringTest )
 endif()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Coverage" )
+    SETUP_TARGET_FOR_COVERAGE(coverage ansakStringTest ansakStringCoverage)
+endif()

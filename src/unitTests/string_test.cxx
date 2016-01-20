@@ -64,6 +64,7 @@ CPPUNIT_TEST_SUITE( StringTestFixture );
     CPPUNIT_TEST( testIsUcs4AsUcs4 );
     CPPUNIT_TEST( testIsUcs4AsUnicode );
     CPPUNIT_TEST( testToUtf8From16Bit );
+    CPPUNIT_TEST( testToUtf8NOPLikes );
     CPPUNIT_TEST( testToUtf8From32Bit );
     CPPUNIT_TEST( testToUcs2From8Bit );
     CPPUNIT_TEST( testToUcs2From32Bit );
@@ -117,6 +118,8 @@ public:
     void testIsUcs4AsUtf16();
     void testIsUcs4AsUcs4();
     void testIsUcs4AsUnicode();
+
+    void testToUtf8NOPLikes();
 
     void testToUtf8From16Bit();
     void testToUtf8From32Bit();
@@ -605,7 +608,7 @@ void StringTestFixture::testIsUtf8AsUtf8()
     char utf8BadF0_F7[] = "Bad F0-F7 \xf2\x81\x82 will fail.";
     CPPUNIT_ASSERT(!isUtf8(utf8BadF0_F7, kUtf8));
     char utf8BadF8_FB[] = "Bad F8-FB \xf9\x84 will fail.";
-    CPPUNIT_ASSERT(!isUtf8(utf8BadF0_F7, kUtf8));
+    CPPUNIT_ASSERT(!isUtf8(utf8BadF8_FB, kUtf8));
     char utf8BadFC_FD[] = "Bad FC-FD \xfd\xa1\xa2 will fail";
     CPPUNIT_ASSERT(!isUtf8(utf8BadFC_FD, kUtf8));
 
@@ -668,7 +671,7 @@ void StringTestFixture::testIsUtf8AsUtf16()
     char utf8GoodXX[] = "This \xc3\xa4 string \xe4\xab\x88 will \xf2\x81\x82\x83 certainly.";
     CPPUNIT_ASSERT(isUtf8(utf8GoodXX, kUtf16));
     char utf8GoodXXX[] = "This \xc3\xa4 string \xe4\xab\x88 will.";
-    CPPUNIT_ASSERT(isUtf8(utf8GoodXX, kUtf16));
+    CPPUNIT_ASSERT(isUtf8(utf8GoodXXX, kUtf16));
 
     char utf8GoodEndDropFC[] = "This \xfd\xa1\xa2\xa3\xa4";
     CPPUNIT_ASSERT(!isUtf8(utf8GoodEndDropFC, kUtf16));
@@ -760,6 +763,7 @@ void StringTestFixture::testIsUtf8LengthTerminated()
                       "\xfd\xa1\xa2\xa3\xa4\xa5";
     unsigned int utf8GoodLength = static_cast<unsigned int>(sizeof(utf8Good) - 1);
 
+    CPPUNIT_ASSERT(isUtf8(utf8Good));
     CPPUNIT_ASSERT(isUtf8(utf8Good, utf8GoodLength));
     utf8Good[1] = '\0';
     CPPUNIT_ASSERT(!isUtf8(utf8Good, utf8GoodLength));
@@ -1079,6 +1083,16 @@ void StringTestFixture::testIsUcs4AsUnicode()
     CPPUNIT_ASSERT(!isUcs4(ucs4AsUcs2Bad4, kUnicode));
 }
 
+void StringTestFixture::testToUtf8NOPLikes()
+{
+    CPPUNIT_ASSERT(toUtf8(static_cast<const char*>(nullptr), kSrcUnicode).empty());
+    CPPUNIT_ASSERT(toUtf8("", kSrcUnicode).empty());
+    CPPUNIT_ASSERT(toUtf8("The quick brown fox etc.", (ansak::SourceEncoding)(54554)).empty());
+    CPPUNIT_ASSERT(!toUtf8("The quick brown fox etc.", kSrcUnicode).empty());
+    CPPUNIT_ASSERT(!toUtf8("The quick brown fox etc.", kSrcCP1252).empty());
+    CPPUNIT_ASSERT(!toUtf8("The quick brown fox etc.", kSrcCP1250).empty());
+}
+
 void StringTestFixture::testToUtf8From16Bit()
 {
     // test null Ucs2
@@ -1099,6 +1113,8 @@ void StringTestFixture::testToUtf8From16Bit()
     string utf16GoodUtf8(toUtf8(utf16Good));
     char encoded1[] = "Hello! \xf0\x90\x80\x80";
     CPPUNIT_ASSERT_EQUAL(0, strcmp(encoded1, utf16GoodUtf8.c_str()));
+    utf16String ofString(utf16Good);
+    CPPUNIT_ASSERT_EQUAL(utf16GoodUtf8, toUtf8(ofString));
     // test 16-bit that includes half-escaped (bad)
     char16_t utf16Bad[] = { 'H', 'e', 'l', 'l', 'o', '!', ' ', 0xd800, ' ', 0 };
     string utf16BadUtf8(toUtf8(utf16Bad));
@@ -1148,6 +1164,8 @@ void StringTestFixture::testToUcs2From8Bit()
     ucs2String dest7bit(toUcs2(src7bit));
     CPPUNIT_ASSERT_EQUAL(strlen(src7bit), dest7bit.size());
     CPPUNIT_ASSERT_EQUAL(0, memcmp(v7bit, dest7bit.c_str(), sizeof(v7bit)));
+    string ofString(src7bit);
+    CPPUNIT_ASSERT(dest7bit == toUcs2(ofString));
 
     // test good 2-byte escapes
     char src2ByteEscapes[] = "Bevor die Welt geschaffen w\xc3\xbcrde war das Wort schon da.";
@@ -1161,12 +1179,15 @@ void StringTestFixture::testToUcs2From8Bit()
     CPPUNIT_ASSERT_EQUAL(0, memcmp(v2ByteEscapes, dest2ByteEscapes.c_str(), sizeof(v2ByteEscapes)));
 
     // test good 3-byte escapes
-    char src3ByteEscapes[] = "Oh never \xe4\x85\x96 mind.";
+    char src3ByteEscapes[] = "Oh never \xe4\x85\x96 mind.\xe4\x85\x96";
     char16_t v3ByteEscapes[] = { 'O', 'h', ' ', 'n', 'e', 'v', 'e', 'r', ' ', 0x4156,
-                                 ' ', 'm', 'i', 'n', 'd', '.', 0 };
+                                 ' ', 'm', 'i', 'n', 'd', '.', 0x4156, 0 };
     ucs2String dest3ByteEscapes(toUcs2(src3ByteEscapes));
-    CPPUNIT_ASSERT_EQUAL(strlen(src3ByteEscapes) - 2, dest3ByteEscapes.size());
+    CPPUNIT_ASSERT_EQUAL(strlen(src3ByteEscapes) - 4, dest3ByteEscapes.size());
     CPPUNIT_ASSERT_EQUAL(0, memcmp(v3ByteEscapes, dest3ByteEscapes.c_str(), sizeof(v3ByteEscapes)));
+    src3ByteEscapes[sizeof(src3ByteEscapes) - 2] = '\0'; // behind the null to shoot out the '\x96'
+    ucs2String destThreeBytesShortened(toUcs2(src3ByteEscapes));
+    CPPUNIT_ASSERT(destThreeBytesShortened.size() + 1 == dest3ByteEscapes.size()); // losing one char, lost two in size here
 
     // test good (for Utf16) 4-byte escapes (bad)
     char src4ByteEscapes0[] = "Straight UTF-8 to things UTF16 would escape: \xf1\x82\x81\x80";
@@ -1198,6 +1219,8 @@ void StringTestFixture::testToUcs2From32Bit()
     char16_t srcGoodUcs4Check[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
                                0x122, 0x1345, 'i', 'm', 'e', 0 };
     CPPUNIT_ASSERT_EQUAL(0, memcmp(srcGoodUcs4Check, goodUcs4.c_str(), goodUcs4.size() + 1));
+    ucs4String ofString(srcGoodUcs4);
+    CPPUNIT_ASSERT(goodUcs4 == toUcs2(ofString));
 
     // test 32-bit that includes escaped (bad)
     char32_t srcBadUcs40[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
@@ -1218,6 +1241,10 @@ void StringTestFixture::testToUcs2From32Bit()
 
 void StringTestFixture::testToUtf16From8Bit()
 {
+    // test empty
+    CPPUNIT_ASSERT(toUtf16(static_cast<const char*>(nullptr)).empty());
+    CPPUNIT_ASSERT(toUtf16(string()).empty());
+
     // test good 7-bit
     char src7bit[] = "Now is the time for all good men to come to the aid of the party.";
     char16_t v7bit[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't', 'i',
@@ -1266,6 +1293,9 @@ void StringTestFixture::testToUtf16From8Bit()
                                   '6', ' ', 'w', 'o', 'u', 'l', 'd', ' ', 'e', 's',
                                   'c', 'a', 'p', 'e', ':', ' ', 0xd800, 0xdc00, 0xd9df, 0xdc30, 0 };
     CPPUNIT_ASSERT_EQUAL(0, memcmp(v4ByteEscapes1, fourByteScapes1.c_str(), sizeof(v4ByteEscapes1)));
+    src4ByteEscapes1[sizeof(src4ByteEscapes1) - 2] = '\0'; // behind the null to shoot out the '\xb0'
+    utf16String destFourBytesShortened(toUtf16(src4ByteEscapes1));
+    CPPUNIT_ASSERT(destFourBytesShortened.size() + 2 == fourByteScapes1.size()); // losing one char, lost two in size here
 
     // test bad (for Utf16) 4-byte escapes (bad)
     char src4ByteBadEscape[] = "You can't switch this: \xf4\x90\x80\x80";
@@ -1304,21 +1334,18 @@ void StringTestFixture::testToUtf16From32Bit()
     char16_t vUtf16X0[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
                                0xdbc4, 0xdf45, 'i', 'm', 'e', 0 };
     CPPUNIT_ASSERT_EQUAL(0, memcmp(vUtf16X0, goodUtf16X0.c_str(), sizeof(vUtf16X0)));
-    char32_t srcUtf16X1[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
-                               0xdbc4, 0xdf45, 'i', 'm', 'e', 0 };
-    utf16String goodUtf16X1(toUtf16(srcUtf16X0));
-    char16_t vUtf16X1[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
-                               0xdbc4, 0xdf45, 'i', 'm', 'e', 0 };
-    CPPUNIT_ASSERT_EQUAL(0, memcmp(vUtf16X1, goodUtf16X1.c_str(), sizeof(vUtf16X1)));
 
     // test 32-bit that includes half-escaped (bad)
-    char32_t srcHalfBadUtf16[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
-                                   0xdbc4, 'i', 'm', 'e', 0 };
-    CPPUNIT_ASSERT(toUcs2(srcHalfBadUtf16).empty());
+    char32_t srcHalfBadUtf16X1[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
+                               0xdbc4,'i', 'm', 'e', 0 };
+    CPPUNIT_ASSERT(toUtf16(srcHalfBadUtf16X1).empty());
+    char32_t srcHalfBadUtf16X2[] = { 'N', 'o', 'w', ' ', 'i', 's', ' ', 't', 'h', 'e', ' ', 't',
+                                   0xdf45,  'i', 'm', 'e', 0 };
+    CPPUNIT_ASSERT(toUtf16(srcHalfBadUtf16X2).empty());
 
     // test 32-bit that includes values in all ranges (bad)
     char32_t srcSampler[] = { 22, 130, 2100, 32000, 655360, 0x181234, 0x1234567, 0x34445555, 0 };
-    CPPUNIT_ASSERT(toUcs2(srcSampler).empty());
+    CPPUNIT_ASSERT(toUtf16(srcSampler).empty());
 }
 
 void StringTestFixture::testToUcs4From8Bit()
@@ -1392,6 +1419,9 @@ void StringTestFixture::testToUcs4From8Bit()
     char32_t v6ByteEscape[] = { '6', '-', 'b', 'y', 't', 'e', ' ', 'e', 's', 'c', 'a', 'p',
                                 'e', ':', ' ', 0x77995103, 0 };
     CPPUNIT_ASSERT_EQUAL(0, memcmp(v6ByteEscape, dest6ByteEscape.c_str(), sizeof(v6ByteEscape)));
+    src6ByteEscape[sizeof(src6ByteEscape) - 2] = '\0'; // behind the null to shoot out the '\x83'
+    ucs4String dest6Shortened(toUcs4(src6ByteEscape));
+    CPPUNIT_ASSERT(dest6Shortened.size() + 1 == dest6ByteEscape.size());
 
     // test good 3-byte escapes that lead to bad Utf16 escapes
     char srcBad3Byte[] = "Convert \xed\xa0\x80.";
@@ -1420,10 +1450,10 @@ void StringTestFixture::testToUcs4From16Bit()
 
     // test good Utf16:
     // test 16-bit that includes escaped (good)
-    char16_t goodUtf16[] = { 'N', 0xf6, 'w', ' ', 'i', 's', ' ', 0x3b8, 'e', ' ', 0xd800, 0xdfff, 'i', 'm', 'e', '.', 0 };
+    char16_t goodUtf16[] =  { 'N', 0xf6, 'w', ' ', 'i', 's', ' ', 0x3b8, 'e', ' ', 0xd800, 0xdfff, 'i', 'm', 'e', '.', 0 };
     ucs4String fromGoodUtf16(toUcs4(goodUtf16));
-    char32_t vGoodUtf16[] = { 'N', 0xf6, 'w', ' ', 'i', 's', ' ', 0x3b8, 'e', ' ', 0x010377, 'i', 'm', 'e', '.', 0 };
-    CPPUNIT_ASSERT_EQUAL(0, memcmp(vGoodUcs2, fromGoodUcs2.c_str(), sizeof(vGoodUcs2)));
+    char32_t vGoodUtf16[] = { 'N', 0xf6, 'w', ' ', 'i', 's', ' ', 0x3b8, 'e', ' ', 0x0103ff, 'i', 'm', 'e', '.', 0 };
+    CPPUNIT_ASSERT_EQUAL(0, memcmp(vGoodUtf16, fromGoodUtf16.c_str(), sizeof(vGoodUtf16)));
     // test 16-bit that includes half-escaped (bad)
     char16_t badUtf16_0[] = { 'N', 0xf6, 'w', ' ', 'i', 's', ' ', 0x3b8, 'e', ' ', 0xdfff, 'i', 'm', 'e', '.', 0 };
     char16_t badUtf16_1[] = { 'N', 0xf6, 'w', ' ', 'i', 's', ' ', 0x3b8, 'e', ' ', 0xd800, 'i', 'm', 'e', '.', 0 };
@@ -1466,6 +1496,11 @@ void StringTestFixture::testUnicodeLengthUtf8()
     CPPUNIT_ASSERT_EQUAL(60u, unicodeLength(easy, 60));
     CPPUNIT_ASSERT_EQUAL(0u, unicodeLength(easy, 66));
 
+    string ofString(easy);
+    CPPUNIT_ASSERT_EQUAL(65u, unicodeLength(ofString));
+    CPPUNIT_ASSERT_EQUAL(0u, unicodeLength(static_cast<const char*>(nullptr)));
+    CPPUNIT_ASSERT_EQUAL(0u, unicodeLength(""));
+
     // test a good UTF-8 string and then successive truncations of the same.
     char medium[] = "Jetzt gab es wieder Sch\xc3\xbcsse.";
     CPPUNIT_ASSERT_EQUAL(28u, unicodeLength(medium));
@@ -1480,6 +1515,8 @@ void StringTestFixture::testUnicodeLengthUtf8()
     CPPUNIT_ASSERT_EQUAL(22u, unicodeLength(medium, 22));   // Jetzt gab es wieder Sc
     CPPUNIT_ASSERT_EQUAL(21u, unicodeLength(medium, 21));   // Jetzt gab es wieder S
     CPPUNIT_ASSERT_EQUAL(20u, unicodeLength(medium, 20));   // Jetzt gab es wieder 
+    medium[24] = '\0';
+    CPPUNIT_ASSERT_EQUAL(22u, unicodeLength(medium));
 
     char harder[] = "\xd7\x91\xd7\xa8\xd7\xa9\xd7\x99\xd7\x94 \xd7\x91\xd7\xa8\xd7"
                     "\x90 \xd7\x90\xd7\x9c\xd7\x95\xd7\x94\xd7\x99\xd7\x9d \xd7"
@@ -1653,6 +1690,16 @@ void StringTestFixture::testUnicodeLengthUtf16()
     CPPUNIT_ASSERT_EQUAL(32u, unicodeLength(boundaryConditions, 32));
     CPPUNIT_ASSERT_EQUAL(31u, unicodeLength(boundaryConditions, 31));
     CPPUNIT_ASSERT_EQUAL(30u, unicodeLength(boundaryConditions, 30));
+    auto endX = 36;
+    boundaryConditions[endX--] = static_cast<char16_t>(0);
+    CPPUNIT_ASSERT_EQUAL(35u, unicodeLength(boundaryConditions));
+    boundaryConditions[endX--] = static_cast<char16_t>(0);
+    CPPUNIT_ASSERT_EQUAL(33u, unicodeLength(boundaryConditions));
+    boundaryConditions[endX] = static_cast<char16_t>(0xdeab);
+    CPPUNIT_ASSERT_EQUAL(0u, unicodeLength(boundaryConditions));
+
+    utf16String ofString(easy);
+    CPPUNIT_ASSERT_EQUAL(65u, unicodeLength(ofString));
 }
 
 void StringTestFixture::testUnicodeLengthUcs4()
@@ -1676,6 +1723,9 @@ void StringTestFixture::testUnicodeLengthUcs4()
     CPPUNIT_ASSERT_EQUAL(0u, unicodeLength(hard1, 59));     CPPUNIT_ASSERT_EQUAL(0u, unicodeLength(hard2, 59));
     CPPUNIT_ASSERT_EQUAL(58u, unicodeLength(hard1, 58));    CPPUNIT_ASSERT_EQUAL(58u, unicodeLength(hard2, 58));
     CPPUNIT_ASSERT_EQUAL(57u, unicodeLength(hard1, 57));    CPPUNIT_ASSERT_EQUAL(57u, unicodeLength(hard2, 57));
+
+    ucs4String ofString(easy);
+    CPPUNIT_ASSERT_EQUAL(65u, unicodeLength(ofString));
 }
 
 void StringTestFixture::testConvertFromCP1252()

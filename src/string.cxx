@@ -144,8 +144,7 @@ char32_t decodeUtf8
     else if (uc <= 0xbf)
     {
         // 80..BF are non-first bytes
-        p = 0;
-        return 0;
+        p = 0; return 0;        // should never get here, trimmed out at higher levels
     }
     else if (uc <= 0xdf)
     {
@@ -184,7 +183,7 @@ char32_t decodeUtf8
             }
             else
             {
-                p = 0; return 0;
+                p = 0; return 0;        // should never get here, trimmed out at higher levels
             }
         }
         else if ((w < 0x800) || isSecondHalfUtf16(w))
@@ -252,8 +251,7 @@ char32_t decodeUtf8
     }
     else
     {
-        p = 0;
-        return 0;
+        p = 0; return 0;        // should never get here, trimmed out at higher levels
     }
 }
 
@@ -275,12 +273,12 @@ int sequenceSizeCharStarts
 {
     if (p == nullptr)
     {
-        return -1;
+        return -1;      // should never get here, trimmed out at higher levels
     }
     auto uc = static_cast<unsigned char>(*p);
     if (uc == 0)
     {
-        return 0;
+        return 0;       // should never get here, trimmed out at higher levels
     }
     if (uc <= 0x7f)
     {
@@ -288,7 +286,7 @@ int sequenceSizeCharStarts
     }
     else if (uc <= 0xbf)
     {
-        return -1;
+        return -1;      // should never get here, trimmed out at higher levels
     }
     else if (uc <= 0xdf)
     {
@@ -302,13 +300,17 @@ int sequenceSizeCharStarts
     {
         return 4;
     }
-    else if (uc <= 0xfd)
+    else if (uc <= 0xfb)
     {
         return 5;
     }
+    else if (uc <= 0xfd)
+    {
+        return 6;
+    }
     else
     {
-        return -1;
+        return -1;      // should never get here, trimmed out at higher levels
     }
 }
 
@@ -399,10 +401,10 @@ bool isUtf8
         }
         // if we won't have enough length-terminted buffer left to satisfy this
         // sequence, quit, now
+        // result will always be positive, p is never nullptr
+        unsigned int seqStarts = sequenceSizeCharStarts(p);
         if (lengthTerminated)
         {
-            // result will always be positive, p is never nullptr
-            unsigned int seqStarts = sequenceSizeCharStarts(p);
             // "3" long sequences might be UTF-16 parts
             if (seqStarts == 3)
             {
@@ -442,6 +444,10 @@ bool isUtf8
         if (lengthTerminated)
         {
             usedThisTime = static_cast<unsigned int>(p - pLast);
+            if (seqStarts != usedThisTime)
+            {
+                return false;   // should never get here
+            }
             pLast = p;
         }
         RangeTypeFlags charFlag = getCharEncodableRangeFlags(c);
@@ -520,11 +526,12 @@ bool isUtf16(const char16_t* test, RangeType targetRange, const EncodingCheckPre
         }
         auto c = *p;
         RangeTypeFlags charFlag;
+        /* Never hit, 2nd half UTF16 is invalid range
         if (isSecondHalfUtf16(c))
         {
             return false;
-        }
-        else if (isFirstHalfUtf16(c))
+        } */
+        if (isFirstHalfUtf16(c))
         {
             char16_t c1 = *++p; if (c1 == 0) { break; }
             if (!isSecondHalfUtf16(c1))
@@ -788,13 +795,10 @@ utf16String toUtf16(const char32_t* src)
         for (auto p = src; *p; ++p)
         {
             auto c = *p;
-            if (p == nullptr || !isUtf16Encodable(c))
+            if (p == nullptr || !isUtf16Encodable(c) ||
+                isFirstHalfUtf16(c) || isSecondHalfUtf16(c))
             {
                 return utf16String();
-            }
-            else if (c == 0)
-            {
-                break;
             }
             rawEncodeUtf16(c, adder);
         }
@@ -946,7 +950,7 @@ unsigned int unicodeLength(const char* src, unsigned int testLength)
         if (c == 0)
         {
             // decoding to 0 when *p != 0 is invalid UTF-8
-            return (*p == 0) ? r : 0;
+            return (*p == 0) ? (r - 1) : 0;
         }
 
         // decoded -- how much was used?
@@ -1019,7 +1023,7 @@ unsigned int unicodeLength(const char16_t* src, unsigned int testLength)
         auto c1 = p[1];
         if (isFirstHalf && c1 == 0)
         {
-            return r;
+            return r - 1;
         }
 
         // and if in two pieces, is it valid?

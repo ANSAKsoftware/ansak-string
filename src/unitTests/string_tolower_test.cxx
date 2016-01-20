@@ -40,6 +40,8 @@ CPPUNIT_TEST_SUITE( StringToLowerTestFixture );
     CPPUNIT_TEST( testPageTwoUnshiftables );
     CPPUNIT_TEST( testPageAToFUnshiftables );
     CPPUNIT_TEST( testPlane1Unshiftables );
+
+    CPPUNIT_TEST( testCoverageGaps );
 CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -53,6 +55,8 @@ public:
     void testPageTwoUnshiftables();
     void testPageAToFUnshiftables();
     void testPlane1Unshiftables();
+
+    void testCoverageGaps();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(StringToLowerTestFixture);
@@ -62,15 +66,18 @@ void StringToLowerTestFixture::testEightBitToLowers()
 {
     string upperCase("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG");
     string lowerCase("the quick brown fox jumps over the lazy dog");
+    string empty(toLower(""));
 
     CPPUNIT_ASSERT_EQUAL(lowerCase, toLower(upperCase));
     CPPUNIT_ASSERT(lowerCase != toLower(upperCase, "tur"));
+    CPPUNIT_ASSERT(empty.empty());
 }
 
 void StringToLowerTestFixture::testTurkishToLowers()
 {
     string upperCaseT("THE QUICK BROWN F\xc4\xb0X JUMPS OVER THE LAZY DOG");
     string lowerCaseT("the qu\xc4\xb1" "ck brown fix jumps over the lazy dog");
+    string lowerCaseNonT("the quick brown fix jumps over the lazy dog");
 
     CPPUNIT_ASSERT(lowerCaseT != toLower(upperCaseT));
     CPPUNIT_ASSERT_EQUAL(lowerCaseT, toLower(upperCaseT, "tr"));
@@ -83,6 +90,8 @@ void StringToLowerTestFixture::testTurkishToLowers()
     CPPUNIT_ASSERT_EQUAL(lowerCaseT, toLower(upperCaseT, "tat"));
     CPPUNIT_ASSERT_EQUAL(lowerCaseT, toLower(upperCaseT, "kk"));
     CPPUNIT_ASSERT_EQUAL(lowerCaseT, toLower(upperCaseT, "kaz"));
+    CPPUNIT_ASSERT_EQUAL(lowerCaseNonT, toLower(upperCaseT, "de"));
+    CPPUNIT_ASSERT_EQUAL(lowerCaseNonT, toLower(upperCaseT, "engl"));
 
     char16_t upperCaseT16Src[] = { 'T', 'H', 'E', ' ', 'Q', 'U', 'I', 'C', 'K', ' ',
                                    'B', 'R', 'O', 'W', 'N', ' ', 'F', 0x130, 'X', ' ',
@@ -137,6 +146,8 @@ void StringToLowerTestFixture::testTurkishToLowers()
 
 void StringToLowerTestFixture::testSixteenBitToLowers()
 {
+    ucs2String empty;
+    CPPUNIT_ASSERT(toLower(empty).empty());
     ucs2String
       u00(u"\u0041\u0042\u0043\u0044\u0045\u0046\u0047\u0048\u0049\u004A\u004B\u004C\u004D\u004E\u004F\u0050\u0051\u0052\u0053\u0054\u0055"),
       u01(u"\u0056\u0057\u0058\u0059\u005A\u00C0\u00C1\u00C2\u00C3\u00C4\u00C5\u00C6\u00C7\u00C8\u00C9\u00CA\u00CB\u00CC\u00CD\u00CE\u00CF"),
@@ -190,7 +201,8 @@ void StringToLowerTestFixture::testSixteenBitToLowers()
       u49(u"\uA744\uA746\uA748\uA74A\uA74C\uA74E\uA750\uA752\uA754\uA756\uA758\uA75A\uA75C\uA75E\uA760\uA762\uA764\uA766\uA768\uA76A\uA76C"),
       u50(u"\uA76E\uA779\uA77B\uA77D\uA77E\uA780\uA782\uA784\uA786\uA78B\uA78D\uA790\uA792\uA796\uA798\uA79A\uA79C\uA79E\uA7A0\uA7A2\uA7A4"),
       u51(u"\uA7A6\uA7A8\uA7AA\uA7AB\uA7AC\uA7AD\uA7B0\uA7B1\uA7B2\uA7B3\uA7B4\uA7B6\uFF21\uFF22\uFF23\uFF24\uFF25\uFF26\uFF27\uFF28\uFF29"),
-      u52(u"\uFF2A\uFF2B\uFF2C\uFF2D\uFF2E\uFF2F\uFF30\uFF31\uFF32\uFF33\uFF34\uFF35\uFF36\uFF37\uFF38\uFF39\uFF3A");
+      u52(u"\uFF2A\uFF2B\uFF2C\uFF2D\uFF2E\uFF2F\uFF30\uFF31\uFF32\uFF33\uFF34\uFF35\uFF36\uFF37\uFF38\uFF39\uFF3A\uFE5A\u0601\u0702\u0803"),
+      u53(u"\u0904\u0a05\u0b06\u0c07\u0d08\u0e09\u0f0a\u3001\u4002\u5003\u6004\u7005\u8006\u9007\ub008\uc009\ud00a\ue00b");
     ucs2String
       l00(u"\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u006A\u006B\u006C\u006D\u006E\u006F\u0070\u0071\u0072\u0073\u0074\u0075"),
       l01(u"\u0076\u0077\u0078\u0079\u007A\u00E0\u00E1\u00E2\u00E3\u00E4\u00E5\u00E6\u00E7\u00E8\u00E9\u00EA\u00EB\u00EC\u00ED\u00EE\u00EF"),
@@ -244,7 +256,8 @@ void StringToLowerTestFixture::testSixteenBitToLowers()
       l49(u"\uA745\uA747\uA749\uA74B\uA74D\uA74F\uA751\uA753\uA755\uA757\uA759\uA75B\uA75D\uA75F\uA761\uA763\uA765\uA767\uA769\uA76B\uA76D"),
       l50(u"\uA76F\uA77A\uA77C\u1D79\uA77F\uA781\uA783\uA785\uA787\uA78C\u0265\uA791\uA793\uA797\uA799\uA79B\uA79D\uA79F\uA7A1\uA7A3\uA7A5"),
       l51(u"\uA7A7\uA7A9\u0266\u025C\u0261\u026C\u029E\u0287\u029D\uAB53\uA7B5\uA7B7\uFF41\uFF42\uFF43\uFF44\uFF45\uFF46\uFF47\uFF48\uFF49"),
-      l52(u"\uFF4A\uFF4B\uFF4C\uFF4D\uFF4E\uFF4F\uFF50\uFF51\uFF52\uFF53\uFF54\uFF55\uFF56\uFF57\uFF58\uFF59\uFF5A");
+      l52(u"\uFF4A\uFF4B\uFF4C\uFF4D\uFF4E\uFF4F\uFF50\uFF51\uFF52\uFF53\uFF54\uFF55\uFF56\uFF57\uFF58\uFF59\uFF5A\uFE5A\u0601\u0702\u0803"),
+      l53(u"\u0904\u0a05\u0b06\u0c07\u0d08\u0e09\u0f0a\u3001\u4002\u5003\u6004\u7005\u8006\u9007\ub008\uc009\ud00a\ue00b");
 
     int64_t x = 0;
     x|= (l00 == toLower(u00)) ? 0b1 : 0;    // good
@@ -303,8 +316,9 @@ void StringToLowerTestFixture::testSixteenBitToLowers()
     x|= (l50 == toLower(u50)) ? 0b100000000000000000000000000000000000000000000000000 : 0;
     x|= (l51 == toLower(u51)) ? 0b1000000000000000000000000000000000000000000000000000 : 0;
     x|= (l52 == toLower(u52)) ? 0b10000000000000000000000000000000000000000000000000000 : 0;
+    x|= (l53 == toLower(u53)) ? 0b100000000000000000000000000000000000000000000000000000 : 0;
 
-    CPPUNIT_ASSERT_EQUAL( 0x1FFFFFFFFFFFFF, x );
+    CPPUNIT_ASSERT_EQUAL( 0x3FFFFFFFFFFFFF, x );
     CPPUNIT_ASSERT(l00 == toLower(l00));
     CPPUNIT_ASSERT(l01 == toLower(l01));
     CPPUNIT_ASSERT(l02 == toLower(l02));
@@ -358,10 +372,14 @@ void StringToLowerTestFixture::testSixteenBitToLowers()
     CPPUNIT_ASSERT(l50 == toLower(l50));
     CPPUNIT_ASSERT(l51 == toLower(l51));
     CPPUNIT_ASSERT(l52 == toLower(l52));
+    CPPUNIT_ASSERT(l53 == toLower(l53));
 }
 
 void StringToLowerTestFixture::testThirtyTwoBitToLowers()
 {
+    ucs4String empty;
+    CPPUNIT_ASSERT(toLower(empty).empty());
+
     int64_t result =0;
     int64_t flag = 1;
     {
@@ -1484,4 +1502,10 @@ void StringToLowerTestFixture::testPlane1Unshiftables()
                                U"\U00010cbc\U00010cbd\U00010cbe\U00010cbf\U00010cf3\U00010cf4\U00010cf5"
                                U"\U0001189d\U0001189e\U0001189f\U000118e0\U000118e1\U000118e2\U000118e3");
     CPPUNIT_ASSERT(dontTouchPlane1 == toLower(dontTouchPlane1));
+}
+
+void StringToLowerTestFixture::testCoverageGaps()
+{
+    ucs2String dontTouch1fNonUnicodes(u"\u1f1e\u1f1f\u1f4e\u1f4f\u1f58\u1f5a\u1f5c\u1f5e");
+    CPPUNIT_ASSERT(dontTouch1fNonUnicodes == toLower(dontTouch1fNonUnicodes));
 }

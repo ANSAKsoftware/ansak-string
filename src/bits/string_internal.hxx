@@ -88,11 +88,11 @@ private:
 // otherwise. Note, all 8-bit values are in the standard. Gaps first begin
 // after U+0377
 
-inline bool isUnicode8Assigned(char c) { return true; }
+inline bool isUnicode8Assigned(char ) { return true; }
 bool isUnicode8Assigned(char16_t c);
 bool isUnicode8Assigned(char32_t c);
 
-inline bool isUnicode8Private(char c) { return false; }
+inline bool isUnicode8Private(char ) { return false; }
 bool isUnicode8Private(char16_t c);
 bool isUnicode8Private(char32_t c);
 

@@ -115,12 +115,7 @@ ucs4String toLower
 
     for (auto c : src)
     {
-        char32_t cL = toLowerFunc(c);
-        if (cL == 0)
-        {
-            return ucs4String();
-        }
-        adder(cL);
+        adder(toLowerFunc(c));
     }
 
     return result;

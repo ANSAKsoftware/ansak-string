@@ -147,11 +147,18 @@ void EncodePredicateTestFixture::testCharToEncoding()
     // test a assigned, non-private, control, whitespace
     CPPUNIT_ASSERT_EQUAL(13u, charToEncodingTypeMask(static_cast<char>(9)));
     // there are no assigned-private characters
+
+    EncodingCheckPredicate null;
+    CPPUNIT_ASSERT(null('3'));
+    CPPUNIT_ASSERT(null(static_cast<char16_t>('3')));
+    CPPUNIT_ASSERT(null(static_cast<char32_t>('3')));
 }
 
 void EncodePredicateTestFixture::testSimpleAssignedsPredicate()
 {
     auto pred = validIf(kIsAssigned);
+    CPPUNIT_ASSERT(pred == pred);
+    CPPUNIT_ASSERT(!(pred != pred));
     for_each(begin(quickBrown), end(quickBrown), [&](const char c){
         if (c != 0)
         {
