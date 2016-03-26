@@ -1,0 +1,71 @@
+CHANGES
+
+1.3 -- support for Unicode 7 and the latest beta of Unicode 9, selectable before compile time; also switch to googletest
+
+    * added support for Unicode 9.0.0d2
+    * to make sure I did multiple Unicode standards "correctly", added support for Unicode 7 as well
+    * support for Unicode 7 and 9.0.0d2 includes isUnicode and tolower for each standard. getUnicodeVersionSupported returns
+        * "7.0.0"
+        * "8.0.0" (the default) or
+        * "9.0.0d2" depending on cmake-time switch. Select by -DANSAK_UNICODE_SUPPORT=7|8|9 on your cmake command line.
+
+    * reorganization of the code, moved public headers into an interface/ directory, unit tests out into test/unit.
+    * added a submodule to googletest at test/googletest
+    * converted all unit tests to gtest (using gtest earlier would have made 1.1 easier, faster)
+
+1.2.1 -- coverage tool integration leads to some border-case bug fixes
+
+    * Integrated ansak-string with lcov/gcov-based coverage data (accessed through -DCMAKE_BUILD_TYPE=Coverage on Linux systems)
+
+    [BUG FIXES]
+    * integration with coverage tools led to the writing of a few (only a very few) more unit tests.
+    * a few more tests uncovered three or four outside-border issues that were also corrected.
+
+1.2 -- identifying whitespace, control characters, private values and valid code-points added, for Unicode 8.0
+
+    * added possible EncodingCheckPredicate to add to isUtf8 etc. to check for
+        * whitespace
+        * control characters
+        * private values
+        * valid Unicode 8.0 code-points
+    * access EncodingCheckPredicate through the functions ansak::validIf and ansak::validIfNot
+    * EncodingCheckPredicate supports "andIf()" and "andIfNot()" additions.
+        * orIf and orIfNot could be added at some time if I can make that happen cleanly.
+
+1.1 -- tolower support across all Unicode 8.0
+
+    * Choose to support Unicode 8.0 as current standard, reporting in an API
+
+    * Added a tolower that works across the entire Unicode 8.0 standard
+        * optional const char* parameter to tolower allows caller to select Turkic langugage usin 2 or 3 letter ISO abbreviations.
+        * Turkic languages so supported are Tatar, Kazakh, Azerbaizhani (all ISO-code-recognized dialects) and, of course, Turkish.
+
+1.0 -- namespace ansak {} is born, requires C++11 or later, includes the following
+
+    * String normalization between UCS-4, UTF-16, UCS-2 and UTF-8
+
+        * consumable via CMake, unit tests with CPPUNIT
+
+        * routines to check for encoding validity:
+            * isUtf8 checks for a null-terminated run of UTF-8 encoding that isn't broken and doesn't interpret to orphaned D800-DFFF codes
+            * isUcs2 checks for a 16-bit-null-terminated run of values that don't include ANY D800-DFFF codes
+            * isUtf16 checks for a 16-bit-null-terminated run of values that don't include any orphaned D800-DFFF codes
+            * isUcs4 checks for a 32-bit-null-terminated run of values that don't include ANY D800-DFFF codes
+        * validity checks may take in intended target into account to answer questions like:
+             "Is this string UTF-8? and can it be converted to UCS-2 (without UTF-16 extensions)?"
+          through a RangeType enum.
+        * "failed" conversions return empty basic_string<T>
+            * toUtf8 takes UCS-2/UTF-16 and UCS-4 inputs
+            * toUcs2 takes UTF-8 and UCS-4 inputs (no D800-DFFF sequences emitted, only Basic Multilingual Plane codes supported)
+            * toUtf16 takes UTF-8 and UCS-4 inputs (correct D800-DFFF sequences emitted)
+            * toUcs4 takes UTF-8 and UCS-2/UTF-16 inputs
+
+    * Python-like "split" and "join"
+
+            * basic_string<T> plus a delimiter yields a vector<basic_string<T>> containing bits, possibly empty, between each delimiter
+            * vector<basic_string<T>> plus a delimiter yields a concatenation as basic_string<T> of each element separated by the delimiter
+
+    * Conversion to UTF-8 from 2 significant 8-bit encodings, CP-1252 and CP-1250.
+
+        * more may be added on request
+        * submit a patch or request for your favourite encoding system and I'll do what makes sense

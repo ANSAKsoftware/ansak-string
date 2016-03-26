@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 // mkUnicodeTestDataxx -- uses istream/ostream and ansak::split to generate
-//                        test data for the isUnicode8 unit tests, because
+//                        test data for the isUnicode unit tests, because
 //                        AWK isn't universally available.
 //
 ///////////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ void process(filebuf& inbuf, filebuf& outbuf)
     auto fields = split(oneLine, ';');
     if (!fields.empty())
     {
-        outStream << "char32_t validUnicode8CodePoints[] = {" << endl << "    ";
+        outStream << "char32_t validUnicodeCodePoints[] = {" << endl << "    ";
         bool firstOne = true;
         int nCount = 0;
         while (oneLine.size() > 10)
