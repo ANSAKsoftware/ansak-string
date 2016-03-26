@@ -84,6 +84,11 @@ private:
 // Local Functions
 
 //=========================================================================
+// Get current implementation's supported Unicode version string.
+
+extern const utf8String supportedUnicodeVersion;
+
+//=========================================================================
 // Returns true if the character is in the Unicode 8.0 standard, false
 // otherwise. Note, all 8-bit values are in the standard. Gaps first begin
 // after U+0377

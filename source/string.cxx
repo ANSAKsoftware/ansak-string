@@ -479,6 +479,17 @@ bool isUtf8
 ///////////////////////////////////////////////////////////////////////////
 // Public Functions
 
+///////////////////////////////////////////////////////////////////////////
+// getUnicodeVersion function
+//
+// Report what Unicode version is supported.
+///////////////////////////////////////////////////////////////////////////
+
+utf8String getUnicodeVersionSupported()
+{
+    return supportedUnicodeVersion;
+}
+
 //////////// Is it (valid) UTF-8, compatible with this encoding?
 
 bool isUtf8(const std::string& test, RangeType targetRange, const EncodingCheckPredicate& pred)
