@@ -39,7 +39,16 @@ if (CMAKE_BUILD_TYPE STREQUAL "Coverage" )
 endif()
 
 set( DEFAULT_SUPPORTED_UNICODE_VERSION "8" )
-set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
+if(ANSAK_UNICODE_SUPPORT)
+    if ( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL "7" ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL "8" ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL "9" ) ) )
+        message( "Unicode version, ${ANSAK_UNICODE_SUPPORT}, is not supported. Reverting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
+        set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
+    endif()
+else()
+    set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
+endif()
 
 if (UNIX)
     set(CMAKE_CXX_STANDARD 11)
@@ -92,7 +101,6 @@ if (CPPUNIT_FOUND)
     add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
     target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
 
-    message("mkUnicodeTestData command: ${CMAKE_CFG_INTDIR}/mkUnicodeTestData ${absBitsDir}/unitTests/UnicodeData.txt ${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx")
     add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                 COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
                         "${absBitsDir}/UnicodeData.txt"
