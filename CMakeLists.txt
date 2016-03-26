@@ -57,11 +57,12 @@ list( APPEND ansakString_src src/string.cxx
                              src/string_tolower.cxx
                              src/string_toutf8.cxx
                              src/encoding_check_predicate.cxx
-                             src/bits/char_to_lower.cxx
-                             src/bits/char_is_unicode.cxx
                              src/string.hxx
                              src/string_splitjoin.hxx
-                             src/bits/string_internal.hxx )
+                             src/bits/char_to_lower.cxx
+                             src/bits/char_is_unicode.cxx
+                             src/bits/string_internal.hxx
+    )
 
 add_library( ansakString STATIC ${ansakString_src} )
 

@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "string.hxx"
-#include "bits/string_internal.hxx"
+#include "string_internal.hxx"
 
 using namespace std;
 using namespace ansak::internal;
