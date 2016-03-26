@@ -19,7 +19,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "bits/string_internal.hxx"
+#include "string_internal.hxx"
 #include <iterator>
 #include <iostream>
 #include "char_is_unicode_test_data.hxx"

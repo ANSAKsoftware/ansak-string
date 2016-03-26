@@ -21,7 +21,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "string.hxx"
-#include "bits/string_internal.hxx"
+#include "string_internal.hxx"
 #include <string.h>
 
 using namespace ansak;

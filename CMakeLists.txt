@@ -65,7 +65,7 @@ list( APPEND ansakString_src source/string.cxx
                              source/encoding_check_predicate.cxx
                              source/bits/char_to_lower.cxx
                              source/bits/char_is_unicode.cxx
-                             source/bits/string_internal.hxx
+                             source/string_internal.hxx
     )
 
 add_library( ansakString STATIC ${ansakString_src} )
