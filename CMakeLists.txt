@@ -38,6 +38,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Coverage" )
     include( CodeCoverage )
 endif()
 
+set( DEFAULT_SUPPORTED_UNICODE_VERSION "8" )
+set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
+
 if (UNIX)
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -58,20 +61,23 @@ list( APPEND ansakString_intfc
                              interface/string_splitjoin.hxx
     )
 
+set( bitsDir source/bits${ANSAK_UNICODE_SUPPORT} )
+set( absBitsDir "${PROJECT_SOURCE_DIR}/${bitsDir}" )
+
 set( ansakString_src )
 list( APPEND ansakString_src source/string.cxx
                              source/string_tolower.cxx
                              source/string_toutf8.cxx
                              source/encoding_check_predicate.cxx
-                             source/bits/char_to_lower.cxx
-                             source/bits/char_is_unicode.cxx
                              source/string_internal.hxx
+                             ${bitsDir}/char_to_lower.cxx
+                             ${bitsDir}/char_is_unicode.cxx
     )
 
 add_library( ansakString STATIC ${ansakString_src} )
 
 set( ansakString_privIncludes )
-list( APPEND ansakString_privIncludes source/bits source )
+list( APPEND ansakString_privIncludes ${bitsDir} source )
 target_include_directories( ansakString PRIVATE ${ansakString_privIncludes}
                                         PUBLIC interface )
 
@@ -102,7 +108,7 @@ if (CPPUNIT_FOUND)
                                     source/unitTests/string_with_predicate_test.cxx
                                     source/unitTests/char_is_unicode_test.cxx
                                     "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx")
-    target_include_directories( ansakStringTest PRIVATE "${PROJECT_SOURCE_DIR}/source/bits" "${PROJECT_SOURCE_DIR}/source" "${PROJECT_BINARY_DIR}")
+    target_include_directories( ansakStringTest PRIVATE "${absBitsDir}" "${PROJECT_SOURCE_DIR}/source" "${PROJECT_BINARY_DIR}")
     target_link_libraries( ansakStringTest PRIVATE ansakString "${CPPUNIT_LIBRARY}" )
     add_test( NAME ansakStringTest COMMAND ansakStringTest )
 endif()
