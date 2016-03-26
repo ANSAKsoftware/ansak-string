@@ -52,22 +52,28 @@ if (UNIX)
     endif()
 endif()
 
+set( ansakString_intfc )
+list( APPEND ansakString_intfc
+                             interface/string.hxx
+                             interface/string_splitjoin.hxx
+    )
+
 set( ansakString_src )
-list( APPEND ansakString_src src/string.cxx
-                             src/string_tolower.cxx
-                             src/string_toutf8.cxx
-                             src/encoding_check_predicate.cxx
-                             src/string.hxx
-                             src/string_splitjoin.hxx
-                             src/bits/char_to_lower.cxx
-                             src/bits/char_is_unicode.cxx
-                             src/bits/string_internal.hxx
+list( APPEND ansakString_src source/string.cxx
+                             source/string_tolower.cxx
+                             source/string_toutf8.cxx
+                             source/encoding_check_predicate.cxx
+                             source/bits/char_to_lower.cxx
+                             source/bits/char_is_unicode.cxx
+                             source/bits/string_internal.hxx
     )
 
 add_library( ansakString STATIC ${ansakString_src} )
 
-target_include_directories( ansakString PRIVATE src/bits
-                                        PUBLIC src )
+set( ansakString_privIncludes )
+list( APPEND ansakString_privIncludes source/bits source )
+target_include_directories( ansakString PRIVATE ${ansakString_privIncludes}
+                                        PUBLIC interface )
 
 if (WIN32)
     find_package( CPPUnit )
@@ -82,21 +88,21 @@ if (CPPUNIT_FOUND)
 
     add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                 COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
-                        "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt"
+                        "${PROJECT_SOURCE_DIR}/source/unitTests/Unicode8Data.txt"
                         "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                         COMMENT "Generating test data for charIsUnicode test"
-                        DEPENDS "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt" mkUnicodeTestData
+                        DEPENDS "${PROJECT_SOURCE_DIR}/source/unitTests/Unicode8Data.txt" mkUnicodeTestData
                         VERBATIM )
 
-    add_executable( ansakStringTest src/unitTests/UnitTest.cxx
-                                    src/unitTests/encode_predicate_test.cxx
-                                    src/unitTests/string_splitjoin_test.cxx
-                                    src/unitTests/string_tolower_test.cxx
-                                    src/unitTests/string_test.cxx
-                                    src/unitTests/string_with_predicate_test.cxx
-                                    src/unitTests/char_is_unicode_test.cxx
+    add_executable( ansakStringTest source/unitTests/UnitTest.cxx
+                                    source/unitTests/encode_predicate_test.cxx
+                                    source/unitTests/string_splitjoin_test.cxx
+                                    source/unitTests/string_tolower_test.cxx
+                                    source/unitTests/string_test.cxx
+                                    source/unitTests/string_with_predicate_test.cxx
+                                    source/unitTests/char_is_unicode_test.cxx
                                     "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx")
-    target_include_directories( ansakStringTest PRIVATE "${CPPUNIT_INCLUDE_DIR}" "${PROJECT_BINARY_DIR}")
+    target_include_directories( ansakStringTest PRIVATE "${PROJECT_SOURCE_DIR}/source/bits" "${PROJECT_SOURCE_DIR}/source" "${PROJECT_BINARY_DIR}")
     target_link_libraries( ansakStringTest PRIVATE ansakString "${CPPUNIT_LIBRARY}" )
     add_test( NAME ansakStringTest COMMAND ansakStringTest )
 endif()
