@@ -92,12 +92,13 @@ if (CPPUNIT_FOUND)
     add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
     target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
 
+    message("mkUnicodeTestData command: ${CMAKE_CFG_INTDIR}/mkUnicodeTestData ${absBitsDir}/unitTests/UnicodeData.txt ${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx")
     add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                 COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
-                        "${PROJECT_SOURCE_DIR}/source/unitTests/Unicode8Data.txt"
+                        "${absBitsDir}/UnicodeData.txt"
                         "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                         COMMENT "Generating test data for charIsUnicode test"
-                        DEPENDS "${PROJECT_SOURCE_DIR}/source/unitTests/Unicode8Data.txt" mkUnicodeTestData
+                        DEPENDS "${absBitsDir}/UnicodeData.txt" mkUnicodeTestData
                         VERBATIM )
 
     add_executable( ansakStringTest source/unitTests/UnitTest.cxx
