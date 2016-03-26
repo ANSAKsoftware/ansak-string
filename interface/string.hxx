@@ -198,10 +198,7 @@ enum SourceEncoding : int {
 // Report what Unicode version is supported.
 ///////////////////////////////////////////////////////////////////////////
 
-inline utf8String getUnicodeVersionSupported()
-{
-    return "8.0";
-}
+utf8String getUnicodeVersionSupported();
 
 ///////////////////////////////////////////////////////////////////////////
 // is<RangeType> functions
