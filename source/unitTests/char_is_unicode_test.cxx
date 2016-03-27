@@ -220,11 +220,22 @@ void IsUnicodeTestFixture::testIsUnicode8()
             cout << "*";
         }
     }
+    char32_t startCJKSection = 0x100;
+    char32_t endCJKSection = 0x0FF;
     for (; i < 0x10000; ++i)
     {
-        if ((i > 0x3400 && i < 0x4db5) ||
-            (i > 0x4e00 && i < 0x9fd5) ||
-            (i > 0xac00 && i < 0xd7a3))
+        switch (*iValid)
+        {
+        default:
+            break;
+        case 0x3400:
+        case 0x4E00:
+        case 0xAC00:
+            startCJKSection = *iValid;
+            endCJKSection = *++iValid;
+            break;
+        }
+        if (i >= startCJKSection && i <= endCJKSection)
         {
             if (!isUnicode8Assigned(i))
             {
@@ -233,6 +244,10 @@ void IsUnicodeTestFixture::testIsUnicode8()
             }
             CPPUNIT_ASSERT(isUnicode8Assigned(i));
             CPPUNIT_ASSERT(isUnicode8Assigned(static_cast<char16_t>(i)));
+            if (i == endCJKSection)
+            {
+                ++iValid;
+            }
         }
         else if (iValid != end(validUnicode8CodePoints) && i == *iValid)
         {
@@ -262,10 +277,19 @@ void IsUnicodeTestFixture::testIsUnicode8()
     }
     for (; i < 0x10FFFF; ++i)
     {
-        if ((i > 0x20000 && i < 0x2a6d6) ||
-            (i > 0x2a700 && i < 0x2b734) ||
-            (i > 0x2b740 && i < 0x2b81d) ||
-            (i > 0x2b820 && i < 0x2cea1))
+        switch (*iValid)
+        {
+        default:
+            break;
+        case 0x20000:
+        case 0x2A700:
+        case 0x2B740:
+        case 0x2B820:
+            startCJKSection = *iValid;
+            endCJKSection = *++iValid;
+            break;
+        }
+        if (i >= startCJKSection && i <= endCJKSection)
         {
             if (!isUnicode8Assigned(i))
             {
@@ -273,6 +297,10 @@ void IsUnicodeTestFixture::testIsUnicode8()
                         ", should be assigned, found unassigned." << endl;
             }
             CPPUNIT_ASSERT(isUnicode8Assigned(i));
+            if (i == endCJKSection)
+            {
+                ++iValid;
+            }
         }
         else if (iValid != end(validUnicode8CodePoints) && i == *iValid)
         {
