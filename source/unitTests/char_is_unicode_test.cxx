@@ -34,14 +34,14 @@ CPPUNIT_TEST_SUITE( IsUnicodeTestFixture );
     CPPUNIT_TEST( testIsControl );
     CPPUNIT_TEST( testIsPrivate );
     CPPUNIT_TEST( testIsWhitespace );
-    CPPUNIT_TEST( testIsUnicode8 );
+    CPPUNIT_TEST( testIsUnicode );
 CPPUNIT_TEST_SUITE_END();
 
 public:
     void testIsControl();
     void testIsPrivate();
     void testIsWhitespace();
-    void testIsUnicode8();
+    void testIsUnicode();
 
 };
 
@@ -51,7 +51,8 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(IsUnicodeTestFixture, "StringClassTests");
 void IsUnicodeTestFixture::testIsControl()
 {
     // all the control characters are U+0000 .. U+001F and U+0080 to U+009F
-    // In the Unicode8Data.txt file their second field (and theirs only) is <control>
+    // In the selected UnicodeData.txt file their second field (and theirs only)
+    // is <control>
     for (char32_t i = 0; i < 32; ++i)
     {
         CPPUNIT_ASSERT(isControlChar(i));
@@ -91,44 +92,44 @@ void IsUnicodeTestFixture::testIsPrivate()
 {
     // all the private characters are U+E000 .. U+F8FF, U+F0000..U+FFFFD and
     // U+100000..U+10FFFD
-    // In the Unicode8Data.txt file these ranges are identified that way
+    // In the UnicodeData.txt file these ranges are identified that way
     for (char32_t i = 0; i <= 255; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicode8Private(i));
-        CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char16_t>(i)));
-        CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char>(i)));
+        CPPUNIT_ASSERT(!isUnicodePrivate(i));
+        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char16_t>(i)));
+        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char>(i)));
     }
     for (char32_t i = 256; i < 0xE000; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicode8Private(i));
-        CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char16_t>(i)));
+        CPPUNIT_ASSERT(!isUnicodePrivate(i));
+        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char16_t>(i)));
     }
     for (char32_t i = 0xE000; i < 0xF8FF; ++i)
     {
-        CPPUNIT_ASSERT(isUnicode8Private(i));
-        CPPUNIT_ASSERT(isUnicode8Private(static_cast<char16_t>(i)));
+        CPPUNIT_ASSERT(isUnicodePrivate(i));
+        CPPUNIT_ASSERT(isUnicodePrivate(static_cast<char16_t>(i)));
     }
     for (char32_t i = 0xF900; i <= 0xFFFF; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicode8Private(i));
-        CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char16_t>(i)));
+        CPPUNIT_ASSERT(!isUnicodePrivate(i));
+        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char16_t>(i)));
     }
     for (char32_t i = 65536; i < 0xF0000; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicode8Private(i));
+        CPPUNIT_ASSERT(!isUnicodePrivate(i));
     }
     for (char32_t i = 0xF0000; i < 0xFFFFE; ++i)
     {
-        CPPUNIT_ASSERT(isUnicode8Private(i));
+        CPPUNIT_ASSERT(isUnicodePrivate(i));
     }
-    CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char32_t>(0xFFFFE)));
-    CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char32_t>(0xFFFFF)));
+    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0xFFFFE)));
+    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0xFFFFF)));
     for (char32_t i = 0x100000; i < 0x10FFFE; ++i)
     {
-        CPPUNIT_ASSERT(isUnicode8Private(i));
+        CPPUNIT_ASSERT(isUnicodePrivate(i));
     }
-    CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char32_t>(0x10FFFE)));
-    CPPUNIT_ASSERT(!isUnicode8Private(static_cast<char32_t>(0x10FFFF)));
+    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0x10FFFE)));
+    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0x10FFFF)));
 }
 
 void IsUnicodeTestFixture::testIsWhitespace()
@@ -185,35 +186,35 @@ void IsUnicodeTestFixture::testIsWhitespace()
     }
 }
 
-void IsUnicodeTestFixture::testIsUnicode8()
+void IsUnicodeTestFixture::testIsUnicode()
 {
-    // test depends on processed form of Unicode8Data.txt
-    auto iValid = begin(validUnicode8CodePoints);
+    // test depends on processed form of the selected UnicodeData.txt
+    auto iValid = begin(validUnicodeCodePoints);
     char32_t i;
     for (i = 0; i < 0x100; ++i)
     {
-        if (iValid != end(validUnicode8CodePoints) && i == *iValid)
+        if (iValid != end(validUnicodeCodePoints) && i == *iValid)
         {
-            if (!isUnicode8Assigned(i))
+            if (!isUnicodeAssigned(i))
             {
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicode8Assigned(i));
-            CPPUNIT_ASSERT(isUnicode8Assigned(static_cast<char16_t>(i)));
-            CPPUNIT_ASSERT(isUnicode8Assigned(static_cast<char>(i)));
+            CPPUNIT_ASSERT(isUnicodeAssigned(i));
+            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char16_t>(i)));
+            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char>(i)));
             ++iValid;
         }
         else
         {
-            if (isUnicode8Assigned(i))
+            if (isUnicodeAssigned(i))
             {
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", shouldn't be assigned, found assigned." << endl;
             }
-            CPPUNIT_ASSERT(!isUnicode8Assigned(i));
-            CPPUNIT_ASSERT(!isUnicode8Assigned(static_cast<char16_t>(i)));
-            CPPUNIT_ASSERT(!isUnicode8Assigned(static_cast<char>(i)));
+            CPPUNIT_ASSERT(!isUnicodeAssigned(i));
+            CPPUNIT_ASSERT(!isUnicodeAssigned(static_cast<char16_t>(i)));
+            CPPUNIT_ASSERT(!isUnicodeAssigned(static_cast<char>(i)));
         }
         if (i % 0x10 == 0xF)
         {
@@ -237,38 +238,38 @@ void IsUnicodeTestFixture::testIsUnicode8()
         }
         if (i >= startCJKSection && i <= endCJKSection)
         {
-            if (!isUnicode8Assigned(i))
+            if (!isUnicodeAssigned(i))
             {
                 cout << "Problem with CJK value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicode8Assigned(i));
-            CPPUNIT_ASSERT(isUnicode8Assigned(static_cast<char16_t>(i)));
+            CPPUNIT_ASSERT(isUnicodeAssigned(i));
+            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char16_t>(i)));
             if (i == endCJKSection)
             {
                 ++iValid;
             }
         }
-        else if (iValid != end(validUnicode8CodePoints) && i == *iValid)
+        else if (iValid != end(validUnicodeCodePoints) && i == *iValid)
         {
-            if (!isUnicode8Assigned(i))
+            if (!isUnicodeAssigned(i))
             {
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicode8Assigned(i));
-            CPPUNIT_ASSERT(isUnicode8Assigned(static_cast<char16_t>(i)));
+            CPPUNIT_ASSERT(isUnicodeAssigned(i));
+            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char16_t>(i)));
             ++iValid;
         }
         else
         {
-            if (isUnicode8Assigned(i))
+            if (isUnicodeAssigned(i))
             {
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", shouldn't be assigned, found assigned." << endl;
             }
-            CPPUNIT_ASSERT(!isUnicode8Assigned(i));
-            CPPUNIT_ASSERT(!isUnicode8Assigned(static_cast<char16_t>(i)));
+            CPPUNIT_ASSERT(!isUnicodeAssigned(i));
+            CPPUNIT_ASSERT(!isUnicodeAssigned(static_cast<char16_t>(i)));
         }
         if (i % 0x1000 == 0xFFF)
         {
@@ -291,35 +292,35 @@ void IsUnicodeTestFixture::testIsUnicode8()
         }
         if (i >= startCJKSection && i <= endCJKSection)
         {
-            if (!isUnicode8Assigned(i))
+            if (!isUnicodeAssigned(i))
             {
                 cout << "Problem with CJK value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicode8Assigned(i));
+            CPPUNIT_ASSERT(isUnicodeAssigned(i));
             if (i == endCJKSection)
             {
                 ++iValid;
             }
         }
-        else if (iValid != end(validUnicode8CodePoints) && i == *iValid)
+        else if (iValid != end(validUnicodeCodePoints) && i == *iValid)
         {
-            if (!isUnicode8Assigned(i))
+            if (!isUnicodeAssigned(i))
             {
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicode8Assigned(i));
+            CPPUNIT_ASSERT(isUnicodeAssigned(i));
             ++iValid;
         }
         else
         {
-            if (isUnicode8Assigned(i))
+            if (isUnicodeAssigned(i))
             {
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", shouldn't be assigned, found assigned." << endl;
             }
-            CPPUNIT_ASSERT(!isUnicode8Assigned(i));
+            CPPUNIT_ASSERT(!isUnicodeAssigned(i));
         }
         if (i % 0x10000 == 0xFFFF)
         {

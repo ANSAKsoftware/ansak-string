@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 // char_is_unicode.cxx -- Code to check if a code-point value is inside
-//                        Unicode, currently Unicode 8.0
+//                        Unicode, locally Unicode 9.0
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -26,14 +26,14 @@ namespace ansak {
 
 namespace internal {
 
-const utf8String supportedUnicodeVersion = "8.0";
+const utf8String supportedUnicodeVersion = "9.0";
 
 namespace
 {
 
 // "isInTheGap" routines for sub-ranges of Unicode domain values. Numbers after isInTheGap
 // gives most significant digits of the 21-bit Unicode values. Values less than U+0300 are
-// all in the Unicode 8.0 standard
+// all in the Unicode 9.0 standard
 
 bool isInTheGap0003(char16_t c)
 {
@@ -2198,7 +2198,7 @@ bool isInTheGap0E(char32_t c)
 
 }
 
-bool isUnicode8Assigned(char16_t c)
+bool isUnicodeAssigned(char16_t c)
 {
     auto page = (c >> 8) & 0xFF;
     auto sheaf = page >> 4;
@@ -2310,19 +2310,19 @@ bool isUnicode8Assigned(char16_t c)
     return true;
 }
 
-bool isUnicode8Assigned(char32_t c)
+bool isUnicodeAssigned(char32_t c)
 {
     switch(c >> 16)
     {
     default:    return false;
-    case 0:     return isUnicode8Assigned(static_cast<char16_t>(c & 0xFFFF));
+    case 0:     return isUnicodeAssigned(static_cast<char16_t>(c & 0xFFFF));
     case 1:     return !isInTheGap01(c);
     case 2:     return !isInTheGap02(c);
     case 14:    return !isInTheGap0E(c);
     }
 }
 
-bool isUnicode8Private(char16_t c)
+bool isUnicodePrivate(char16_t c)
 {
     auto page = (c >> 8) & 0xFF;
     auto sheaf = page >> 4;
@@ -2336,12 +2336,12 @@ bool isUnicode8Private(char16_t c)
     }
 }
 
-bool isUnicode8Private(char32_t c)
+bool isUnicodePrivate(char32_t c)
 {
     switch(c >> 16)
     {
     default:    return false;
-    case 0:     return isUnicode8Private(static_cast<char16_t>(c & 0xFFFF));
+    case 0:     return isUnicodePrivate(static_cast<char16_t>(c & 0xFFFF));
     case 15:
     case 16:    return (c & 0xFFFF) <= 0xFFFD;
     }
