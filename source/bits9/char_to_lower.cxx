@@ -415,6 +415,7 @@ char16_t toLowerA000(char16_t c)
                 case 0xA7AB:    return 0x025C;
                 case 0xA7AC:    return 0x0261;
                 case 0xA7AD:    return 0x026C;
+                case 0xA7AE:    return 0x026A;
                 case 0xA7B0:    return 0x029E;
                 case 0xA7B1:    return 0x0287;
                 case 0xA7B2:    return 0x029D;
@@ -501,6 +502,10 @@ char32_t toLower(char32_t c)
         {
             return c + 0x28;
         }
+        else if (c >= 0x104B0 && c <= 0x104D3)
+        {
+            return c + 0x28;
+        }
         else if (c >= 0X10C80 && c <= 0x10CB2)
         {
             return c | 0x40;
@@ -509,6 +514,10 @@ char32_t toLower(char32_t c)
         {
             return c + 0x20;
         }
+    }
+    else if (c >= 0x1E900 && c <= 0x1E921)
+    {
+        return c + 0x22;
     }
 
     return c;

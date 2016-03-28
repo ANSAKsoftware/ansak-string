@@ -236,18 +236,6 @@ char16_t toLower1000(char16_t c)
         }
         break;
 
-    case 0x13:
-        if (c >= 0x13A0 && c < 0x13F0)
-        {
-            // Cherokee!
-            return c + 0x97d0;
-        }
-        else if (c >= 0x13F0 && c <= 0x13F5)
-        {
-            return c | 8;
-        }
-        break;
-
     case 0x1E:
         if (c == 0x1E9E)
         {
@@ -394,8 +382,7 @@ char16_t toLowerA000(char16_t c)
             (c >= 0xA732 && c <= 0xA76F) ||
             (c >= 0xA77E && c <= 0xA787) ||
             (c >= 0xA790 && c <= 0xA793) ||
-            (c >= 0xA796 && c <= 0xA7A9) ||
-            (c >= 0xA7B4 && c <= 0xA7B7))
+            (c >= 0xA796 && c <= 0xA7A9))
         {
             return c | 1;
         }
@@ -417,8 +404,6 @@ char16_t toLowerA000(char16_t c)
                 case 0xA7AD:    return 0x026C;
                 case 0xA7B0:    return 0x029E;
                 case 0xA7B1:    return 0x0287;
-                case 0xA7B2:    return 0x029D;
-                case 0xA7B3:    return 0xAB53;
             }
         }
         break;

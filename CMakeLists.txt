@@ -113,7 +113,7 @@ if (CPPUNIT_FOUND)
     add_executable( ansakStringTest source/unitTests/UnitTest.cxx
                                     source/unitTests/encode_predicate_test.cxx
                                     source/unitTests/string_splitjoin_test.cxx
-                                    source/unitTests/string_tolower_test.cxx
+                                    source/unitTests/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
                                     source/unitTests/string_test.cxx
                                     source/unitTests/string_with_predicate_test.cxx
                                     source/unitTests/char_is_unicode_test.cxx
