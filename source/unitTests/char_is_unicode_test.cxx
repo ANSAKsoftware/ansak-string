@@ -282,6 +282,7 @@ void IsUnicodeTestFixture::testIsUnicode()
         {
         default:
             break;
+        case 0x17000:
         case 0x20000:
         case 0x2A700:
         case 0x2B740:
@@ -294,7 +295,7 @@ void IsUnicodeTestFixture::testIsUnicode()
         {
             if (!isUnicodeAssigned(i))
             {
-                cout << "Problem with CJK value, " << static_cast<int>(i) <<
+                cout << "Problem with CJK/Tangut value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
             CPPUNIT_ASSERT(isUnicodeAssigned(i));
