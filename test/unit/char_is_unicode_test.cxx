@@ -17,7 +17,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include "string_internal.hxx"
 #include <iterator>
@@ -27,112 +27,93 @@
 using namespace ansak;
 using namespace ansak::internal;
 using namespace std;
+using namespace testing;
 
-class IsUnicodeTestFixture : public CppUnit::TestFixture {
-
-CPPUNIT_TEST_SUITE( IsUnicodeTestFixture );
-    CPPUNIT_TEST( testIsControl );
-    CPPUNIT_TEST( testIsPrivate );
-    CPPUNIT_TEST( testIsWhitespace );
-    CPPUNIT_TEST( testIsUnicode );
-CPPUNIT_TEST_SUITE_END();
-
-public:
-    void testIsControl();
-    void testIsPrivate();
-    void testIsWhitespace();
-    void testIsUnicode();
-
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(IsUnicodeTestFixture);
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(IsUnicodeTestFixture, "StringClassTests");
-
-void IsUnicodeTestFixture::testIsControl()
+TEST(IsUnicodeTest, testIsControl)
 {
     // all the control characters are U+0000 .. U+001F and U+0080 to U+009F
     // In the selected UnicodeData.txt file their second field (and theirs only)
     // is <control>
     for (char32_t i = 0; i < 32; ++i)
     {
-        CPPUNIT_ASSERT(isControlChar(i));
-        CPPUNIT_ASSERT(isControlChar(static_cast<char16_t>(i)));
-        CPPUNIT_ASSERT(isControlChar(static_cast<char>(i)));
+        EXPECT_TRUE(isControlChar(i));
+        EXPECT_TRUE(isControlChar(static_cast<char16_t>(i)));
+        EXPECT_TRUE(isControlChar(static_cast<char>(i)));
     }
     for (char32_t i = 32; i < 127; ++i)
     {
-        CPPUNIT_ASSERT(!isControlChar(i));
-        CPPUNIT_ASSERT(!isControlChar(static_cast<char16_t>(i)));
-        CPPUNIT_ASSERT(!isControlChar(static_cast<char>(i)));
+        EXPECT_FALSE(isControlChar(i));
+        EXPECT_FALSE(isControlChar(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isControlChar(static_cast<char>(i)));
     }
     for (char32_t i = 127; i < 160; ++i)
     {
-        CPPUNIT_ASSERT(isControlChar(i));
-        CPPUNIT_ASSERT(isControlChar(static_cast<char16_t>(i)));
-        CPPUNIT_ASSERT(isControlChar(static_cast<char>(i)));
+        EXPECT_TRUE(isControlChar(i));
+        EXPECT_TRUE(isControlChar(static_cast<char16_t>(i)));
+        EXPECT_TRUE(isControlChar(static_cast<char>(i)));
     }
     for (char32_t i = 160; i <= 255; ++i)
     {
-        CPPUNIT_ASSERT(!isControlChar(i));
-        CPPUNIT_ASSERT(!isControlChar(static_cast<char16_t>(i)));
-        CPPUNIT_ASSERT(!isControlChar(static_cast<char>(i)));
+        EXPECT_FALSE(isControlChar(i));
+        EXPECT_FALSE(isControlChar(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isControlChar(static_cast<char>(i)));
     }
     for (char32_t i = 256; i <= 0xFFFF; ++i)
     {
-        CPPUNIT_ASSERT(!isControlChar(i));
-        CPPUNIT_ASSERT(!isControlChar(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isControlChar(i));
+        EXPECT_FALSE(isControlChar(static_cast<char16_t>(i)));
     }
     for (char32_t i = 65536; i < 0x110000; ++i)
     {
-        CPPUNIT_ASSERT(!isControlChar(i));
+        EXPECT_FALSE(isControlChar(i));
     }
 }
 
-void IsUnicodeTestFixture::testIsPrivate()
+TEST(IsUnicodeTest, testIsPrivate)
 {
     // all the private characters are U+E000 .. U+F8FF, U+F0000..U+FFFFD and
     // U+100000..U+10FFFD
     // In the UnicodeData.txt file these ranges are identified that way
     for (char32_t i = 0; i <= 255; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicodePrivate(i));
-        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char16_t>(i)));
-        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char>(i)));
+        EXPECT_FALSE(isUnicodePrivate(i));
+        EXPECT_FALSE(isUnicodePrivate(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isUnicodePrivate(static_cast<char>(i)));
     }
     for (char32_t i = 256; i < 0xE000; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicodePrivate(i));
-        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isUnicodePrivate(i));
+        EXPECT_FALSE(isUnicodePrivate(static_cast<char16_t>(i)));
     }
     for (char32_t i = 0xE000; i < 0xF8FF; ++i)
     {
-        CPPUNIT_ASSERT(isUnicodePrivate(i));
-        CPPUNIT_ASSERT(isUnicodePrivate(static_cast<char16_t>(i)));
+        EXPECT_TRUE(isUnicodePrivate(i));
+        EXPECT_TRUE(isUnicodePrivate(static_cast<char16_t>(i)));
     }
     for (char32_t i = 0xF900; i <= 0xFFFF; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicodePrivate(i));
-        CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isUnicodePrivate(i));
+        EXPECT_FALSE(isUnicodePrivate(static_cast<char16_t>(i)));
     }
     for (char32_t i = 65536; i < 0xF0000; ++i)
     {
-        CPPUNIT_ASSERT(!isUnicodePrivate(i));
+        EXPECT_FALSE(isUnicodePrivate(i));
     }
     for (char32_t i = 0xF0000; i < 0xFFFFE; ++i)
     {
-        CPPUNIT_ASSERT(isUnicodePrivate(i));
+        EXPECT_TRUE(isUnicodePrivate(i));
     }
-    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0xFFFFE)));
-    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0xFFFFF)));
+    EXPECT_FALSE(isUnicodePrivate(static_cast<char32_t>(0xFFFFE)));
+    EXPECT_FALSE(isUnicodePrivate(static_cast<char32_t>(0xFFFFF)));
     for (char32_t i = 0x100000; i < 0x10FFFE; ++i)
     {
-        CPPUNIT_ASSERT(isUnicodePrivate(i));
+        EXPECT_TRUE(isUnicodePrivate(i));
     }
-    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0x10FFFE)));
-    CPPUNIT_ASSERT(!isUnicodePrivate(static_cast<char32_t>(0x10FFFF)));
+    EXPECT_FALSE(isUnicodePrivate(static_cast<char32_t>(0x10FFFE)));
+    EXPECT_FALSE(isUnicodePrivate(static_cast<char32_t>(0x10FFFF)));
 }
 
-void IsUnicodeTestFixture::testIsWhitespace()
+TEST(IsUnicodeTest, testIsWhitespace)
 {
     // all the whitespace characters are U+0009..U+000D; U+0020;
     // U+0085; U+00A0; U+1680; U+2000..U+200A; U+2028,U+2029,U+202F;
@@ -148,17 +129,17 @@ void IsUnicodeTestFixture::testIsWhitespace()
             cout << "Problem with whitespace check at value, " << static_cast<int>(i) <<
                     "." << endl;
         }
-        CPPUNIT_ASSERT(isSpace == isWhitespaceChar(i));
-        CPPUNIT_ASSERT(isSpace == isWhitespaceChar(static_cast<char16_t>(i)));
-        CPPUNIT_ASSERT(isSpace == isWhitespaceChar(static_cast<char>(i)));
+        EXPECT_TRUE(isSpace == isWhitespaceChar(i));
+        EXPECT_TRUE(isSpace == isWhitespaceChar(static_cast<char16_t>(i)));
+        EXPECT_TRUE(isSpace == isWhitespaceChar(static_cast<char>(i)));
     }
     for ( ; i < 0x1680; ++i)
     {
-        CPPUNIT_ASSERT(!isWhitespaceChar(i));
-        CPPUNIT_ASSERT(!isWhitespaceChar(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isWhitespaceChar(i));
+        EXPECT_FALSE(isWhitespaceChar(static_cast<char16_t>(i)));
     }
-    CPPUNIT_ASSERT(isWhitespaceChar(i));
-    CPPUNIT_ASSERT(isWhitespaceChar(static_cast<char16_t>(i)));
+    EXPECT_TRUE(isWhitespaceChar(i));
+    EXPECT_TRUE(isWhitespaceChar(static_cast<char16_t>(i)));
     for (++i; i <= 0x2FFF; ++i)
     {
         bool isSpace = (i >= 0x2000 && i <= 0x200a) ||
@@ -170,24 +151,25 @@ void IsUnicodeTestFixture::testIsWhitespace()
             cout << "Problem with whitespace check at value, " << static_cast<int>(i) <<
                     "." << endl;
         }
-        CPPUNIT_ASSERT(isSpace == isWhitespaceChar(i));
-        CPPUNIT_ASSERT(isSpace == isWhitespaceChar(static_cast<char16_t>(i)));
+        EXPECT_TRUE(isSpace == isWhitespaceChar(i));
+        EXPECT_TRUE(isSpace == isWhitespaceChar(static_cast<char16_t>(i)));
     }
-    CPPUNIT_ASSERT(isWhitespaceChar(i));
-    CPPUNIT_ASSERT(isWhitespaceChar(static_cast<char16_t>(i)));
+    EXPECT_TRUE(isWhitespaceChar(i));
+    EXPECT_TRUE(isWhitespaceChar(static_cast<char16_t>(i)));
     for (++i; i <= 0xFFFF; ++i)
     {
-        CPPUNIT_ASSERT(!isWhitespaceChar(i));
-        CPPUNIT_ASSERT(!isWhitespaceChar(static_cast<char16_t>(i)));
+        EXPECT_FALSE(isWhitespaceChar(i));
+        EXPECT_FALSE(isWhitespaceChar(static_cast<char16_t>(i)));
     }
     for (char32_t i = 65536; i < 0x110000; ++i)
     {
-        CPPUNIT_ASSERT(!isWhitespaceChar(i));
+        EXPECT_FALSE(isWhitespaceChar(i));
     }
 }
 
-void IsUnicodeTestFixture::testIsUnicode()
+TEST(IsUnicodeTest, testIsUnicode)
 {
+    cout << "testIsUnicode progress: ";
     // test depends on processed form of the selected UnicodeData.txt
     auto iValid = begin(validUnicodeCodePoints);
     char32_t i;
@@ -200,9 +182,9 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicodeAssigned(i));
-            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char16_t>(i)));
-            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char>(i)));
+            EXPECT_TRUE(isUnicodeAssigned(i));
+            EXPECT_TRUE(isUnicodeAssigned(static_cast<char16_t>(i)));
+            EXPECT_TRUE(isUnicodeAssigned(static_cast<char>(i)));
             ++iValid;
         }
         else
@@ -212,9 +194,9 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", shouldn't be assigned, found assigned." << endl;
             }
-            CPPUNIT_ASSERT(!isUnicodeAssigned(i));
-            CPPUNIT_ASSERT(!isUnicodeAssigned(static_cast<char16_t>(i)));
-            CPPUNIT_ASSERT(!isUnicodeAssigned(static_cast<char>(i)));
+            EXPECT_FALSE(isUnicodeAssigned(i));
+            EXPECT_FALSE(isUnicodeAssigned(static_cast<char16_t>(i)));
+            EXPECT_FALSE(isUnicodeAssigned(static_cast<char>(i)));
         }
         if (i % 0x10 == 0xF)
         {
@@ -243,8 +225,8 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with CJK value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicodeAssigned(i));
-            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char16_t>(i)));
+            EXPECT_TRUE(isUnicodeAssigned(i));
+            EXPECT_TRUE(isUnicodeAssigned(static_cast<char16_t>(i)));
             if (i == endCJKSection)
             {
                 ++iValid;
@@ -257,8 +239,8 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicodeAssigned(i));
-            CPPUNIT_ASSERT(isUnicodeAssigned(static_cast<char16_t>(i)));
+            EXPECT_TRUE(isUnicodeAssigned(i));
+            EXPECT_TRUE(isUnicodeAssigned(static_cast<char16_t>(i)));
             ++iValid;
         }
         else
@@ -268,8 +250,8 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", shouldn't be assigned, found assigned." << endl;
             }
-            CPPUNIT_ASSERT(!isUnicodeAssigned(i));
-            CPPUNIT_ASSERT(!isUnicodeAssigned(static_cast<char16_t>(i)));
+            EXPECT_FALSE(isUnicodeAssigned(i));
+            EXPECT_FALSE(isUnicodeAssigned(static_cast<char16_t>(i)));
         }
         if (i % 0x1000 == 0xFFF)
         {
@@ -298,7 +280,7 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with CJK/Tangut value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicodeAssigned(i));
+            EXPECT_TRUE(isUnicodeAssigned(i));
             if (i == endCJKSection)
             {
                 ++iValid;
@@ -311,7 +293,7 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", should be assigned, found unassigned." << endl;
             }
-            CPPUNIT_ASSERT(isUnicodeAssigned(i));
+            EXPECT_TRUE(isUnicodeAssigned(i));
             ++iValid;
         }
         else
@@ -321,12 +303,13 @@ void IsUnicodeTestFixture::testIsUnicode()
                 cout << "Problem with value, " << static_cast<int>(i) <<
                         ", shouldn't be assigned, found assigned." << endl;
             }
-            CPPUNIT_ASSERT(!isUnicodeAssigned(i));
+            EXPECT_FALSE(isUnicodeAssigned(i));
         }
         if (i % 0x10000 == 0xFFFF)
         {
             cout << "x";
         }
     }
+    cout << " ... done!" << endl;
 }
 
