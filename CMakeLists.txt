@@ -41,7 +41,7 @@ else()
         include( CodeCoverage )
     endif()
 
-    add_subdirectory( test/gtest-1.7.0 )
+    add_subdirectory( test/googletest )
 endif()
 
 set( DEFAULT_SUPPORTED_UNICODE_VERSION "8" )
