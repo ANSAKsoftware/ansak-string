@@ -84,17 +84,22 @@ private:
 // Local Functions
 
 //=========================================================================
-// Returns true if the character is in the Unicode 8.0 standard, false
+// Get current implementation's supported Unicode version string.
+
+extern const utf8String supportedUnicodeVersion;
+
+//=========================================================================
+// Returns true if the character is in the selected Unicode 8 standard, false
 // otherwise. Note, all 8-bit values are in the standard. Gaps first begin
 // after U+0377
 
-inline bool isUnicode8Assigned(char ) { return true; }
-bool isUnicode8Assigned(char16_t c);
-bool isUnicode8Assigned(char32_t c);
+inline bool isUnicodeAssigned(char ) { return true; }
+bool isUnicodeAssigned(char16_t c);
+bool isUnicodeAssigned(char32_t c);
 
-inline bool isUnicode8Private(char ) { return false; }
-bool isUnicode8Private(char16_t c);
-bool isUnicode8Private(char32_t c);
+inline bool isUnicodePrivate(char ) { return false; }
+bool isUnicodePrivate(char16_t c);
+bool isUnicodePrivate(char32_t c);
 
 bool isControlChar(char c);
 bool isControlChar(char16_t c);
@@ -220,8 +225,8 @@ uint32_t charToEncodingTypeMask(C c)
 {
     static_assert(std::is_integral<C>::value, "charToEncodingTypeMask needs an integral type.");
 
-    return (isUnicode8Assigned(c) ? kIsAssignedFlag : 0) |
-           (isUnicode8Private(c) ? kIsPrivateFlag : 0) |
+    return (isUnicodeAssigned(c) ? kIsAssignedFlag : 0) |
+           (isUnicodePrivate(c) ? kIsPrivateFlag : 0) |
            (isControlChar(c) ? kIsControlFlag : 0) |
            (isWhitespaceChar(c) ? kIsWhiteSpaceFlag : 0);
 }

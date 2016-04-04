@@ -10,18 +10,19 @@
 # whatever environment you use it. Thank you.
 
 # This project requires CMake 3.1 or later with a C++11-compatible compiler.
-# On MS-Windows, this project requires VS2012 or later to use it, requires VS2015
-# or later to run the Unit Tests (If you use CLANG your mileage will CERTAINLY vary.
 
-# On MS-Windows, in order to run CPPUNIT, install the binaries compatible with your
-# compiler and architecture and include definitions for CPPUNIT_INCLUDE_DIRS to point
-# to your CPPUnit header files and CPPUNIT_LIBRARY_DIRS to point to your CPPUnit binary
-# files on the cmake command line, like this:
-#    -DCPPUNIT_INCLUDE_DIRS=<path to your cppunit install's include files>
-#    -DCPPUNIT_LIBRARY_DIRS=<path to your cppunit install's lib files>
+# Select your desired version of unicode with the ANSAK_UNICODE_SUPPORT variable, e.g.:
+#   cmake -DANSAK_UNICODE_SUPPORT=9      # to use the 9.0.0d2 version of Unicode
+# ANSAK_UNICODE_SUPPORT defualts to8.
+
+# Be sure to update the gtest sub-module so the unit tests will work!
 
 # If you have gcov and lcov installed on a Linux system, code coverage is provided via
 #   cmake -DCMAKE_BUILD_TYPE=Coverage for this target to work properly
+
+# On MS-Windows, this project requires VS2012 or later to use it, requires VS2015
+# or later to run the Unit Tests (If you use CLANG your mileage will CERTAINLY vary.
+# Define ANSAK_SUPPRESS_UNIT_TESTS=1 for VS2012
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -30,12 +31,30 @@ list( INSERT CMAKE_MODULE_PATH
 
 project(ansakString)
 
-include( CTest )
-if (CMAKE_BUILD_TYPE STREQUAL "Coverage" )
-    if (NOT UNIX)
-        message("Trying to build code coverage on a non-Linux system isn't going to end well.")
+if(ANSAK_SUPPRESS_UNIT_TESTS)
+else()
+    include( CTest )
+    if (CMAKE_BUILD_TYPE STREQUAL "Coverage" )
+        if (NOT UNIX)
+            message("Trying to build code coverage on a non-Linux system isn't going to end well.")
+        endif()
+        include( CodeCoverage )
     endif()
-    include( CodeCoverage )
+
+    add_subdirectory( test/googletest )
+endif()
+
+set( DEFAULT_SUPPORTED_UNICODE_VERSION "8" )
+if(ANSAK_UNICODE_SUPPORT)
+    if ( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL "7" ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL "8" ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL "9" ) ) )
+        message( "Unicode version, ${ANSAK_UNICODE_SUPPORT}, is not supported. Reverting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
+        set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
+    endif()
+else()
+    message( "No Unicode version selected. Defaulting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
+    set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
 endif()
 
 if (UNIX)
@@ -52,54 +71,60 @@ if (UNIX)
     endif()
 endif()
 
+set( ansakString_intfc )
+list( APPEND ansakString_intfc
+                             interface/string.hxx
+                             interface/string_splitjoin.hxx
+    )
+
+set( bitsDir source/bits${ANSAK_UNICODE_SUPPORT} )
+set( absBitsDir "${PROJECT_SOURCE_DIR}/${bitsDir}" )
+
 set( ansakString_src )
-list( APPEND ansakString_src src/string.cxx
-                             src/string_tolower.cxx
-                             src/string_toutf8.cxx
-                             src/encoding_check_predicate.cxx
-                             src/bits/char_to_lower.cxx
-                             src/bits/char_is_unicode.cxx
-                             src/string.hxx
-                             src/string_splitjoin.hxx
-                             src/bits/string_internal.hxx )
+list( APPEND ansakString_src source/string.cxx
+                             source/string_tolower.cxx
+                             source/string_toutf8.cxx
+                             source/encoding_check_predicate.cxx
+                             source/string_internal.hxx
+                             ${bitsDir}/char_to_lower.cxx
+                             ${bitsDir}/char_is_unicode.cxx
+    )
 
 add_library( ansakString STATIC ${ansakString_src} )
 
-target_include_directories( ansakString PRIVATE src/bits
-                                        PUBLIC src )
+set( ansakString_privIncludes )
+list( APPEND ansakString_privIncludes ${bitsDir} source )
+target_include_directories( ansakString PRIVATE ${ansakString_privIncludes} PUBLIC interface )
 
-if (WIN32)
-    find_package( CPPUnit )
+if(ANSAK_SUPPRESS_UNIT_TESTS)
 else()
-    set(CPPUNIT_LIBRARY cppunit)
-    set(CPPUNIT_FOUND TRUE)
-endif()
+add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
+target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
 
-if (CPPUNIT_FOUND)
-    add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
-    target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
+add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
+            COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
+                    "${absBitsDir}/UnicodeData.txt"
+                    "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
+                    COMMENT "Generating test data for charIsUnicode test"
+                    DEPENDS "${absBitsDir}/UnicodeData.txt" mkUnicodeTestData
+                    VERBATIM )
 
-    add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
-                        "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt"
-                        "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                        COMMENT "Generating test data for charIsUnicode test"
-                        DEPENDS "${PROJECT_SOURCE_DIR}/src/unitTests/Unicode8Data.txt" mkUnicodeTestData
-                        VERBATIM )
+add_executable( ansakStringTest test/unit/string_test.cxx
+                                test/unit/encode_predicate_test.cxx
+                                test/unit/string_splitjoin_test.cxx
+                                test/unit/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
+                                test/unit/string_with_predicate_test.cxx
+                                test/unit/char_is_unicode_test.cxx
+                                "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
+              )
+target_link_libraries( ansakStringTest PRIVATE ansakString gtest_main )
+target_include_directories( ansakStringTest PRIVATE "$<TARGET_PROPERTY:ansakString,INCLUDE_DIRECTORIES>"
+                                                    "${PROJECT_BINARY_DIR}"
+                          )
 
-    add_executable( ansakStringTest src/unitTests/UnitTest.cxx
-                                    src/unitTests/encode_predicate_test.cxx
-                                    src/unitTests/string_splitjoin_test.cxx
-                                    src/unitTests/string_tolower_test.cxx
-                                    src/unitTests/string_test.cxx
-                                    src/unitTests/string_with_predicate_test.cxx
-                                    src/unitTests/char_is_unicode_test.cxx
-                                    "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx")
-    target_include_directories( ansakStringTest PRIVATE "${CPPUNIT_INCLUDE_DIR}" "${PROJECT_BINARY_DIR}")
-    target_link_libraries( ansakStringTest PRIVATE ansakString "${CPPUNIT_LIBRARY}" )
-    add_test( NAME ansakStringTest COMMAND ansakStringTest )
-endif()
+add_test( NAME ansakStringTest COMMAND ansakStringTest )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Coverage" )
     SETUP_TARGET_FOR_COVERAGE(coverage ansakStringTest ansakStringCoverage)
+endif()
 endif()

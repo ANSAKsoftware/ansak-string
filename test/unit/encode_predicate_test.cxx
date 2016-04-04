@@ -17,10 +17,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include "string.hxx"
-#include "bits/string_internal.hxx"
+#include "string_internal.hxx"
 
 #include <algorithm>
 #include <iostream>
@@ -29,42 +29,7 @@
 using namespace ansak;
 using namespace ansak::internal;
 using namespace std;
-
-class EncodePredicateTestFixture : public CppUnit::TestFixture {
-
-CPPUNIT_TEST_SUITE( EncodePredicateTestFixture );
-    CPPUNIT_TEST( testCharToEncoding );
-
-    CPPUNIT_TEST( testSimpleAssignedsPredicate );
-    CPPUNIT_TEST( testSimpleSpacesPredicate );
-    CPPUNIT_TEST( testSimpleControlPredicate );
-    CPPUNIT_TEST( testSimplePrivatesPredicate );
-
-    CPPUNIT_TEST( testSimpleNonAssignedsPredicate );
-    CPPUNIT_TEST( testSimpleNonSpacesPredicate );
-    CPPUNIT_TEST( testSimpleNonControlPredicate );
-
-    CPPUNIT_TEST( testCombinedFlagsPredicate );
-CPPUNIT_TEST_SUITE_END();
-
-public:
-    void testCharToEncoding();
-
-    void testSimpleAssignedsPredicate();
-    void testSimpleSpacesPredicate();
-    void testSimpleControlPredicate();
-    void testSimplePrivatesPredicate();
-
-    void testSimpleNonAssignedsPredicate();
-    void testSimpleNonSpacesPredicate();
-    void testSimpleNonControlPredicate();
-    void testSimpleNonPrivatesPredicate();
-
-    void testCombinedFlagsPredicate();
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(EncodePredicateTestFixture);
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(EncodePredicateTestFixture, "StringClassTests");
+using namespace testing;
 
 namespace {
 
@@ -101,7 +66,7 @@ char16_t unassigneds16[] = { 0x378, 0x379, 0x10c8, 0x10c9, 0x2072, 0x2073, 0x321
 char32_t unassigneds32[] = { 0x378, 0x379, 0x10c8, 0x10c9, 0x2072, 0x2073, 0x321f, 0x32ff,
                              0x4db7, 0x4db8, 0x9fd7, 0x9fd8, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
                              0xd800, 0xdc00, 0xfa6e, 0xfa6f,
-                             0x1004e, 0x1004f, 0x12545, 0x12546, 0x17000, 0x18000, 0x1f0c0, 0x1f0d0,
+                             0x1004e, 0x1004f, 0x12545, 0x12546, 0x16FF0, 0x187ED, 0x1f0c0, 0x1f0d0,
                              0x2a6d7, 0x2a6d8, 0x30001, 0x40001, 0x50001, 0x60001, 0x70001, 0x80001,
                              0x90001, 0xA0001, 0xB0001, 0xC0001, 0xD0001, 0xE0000, 0x110000, 0 };
 
@@ -131,34 +96,34 @@ char32_t quickBrownTamil32[] = {
                 46, 0 };
 }
 
-void EncodePredicateTestFixture::testCharToEncoding()
+TEST(EncodePredicateTest, testCharToEncoding)
 {
     // test a non-assigned, non-private, non-control, non-whitespace
-    CPPUNIT_ASSERT_EQUAL(0u, charToEncodingTypeMask(static_cast<char32_t>(0x30000)));
+    EXPECT_EQ(0u, charToEncodingTypeMask(static_cast<char32_t>(0x30000)));
     // there are no non-assigned: control or whitespace values
     // test a non-assigned, private, non-control, non-whitespace
-    CPPUNIT_ASSERT_EQUAL(2u, charToEncodingTypeMask(static_cast<char32_t>(0xf0020)));
+    EXPECT_EQ(2u, charToEncodingTypeMask(static_cast<char32_t>(0xf0020)));
     // test a assigned, non-private, non-control, non-whitespace
-    CPPUNIT_ASSERT_EQUAL(1u, charToEncodingTypeMask(static_cast<char32_t>(0x2f920)));
+    EXPECT_EQ(1u, charToEncodingTypeMask(static_cast<char32_t>(0x2f920)));
     // test a assigned, non-private, non-control, whitespace
-    CPPUNIT_ASSERT_EQUAL(9u, charToEncodingTypeMask(static_cast<char16_t>(160)));
+    EXPECT_EQ(9u, charToEncodingTypeMask(static_cast<char16_t>(160)));
     // test a assigned, non-private, control, non-whitespace
-    CPPUNIT_ASSERT_EQUAL(5u, charToEncodingTypeMask(static_cast<char>(16)));
+    EXPECT_EQ(5u, charToEncodingTypeMask(static_cast<char>(16)));
     // test a assigned, non-private, control, whitespace
-    CPPUNIT_ASSERT_EQUAL(13u, charToEncodingTypeMask(static_cast<char>(9)));
+    EXPECT_EQ(13u, charToEncodingTypeMask(static_cast<char>(9)));
     // there are no assigned-private characters
 
     EncodingCheckPredicate null;
-    CPPUNIT_ASSERT(null('3'));
-    CPPUNIT_ASSERT(null(static_cast<char16_t>('3')));
-    CPPUNIT_ASSERT(null(static_cast<char32_t>('3')));
+    EXPECT_TRUE(null('3'));
+    EXPECT_TRUE(null(static_cast<char16_t>('3')));
+    EXPECT_TRUE(null(static_cast<char32_t>('3')));
 }
 
-void EncodePredicateTestFixture::testSimpleAssignedsPredicate()
+TEST(EncodePredicateTest, testSimpleAssignedsPredicate)
 {
     auto pred = validIf(kIsAssigned);
-    CPPUNIT_ASSERT(pred == pred);
-    CPPUNIT_ASSERT(!(pred != pred));
+    EXPECT_TRUE(pred == pred);
+    EXPECT_FALSE(pred != pred);
     for_each(begin(quickBrown), end(quickBrown), [&](const char c){
         if (c != 0)
         {
@@ -166,14 +131,14 @@ void EncodePredicateTestFixture::testSimpleAssignedsPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
-    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testSimpleSpacesPredicate()
+TEST(EncodePredicateTest, testSimpleSpacesPredicate)
 {
     auto pred = validIf(kIsWhitespace);
     for_each(begin(spaces), end(spaces), [&](const char c){
@@ -183,14 +148,14 @@ void EncodePredicateTestFixture::testSimpleSpacesPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(spaces16), end(spaces16), [&](const char16_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
-    for_each(begin(spaces32), end(spaces32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(spaces16), end(spaces16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(spaces32), end(spaces32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testSimpleControlPredicate()
+TEST(EncodePredicateTest, testSimpleControlPredicate)
 {
     auto pred = validIf(kIsControl);
     for_each(begin(controls), end(controls), [&](const char c){
@@ -200,14 +165,14 @@ void EncodePredicateTestFixture::testSimpleControlPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(controls16), end(controls16), [&](const char16_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
-    for_each(begin(controls32), end(controls32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(controls16), end(controls16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(controls32), end(controls32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testSimplePrivatesPredicate()
+TEST(EncodePredicateTest, testSimplePrivatesPredicate)
 {
     auto pred = validIfNot(kIsAssigned);
     for_each(begin(privates16), end(privates16), [&](const char16_t c){
@@ -217,13 +182,13 @@ void EncodePredicateTestFixture::testSimplePrivatesPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(privates32), end(privates32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(privates32), end(privates32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testSimpleNonAssignedsPredicate()
+TEST(EncodePredicateTest, testSimpleNonAssignedsPredicate)
 {
     auto pred = validIfNot(kIsAssigned);
     for_each(begin(unassigneds16), end(unassigneds16), [&](const char16_t c){
@@ -233,13 +198,13 @@ void EncodePredicateTestFixture::testSimpleNonAssignedsPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(unassigneds32), end(unassigneds32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(unassigneds32), end(unassigneds32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testSimpleNonSpacesPredicate()
+TEST(EncodePredicateTest, testSimpleNonSpacesPredicate)
 {
     auto pred = validIfNot(kIsWhitespace);
     char camelCaseSentence[] = "aQuickBrownFoxJumpsOverTheLazyDog";
@@ -256,14 +221,14 @@ void EncodePredicateTestFixture::testSimpleNonSpacesPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(camelCaseSentence16), end(camelCaseSentence16), [&](const char16_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
-    for_each(begin(camelCaseSentence32), end(camelCaseSentence32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(camelCaseSentence16), end(camelCaseSentence16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(camelCaseSentence32), end(camelCaseSentence32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testSimpleNonControlPredicate()
+TEST(EncodePredicateTest, testSimpleNonControlPredicate)
 {
     auto pred = validIfNot(kIsControl);
     for_each(begin(quickBrown), end(quickBrown), [&](const char c){
@@ -273,14 +238,14 @@ void EncodePredicateTestFixture::testSimpleNonControlPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
-    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testSimpleNonPrivatesPredicate()
+TEST(EncodePredicateTest, testSimpleNonPrivatesPredicate)
 {
     auto pred = validIfNot(kIsPrivate);
     for_each(begin(quickBrown), end(quickBrown), [&](const char c){
@@ -290,14 +255,14 @@ void EncodePredicateTestFixture::testSimpleNonPrivatesPredicate()
             {
                 cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
             }
-            CPPUNIT_ASSERT(pred(c));
+            EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
-    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) CPPUNIT_ASSERT(pred(c)); });
+    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
 }
 
-void EncodePredicateTestFixture::testCombinedFlagsPredicate()
+TEST(EncodePredicateTest, testCombinedFlagsPredicate)
 {
     auto pred = validIf(kIsAssigned);
     auto spacePred = pred.andIf(kIsWhitespace).andIfNot(kIsControl)
@@ -305,13 +270,13 @@ void EncodePredicateTestFixture::testCombinedFlagsPredicate()
     auto tabsPred = pred.andIf(kIsWhitespace).andIf(kIsControl)
                             .andIfNot(kIsPrivate);
 
-    CPPUNIT_ASSERT(pred(spaces[0]));CPPUNIT_ASSERT(!spacePred(spaces[0]));CPPUNIT_ASSERT(tabsPred(spaces[0]));  // 9
-    CPPUNIT_ASSERT(pred(spaces[1]));CPPUNIT_ASSERT(!spacePred(spaces[1]));CPPUNIT_ASSERT(tabsPred(spaces[1]));  // 10
-    CPPUNIT_ASSERT(pred(spaces[2]));CPPUNIT_ASSERT(!spacePred(spaces[2]));CPPUNIT_ASSERT(tabsPred(spaces[2]));  // 11
-    CPPUNIT_ASSERT(pred(spaces[3]));CPPUNIT_ASSERT(!spacePred(spaces[3]));CPPUNIT_ASSERT(tabsPred(spaces[3]));  // 12
-    CPPUNIT_ASSERT(pred(spaces[4]));CPPUNIT_ASSERT(!spacePred(spaces[4]));CPPUNIT_ASSERT(tabsPred(spaces[4]));  // 13
-    CPPUNIT_ASSERT(pred(spaces[5]));CPPUNIT_ASSERT(spacePred(spaces[5]));CPPUNIT_ASSERT(!tabsPred(spaces[5]));  // 32
-    CPPUNIT_ASSERT(pred(spaces[6]));CPPUNIT_ASSERT(!spacePred(spaces[6]));CPPUNIT_ASSERT(tabsPred(spaces[6]));  // 133
-    CPPUNIT_ASSERT(pred(spaces[7]));CPPUNIT_ASSERT(spacePred(spaces[7]));CPPUNIT_ASSERT(!tabsPred(spaces[7]));  // 160
+    EXPECT_TRUE(pred(spaces[0]));EXPECT_FALSE(spacePred(spaces[0]));EXPECT_TRUE(tabsPred(spaces[0]));  // 9
+    EXPECT_TRUE(pred(spaces[1]));EXPECT_FALSE(spacePred(spaces[1]));EXPECT_TRUE(tabsPred(spaces[1]));  // 10
+    EXPECT_TRUE(pred(spaces[2]));EXPECT_FALSE(spacePred(spaces[2]));EXPECT_TRUE(tabsPred(spaces[2]));  // 11
+    EXPECT_TRUE(pred(spaces[3]));EXPECT_FALSE(spacePred(spaces[3]));EXPECT_TRUE(tabsPred(spaces[3]));  // 12
+    EXPECT_TRUE(pred(spaces[4]));EXPECT_FALSE(spacePred(spaces[4]));EXPECT_TRUE(tabsPred(spaces[4]));  // 13
+    EXPECT_TRUE(pred(spaces[5]));EXPECT_TRUE(spacePred(spaces[5]));EXPECT_FALSE(tabsPred(spaces[5]));  // 32
+    EXPECT_TRUE(pred(spaces[6]));EXPECT_FALSE(spacePred(spaces[6]));EXPECT_TRUE(tabsPred(spaces[6]));  // 133
+    EXPECT_TRUE(pred(spaces[7]));EXPECT_TRUE(spacePred(spaces[7]));EXPECT_FALSE(tabsPred(spaces[7]));  // 160
 }
 
