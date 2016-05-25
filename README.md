@@ -1,6 +1,8 @@
 ansak-string
 ============
 
+Copyright 2015, Arthur N. Klassen; see LICENSE for usage guidelines (BSD 2-clause)
+
 This library started as the first piece of a larger project that's gotten somewhat stalled. It's a simple string library.
 
 It's all about purifying input. If your string (whether it's 7-bit ASCII, UTF-8, UTF-16, UCS-2 or UTF-32/UCS-4) makes it through my APIs (into 7-bit ASCII, UTF-8 etc.), then that's what it is. No more, no less. This includes filtering for publicly assigned Unicode values, currently following Unicode 8.0.
