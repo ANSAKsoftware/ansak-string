@@ -35,8 +35,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// sringSplitJoinTest.cxx -- unit tests for the string splitting and
-//                           joining functions
+// string_splitjoin_test.cxx -- unit tests for the string splitting and
+//                              joining functions
 //
 ///////////////////////////////////////////////////////////////////////////
 

@@ -59,9 +59,9 @@ list( INSERT CMAKE_MODULE_PATH
 
 project( ansakString )
 
-set( _useUnitTests 1 )
+set( _ansakDoUnitTests 1 )
 if( ANSAK_SUPPRESS_UNIT_TESTS )
-    set( _useUnitTests 0 )
+    set( _ansakDoUnitTests 0 )
 endif()
 
 set( _ansakBuildType "notCoverage")
@@ -73,20 +73,20 @@ if( CMAKE_GENERATOR MATCHES "Visual Studio" )
     if( _ansakBuildType STREQUAL "Coverage" )
         message( FATAL_ERROR "Coverage is not available in Visual Studio Builds." )
     endif()
-    if( _useUnitTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
+    if( _ansakDoUnitTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
         message( "Unit tests require Visual Studio 2015 or later. Suppressing..." )
-        set( _useUnitTests 0 )
+        set( _ansakDoUnitTests 0 )
     endif()
 endif()
 
 if( ${_ansakBuildType} STREQUAL "Coverage" )
-    if( ${_useUnitTests} EQUAL 0 )
+    if( ${_ansakDoUnitTests} EQUAL 0 )
         message( "Coverage builds require unit tests to be active." )
-        set( _useUnitTests 1 )
+        set( _ansakDoUnitTests 1 )
     endif()
 endif()
 
-if( _useUnitTests )
+if( _ansakDoUnitTests )
     include( CTest )
     if( _ansakBuildType STREQUAL "Coverage" )
         if( NOT UNIX )
@@ -129,6 +129,7 @@ set( ansakString_intfc )
 list( APPEND ansakString_intfc
              interface/string.hxx
              interface/string_splitjoin.hxx
+             interface/internal/string_decode_utf8.hxx
     )
 
 set( bitsDir source/bits${ANSAK_UNICODE_SUPPORT} )
@@ -138,6 +139,7 @@ set( ansakString_src )
 list( APPEND ansakString_src source/string.cxx
                              source/string_tolower.cxx
                              source/string_toutf8.cxx
+                             source/string_decode_utf8.cxx
                              source/encoding_check_predicate.cxx
                              source/string_internal.hxx
                              ${bitsDir}/char_to_lower.cxx
@@ -150,7 +152,7 @@ set( ansakString_privIncludes )
 list( APPEND ansakString_privIncludes ${bitsDir} source )
 target_include_directories( ansakString PRIVATE ${ansakString_privIncludes} PUBLIC interface )
 
-if( _useUnitTests )
+if( _ansakDoUnitTests )
   add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
   target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
 
@@ -163,6 +165,7 @@ if( _useUnitTests )
                       VERBATIM )
 
   add_executable( ansakStringTest test/unit/string_test.cxx
+                                  test/unit/string_decode_utf8_test.cxx
                                   test/unit/encode_predicate_test.cxx
                                   test/unit/string_splitjoin_test.cxx
                                   test/unit/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx

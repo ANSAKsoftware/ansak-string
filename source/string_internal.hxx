@@ -255,6 +255,40 @@ uint32_t charToEncodingTypeMask(C c)
 }
 
 //=========================================================================
+// Is character (of whatever type) first half of non-BMP UTF-16 pair
+// (in range D800..DBFF)
+//
+// Returns true if in range, false otherwise.
+
+template<typename C>
+bool isFirstHalfUtf16
+(
+    C                   c       // I - character to test
+)
+{
+    static_assert(std::is_integral<C>::value, "isFirstHalfUtf16 needs an integral type.");
+
+    return c >= 0xd800 && c <= 0xdbff;
+}
+
+//=========================================================================
+// Is character (of whatever type) second half of non-BMP UTF-16 pair
+// (in range DC00..DFFF)
+//
+// Returns true if in range, false otherwise.
+
+template<typename C>
+bool isSecondHalfUtf16
+(
+    C                   c       // I - character to test
+)
+{
+    static_assert(std::is_integral<C>::value, "isSecondHalfUtf16 needs an integral type.");
+
+    return c >= 0xdc00 && c <= 0xdfff;
+}
+
+//=========================================================================
 // Utility overloaded functions to convert 2-byte UTF-8 sequences to a single value
 
 inline char16_t rawDecodeUtf8(char c0, char c1)

@@ -48,6 +48,7 @@
 
 #include "string.hxx"
 #include "string_internal.hxx"
+#include "internal/string_decode_utf8.hxx"
 
 using namespace std;
 using namespace ansak::internal;
@@ -64,40 +65,6 @@ RangeTypeFlags rangeTypeToRangeFlag[RangeType::kFirstInvalidRange] =
 
 ///////////////////////////////////////////////////////////////////////////
 // Local Functions
-
-//=========================================================================
-// Is character (of whatever type) first half of non-BMP UTF-16 pair
-// (in range D800..DBFF)
-//
-// Returns true if in range, false otherwise.
-
-template<typename C>
-bool isFirstHalfUtf16
-(
-    C                   c       // I - character to test
-)
-{
-    static_assert(std::is_integral<C>::value, "isFirstHalfUtf16 needs an integral type.");
-
-    return c >= 0xd800 && c <= 0xdbff;
-}
-
-//=========================================================================
-// Is character (of whatever type) second half of non-BMP UTF-16 pair
-// (in range DC00..DFFF)
-//
-// Returns true if in range, false otherwise.
-
-template<typename C>
-bool isSecondHalfUtf16
-(
-    C                   c       // I - character to test
-)
-{
-    static_assert(std::is_integral<C>::value, "isSecondHalfUtf16 needs an integral type.");
-
-    return c >= 0xdc00 && c <= 0xdfff;
-}
 
 //=========================================================================
 // Is character (of whatever type) encodable as UTF-16? (in range 0..10FFFF)
@@ -129,153 +96,6 @@ inline bool isUtf16EscapedRange
 )
 {
     return isFirstHalfUtf16(c) || isSecondHalfUtf16(c);
-}
-
-//=========================================================================
-// Utility function to decode a single UCS-4 character from "the next
-// character" in a 0-terminated string, assumed to be UTF-8.
-//
-// Returns 0 if no UCS-4 character could be decoded, returns that character
-//     otherwise.
-// If the null-terminated string ran out of characters, returns 0 and leaves
-//     p pointing at the last read character, the null.
-// If the UTF-8 character is invalid, i.e. broken in any way, returns 0 and
-//     modifies p to equal 0.
-// If the UTF-8 character (or characters) are valid, returns that character and
-//     p is advanced to point to the last character consumed in decoding.
-//
-// UTF-8 characters can be broken by:
-// 1. not a sequence character -- 0xfe, 0xff
-// 2. inappropriate sequences -- starting with 0xa0..0xbf (subsequent byte)
-// 3. inappropriate sequences -- not enough subsequent bytes after an initial byte
-//                               (0x80..0xdf : 1 byte; 0xe0..0xef : 2 bytes ...)
-// 4. UTF-8 sequence leading to broken UTF-16 sequence -- starting with 0xdc00..0xdfff
-// 5. UTF-8 sequence leading to broken UTF-16 sequence -- starting with 0xd800..0xdbff
-//                               but not continued with 0xdc00..0xdfff
-
-char32_t decodeUtf8
-(
-    const char*&        p       // I/O - points to current non-null character
-)
-{
-    auto uc = static_cast<unsigned char>(*p);
-    if (uc <= 0x7f)
-    {
-        // 7-bit
-        return uc;
-    }
-    else if (uc <= 0xbf)
-    {
-        // 80..BF are non-first bytes
-        p = 0; return 0;        // should never get here, trimmed out at higher levels
-    }
-    else if (uc <= 0xdf)
-    {
-        // 2-byte, next 1 must be A0..BF range
-        auto uc1 = static_cast<unsigned char>(*++p); if (uc1 == 0) { return 0; }
-        if (uc1 < 0x80 || uc1 > 0xbf) { p = 0; return 0; }
-        auto r = rawDecodeUtf8(uc, uc1);
-        if (r < 0x80)
-        {
-            p = 0; return 0;
-        }
-        return r;
-    }
-    else if (uc <= 0xef)
-    {
-        // 3-byte, next 2 must be A0..BF range
-        auto uc1 = static_cast<unsigned char>(*++p); if (uc1 == 0) { return 0; }
-        if (uc1 < 0x80 || uc1 > 0xbf) { p = 0; return 0; }
-        auto uc2 = static_cast<unsigned char>(*++p); if (uc2 == 0) { return 0; }
-        if (uc2 < 0x80 || uc2 > 0xbf) { p = 0; return 0; }
-        char32_t w = rawDecodeUtf8(uc, uc1, uc2);
-        if (isFirstHalfUtf16(w))
-        {
-            // must have 2nd-half of escape from UTF-16 -- must be 3-byte UTF-8 range
-            auto uc3 = static_cast<unsigned char>(*++p); if (uc3 == 0) { return 0; }
-            if (uc3 < 0xe0 || uc3 > 0xef) { p = 0; return 0; }
-            auto uc4 = static_cast<unsigned char>(*++p); if (uc4 == 0) { return 0; }
-            if (uc4 < 0x80 || uc4 > 0xbf) { p = 0; return 0; }
-            auto uc5 = static_cast<unsigned char>(*++p); if (uc5 == 0) { return 0; }
-            if (uc5 < 0x80 || uc5 > 0xbf) { p = 0; return 0; }
-            // turn to UCS-4
-            char32_t w2 = rawDecodeUtf8(uc3, uc4, uc5);
-            if (isSecondHalfUtf16(w2))
-            {
-                return 0x10000 + ((w & 0x3ff) << 10) + (w2 & 0x3ff);
-            }
-            else
-            {
-                p = 0; return 0;        // should never get here, trimmed out at higher levels
-            }
-        }
-        else if ((w < 0x800) || isSecondHalfUtf16(w))
-        {
-            p = 0; return 0;
-        }
-        else
-        {
-            return w;
-        }
-    }
-    else if (uc <= 0xf7)
-    {
-        // 4-byte, next 3 must be A0..BF range
-        auto uc1 = static_cast<unsigned char>(*++p); if (uc1 == 0) { return 0; }
-        if (uc1 < 0x80 || uc1 > 0xbf) { p = 0; return 0; }
-        auto uc2 = static_cast<unsigned char>(*++p); if (uc2 == 0) { return 0; }
-        if (uc2 < 0x80 || uc2 > 0xbf) { p = 0; return 0; }
-        auto uc3 = static_cast<unsigned char>(*++p); if (uc3 == 0) { return 0; }
-        if (uc3 < 0x80 || uc3 > 0xbf) { p = 0; return 0; }
-        auto r = rawDecodeUtf8(uc, uc1, uc2, uc3);
-        if (r < 0x10000)
-        {
-            p = 0; return 0;
-        }
-        return r;
-    }
-    else if (uc <= 0xfb)
-    {
-        // 5-byte, next 4 must be A0..BF range
-        auto uc1 = static_cast<unsigned char>(*++p); if (uc1 == 0) { return 0; }
-        if (uc1 < 0x80 || uc1 > 0xbf) { p = 0; return 0; }
-        auto uc2 = static_cast<unsigned char>(*++p); if (uc2 == 0) { return 0; }
-        if (uc2 < 0x80 || uc2 > 0xbf) { p = 0; return 0; }
-        auto uc3 = static_cast<unsigned char>(*++p); if (uc3 == 0) { return 0; }
-        if (uc3 < 0x80 || uc3 > 0xbf) { p = 0; return 0; }
-        auto uc4 = static_cast<unsigned char>(*++p); if (uc4 == 0) { return 0; }
-        if (uc4 < 0x80 || uc4 > 0xbf) { p = 0; return 0; }
-        auto r = rawDecodeUtf8(uc, uc1, uc2, uc3, uc4);
-        if (r < 0x200000)
-        {
-            p = 0; return 0;
-        }
-        return r;
-    }
-    else if (uc <= 0xfd)
-    {
-        // 6-byte, next 5 must be A0..BF range (speculative! 10FFFF is covered in 5 bytes)
-        auto uc1 = static_cast<unsigned char>(*++p); if (uc1 == 0) { return 0; }
-        if (uc1 < 0x80 || uc1 > 0xbf) { p = 0; return 0; }
-        auto uc2 = static_cast<unsigned char>(*++p); if (uc2 == 0) { return 0; }
-        if (uc2 < 0x80 || uc2 > 0xbf) { p = 0; return 0; }
-        auto uc3 = static_cast<unsigned char>(*++p); if (uc3 == 0) { return 0; }
-        if (uc3 < 0x80 || uc3 > 0xbf) { p = 0; return 0; }
-        auto uc4 = static_cast<unsigned char>(*++p); if (uc4 == 0) { return 0; }
-        if (uc4 < 0x80 || uc4 > 0xbf) { p = 0; return 0; }
-        auto uc5 = static_cast<unsigned char>(*++p); if (uc5 == 0) { return 0; }
-        if (uc5 < 0x80 || uc5 > 0xbf) { p = 0; return 0; }
-        auto r = rawDecodeUtf8(uc, uc1, uc2, uc3, uc4, uc5);
-        if (r < 0x4000000)
-        {
-            p = 0; return 0;
-        }
-        return r;
-    }
-    else
-    {
-        p = 0; return 0;        // should never get here, trimmed out at higher levels
-    }
 }
 
 //=========================================================================
