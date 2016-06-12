@@ -5,7 +5,7 @@
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright notice,
 #    this list of conditions and the following disclaimer.
 #
@@ -52,20 +52,27 @@
 # Unit tests are enabled but may be disabled by setting ANSAK_SUPPRESS_UNIT_TESTS=1 before
 # calling add_subdirectory() to include it.
 
-cmake_minimum_required( VERSION 3.1 )
+cmake_minimum_required(VERSION 3.1)
 
-list( INSERT CMAKE_MODULE_PATH
-      0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules )
+project(ansakString)
 
-project( ansakString )
+set( _ansakRoot 0 )
+if( "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" )
+    set( _ansakRoot 1 )
+endif()
 
-set( _ansakDoUnitTests 1 )
-if( ANSAK_SUPPRESS_UNIT_TESTS )
-    set( _ansakDoUnitTests 0 )
+if( ${_ansakRoot} )
+    list( INSERT CMAKE_MODULE_PATH
+          0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules )
+
+    set( _useUnitTests 1 )
+    if( ANSAK_SUPPRESS_UNIT_TESTS )
+        set( _useUnitTests 0 )
+    endif()
 endif()
 
 set( _ansakBuildType "notCoverage")
-if (CMAKE_BUILD_TYPE)
+if( CMAKE_BUILD_TYPE )
     set(_ansakBuildType "${CMAKE_BUILD_TYPE}")
 endif()
 
@@ -73,29 +80,34 @@ if( CMAKE_GENERATOR MATCHES "Visual Studio" )
     if( _ansakBuildType STREQUAL "Coverage" )
         message( FATAL_ERROR "Coverage is not available in Visual Studio Builds." )
     endif()
-    if( _ansakDoUnitTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
+    if( _useUnitTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
         message( "Unit tests require Visual Studio 2015 or later. Suppressing..." )
-        set( _ansakDoUnitTests 0 )
+        set( _useUnitTests 0 )
     endif()
 endif()
 
 if( ${_ansakBuildType} STREQUAL "Coverage" )
-    if( ${_ansakDoUnitTests} EQUAL 0 )
+    if( ${_useUnitTests} EQUAL 0 )
         message( "Coverage builds require unit tests to be active." )
-        set( _ansakDoUnitTests 1 )
+        set( _useUnitTests 1 )
     endif()
 endif()
 
-if( _ansakDoUnitTests )
-    include( CTest )
-    if( _ansakBuildType STREQUAL "Coverage" )
-        if( NOT UNIX )
-            message( "Trying to build code coverage on a non-Linux system isn't going to end well." )
+if( _useUnitTests )
+    if( ${_ansakRoot} ) 
+        include( CTest )
+        if( _ansakBuildType STREQUAL "Coverage" )
+            if( NOT UNIX )
+                message( "Trying to build code coverage on a non-Linux system isn't going to end well." )
+            endif()
+            include( CodeCoverage )
         endif()
-        include( CodeCoverage )
-    endif()
 
-    add_subdirectory( test/googletest )
+        if(NOT DEFINED ANSAK_HAVE_GOOGLE_TEST)
+            add_subdirectory( test/googletest )
+            set( ANSAK_HAVE_GOOGLE_TEST on )
+        endif()
+    endif()
 endif()
 
 set( DEFAULT_SUPPORTED_UNICODE_VERSION "8" )
@@ -129,8 +141,7 @@ set( ansakString_intfc )
 list( APPEND ansakString_intfc
              interface/string.hxx
              interface/string_splitjoin.hxx
-             interface/internal/string_decode_utf8.hxx
-    )
+             interface/internal/string_decode_utf8.hxx )
 
 set( bitsDir source/bits${ANSAK_UNICODE_SUPPORT} )
 set( absBitsDir "${PROJECT_SOURCE_DIR}/${bitsDir}" )
@@ -152,7 +163,7 @@ set( ansakString_privIncludes )
 list( APPEND ansakString_privIncludes ${bitsDir} source )
 target_include_directories( ansakString PRIVATE ${ansakString_privIncludes} PUBLIC interface )
 
-if( _ansakDoUnitTests )
+if( _useUnitTests )
   add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
   target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
 
@@ -173,10 +184,9 @@ if( _ansakDoUnitTests )
                                   test/unit/char_is_unicode_test.cxx
                                   "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                 )
-  target_link_libraries( ansakStringTest PRIVATE ansakString gtest_main )
   target_include_directories( ansakStringTest PRIVATE "$<TARGET_PROPERTY:ansakString,INCLUDE_DIRECTORIES>"
-                                                      "${PROJECT_BINARY_DIR}"
-                            )
+                                                      "${PROJECT_BINARY_DIR}")
+  target_link_libraries( ansakStringTest PRIVATE ansakString gtest_main )
 
   add_test( NAME ansakStringTest COMMAND ansakStringTest )
 
