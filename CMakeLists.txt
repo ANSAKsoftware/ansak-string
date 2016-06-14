@@ -37,7 +37,7 @@
 
 # Select your desired version of unicode with the ANSAK_UNICODE_SUPPORT variable, e.g.:
 #   cmake -DANSAK_UNICODE_SUPPORT=9      # to use the 9.0.0d2 version of Unicode
-# ANSAK_UNICODE_SUPPORT defualts to8.
+# ANSAK_UNICODE_SUPPORT defualts to 8.
 
 # Be sure to update the gtest sub-module so the unit tests will work!
 
@@ -49,12 +49,11 @@
 # Unit tests will be suppressed for VS2012 (some C++11 features used for those unit tests
 # are incompatible with the VS2012 compiler).
 
-# Unit tests are enabled but may be disabled by setting ANSAK_SUPPRESS_UNIT_TESTS=1 before
-# calling add_subdirectory() to include it.
-
 cmake_minimum_required(VERSION 3.1)
 
 project(ansakString)
+
+## part of ansak multi-part project? ####
 
 set( _ansakRoot 0 )
 if( "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" )
@@ -64,12 +63,8 @@ endif()
 if( ${_ansakRoot} )
     list( INSERT CMAKE_MODULE_PATH
           0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules )
-
-    set( _useUnitTests 1 )
-    if( ANSAK_SUPPRESS_UNIT_TESTS )
-        set( _useUnitTests 0 )
-    endif()
 endif()
+set( _useUnitTests 1 )
 
 set( _ansakBuildType "notCoverage")
 if( CMAKE_BUILD_TYPE )
@@ -102,11 +97,7 @@ if( _useUnitTests )
             endif()
             include( CodeCoverage )
         endif()
-
-        if(NOT DEFINED ANSAK_HAVE_GOOGLE_TEST)
-            add_subdirectory( test/googletest )
-            set( ANSAK_HAVE_GOOGLE_TEST on )
-        endif()
+        add_subdirectory( submods )
     endif()
 endif()
 
@@ -127,7 +118,6 @@ if( UNIX )
     set( CMAKE_CXX_STANDARD 11 )
     set( CMAKE_CXX_STANDARD_REQUIRED ON )
     add_compile_options( -Wall -Wextra -Werror )
-                        # -Wno-multichar -Wno-attributes -Wno-unknown-pragmas -Wno-switch )
     if( COVERAGE )
         add_compile_options( -O0 -fprofile-arcs -ftest-coverage )
         SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs -ftest-coverage -lgcov" )
@@ -158,6 +148,9 @@ list( APPEND ansakString_src source/string.cxx
     )
 
 add_library( ansakString STATIC ${ansakString_src} )
+if (UNIX)
+    target_compile_options( ansakString PRIVATE -Weffc++ )
+endif()
 
 set( ansakString_privIncludes )
 list( APPEND ansakString_privIncludes ${bitsDir} source )
@@ -187,6 +180,11 @@ if( _useUnitTests )
   target_include_directories( ansakStringTest PRIVATE "$<TARGET_PROPERTY:ansakString,INCLUDE_DIRECTORIES>"
                                                       "${PROJECT_BINARY_DIR}")
   target_link_libraries( ansakStringTest PRIVATE ansakString gtest_main )
+  if( WIN32 )
+      add_custom_command( TARGET ansakStringTest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR})
+  endif()
 
   add_test( NAME ansakStringTest COMMAND ansakStringTest )
 

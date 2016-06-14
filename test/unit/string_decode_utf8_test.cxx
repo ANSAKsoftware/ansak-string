@@ -443,8 +443,8 @@ TEST(DecodeUtf8Test, testFiveByteSequence)
         const char testGoodFiveByte[] = "\xfb\x91\x96\x9e\x89";
         const char* p = &testGoodFiveByte[0];
         auto q = p;
-        auto c = decodeUtf8(p);
-        EXPECT_EQ(c, U'\U03456789');
+        auto c = static_cast<int>(decodeUtf8(p));   // gcc doesn't like char32_t -- int comparisons
+        EXPECT_EQ(c, 0x3456789);                    // MSVC doesn't like non-code-point char32_t's
         EXPECT_EQ(q + 4, p);
     }
 }
@@ -555,8 +555,8 @@ TEST(DecodeUtf8Test, testSixByteSequence)
         const char testGoodSixByte[] = "\xfd\xa7\xa2\x9a\xaf\x8d";
         const char* p = &testGoodSixByte[0];
         auto q = p;
-        auto c = decodeUtf8(p);
-        EXPECT_EQ(c, U'\U6789abcd');
+        auto c = static_cast<int>(decodeUtf8(p));   // gcc doesn't like char32_t -- int comparisons
+        EXPECT_EQ(c, 0x6789abcd);                   // MSVC doesn't like non-code-point char32_t's
         EXPECT_EQ(q + 5, p);
     }
 }
