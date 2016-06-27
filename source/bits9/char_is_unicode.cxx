@@ -49,7 +49,7 @@ namespace ansak {
 
 namespace internal {
 
-const utf8String supportedUnicodeVersion = "9.0.0d2";
+const utf8String supportedUnicodeVersion = "9.0.0";
 
 namespace
 {

@@ -1,3 +1,3 @@
 [submodule "test/googletest"]
-	path = test/googletest
+	path = submods/googletest
 	url = https://github.com/google/googletest.git

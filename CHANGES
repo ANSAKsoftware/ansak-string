@@ -1,5 +1,7 @@
 CHANGES
 
+2.0 -- Complete the use of Unicode 9.0 (make that the default), make ansak-string suitable for sub-moduling, and bring Windows support for the latest version up to par.
+
 1.4 -- converted project to use 2-clause BSD license
 
 1.3 -- support for Unicode 7 and the latest beta of Unicode 9, selectable before compile time; also switch to googletest
