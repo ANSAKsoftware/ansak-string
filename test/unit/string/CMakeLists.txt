@@ -48,6 +48,7 @@ add_executable( test-ansakString string_test.cxx
                               encode_predicate_test.cxx
                               string_splitjoin_test.cxx
                               string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
+                              string_trim_test.cxx
                               string_with_predicate_test.cxx
                               char_is_unicode_test.cxx
                               "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"

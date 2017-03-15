@@ -44,7 +44,6 @@
 
 #include <string_splitjoin.hxx>
 #include <string.hxx>
-#include <string.h>
 
 using namespace std;
 using namespace testing;
