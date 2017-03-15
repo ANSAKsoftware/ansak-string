@@ -55,10 +55,6 @@ add_executable( test-ansakString string_test.cxx
 target_include_directories( test-ansakString PRIVATE "${PROJECT_BINARY_DIR}"
                                                      ../../../source/include )
 target_link_libraries( test-ansakString PRIVATE ansakString gtest_main )
-if( WIN32 )
-  add_custom_command( TARGET test-ansakString POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR})
-endif()
+SETUP_TO_EXECUTE_GTEST()
 
 add_test( NAME ansakStringTest COMMAND test-ansakString )
