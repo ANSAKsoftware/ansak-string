@@ -56,7 +56,7 @@ if(NOT (TARGET "gmock" OR TARGET "gtest"))
                 CMAKE_C_FLAGS_RELEASE
                 )
         foreach(CompilerFlag ${CompilerFlags})
-          string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+          string(REPLACE "/MT" "/MD" ${CompilerFlag} "${${CompilerFlag}}")
         endforeach()
     endif()
 endif()
