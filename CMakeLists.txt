@@ -39,19 +39,19 @@
 #   cmake -DANSAK_UNICODE_SUPPORT=9      # to use the 9.0.0 version of Unicode
 # ANSAK_UNICODE_SUPPORT defualts to 9.
 
-# Be sure to update the gtest sub-module so the unit tests will work!
+# Be sure to update the gtest sub-module so the tests will work!
 
 # If you have gcov and lcov installed on a Linux system, code coverage is provided via
 #   cmake -DCMAKE_BUILD_TYPE=Coverage for this target to work properly
 
 # On MS-Windows, this project requires VS2012 or later to use it, requires VS2015
-# or later to run the Unit Tests (If you use CLANG your mileage will CERTAINLY vary.)
-# Unit tests will be suppressed for VS2012 (some C++11 features used for those unit tests
-# are incompatible with the VS2012 compiler).
+# or later to run the Tests (If you use CLANG your mileage will CERTAINLY vary.)
+# Tests will be suppressed for VS2012 (some C++11 features used for tests are
+# incompatible with the VS2012 compiler).
 
 cmake_minimum_required(VERSION 3.1)
 
-project(ansakString)
+project(ansakLib)
 
 ## part of ansak multi-part project? ####
 
@@ -64,43 +64,8 @@ if( ${_ansakRoot} )
     list( INSERT CMAKE_MODULE_PATH
           0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules )
 endif()
-set( _useUnitTests 1 )
 
-set( _ansakBuildType "notCoverage")
-if( CMAKE_BUILD_TYPE )
-    set(_ansakBuildType "${CMAKE_BUILD_TYPE}")
-endif()
-
-if( CMAKE_GENERATOR MATCHES "Visual Studio" )
-    if( _ansakBuildType STREQUAL "Coverage" )
-        message( FATAL_ERROR "Coverage is not available in Visual Studio Builds." )
-    endif()
-    if( _useUnitTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
-        message( "Unit tests require Visual Studio 2015 or later. Suppressing..." )
-        set( _useUnitTests 0 )
-    endif()
-endif()
-
-if( ${_ansakBuildType} STREQUAL "Coverage" )
-    if( ${_useUnitTests} EQUAL 0 )
-        message( "Coverage builds require unit tests to be active." )
-        set( _useUnitTests 1 )
-    endif()
-endif()
-
-if( _useUnitTests )
-    if( ${_ansakRoot} ) 
-        include( CTest )
-        if( _ansakBuildType STREQUAL "Coverage" )
-            if( NOT UNIX )
-                message( "Trying to build code coverage on a non-Linux system isn't going to end well." )
-            endif()
-            include( CodeCoverage )
-        endif()
-        add_subdirectory( submods )
-    endif()
-endif()
-
+# Choose Unicode version to support
 set( DEFAULT_SUPPORTED_UNICODE_VERSION "9" )
 if( ANSAK_UNICODE_SUPPORT )
     if( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL "7" ) OR
@@ -113,7 +78,47 @@ else()
     message( "No Unicode version selected. Defaulting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
     set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
 endif()
+set( unicodeSubDir bits${ANSAK_UNICODE_SUPPORT} )
 
+# Choose unit-tests or not (default on), Coverage or not, based on target platform
+set( _useTests 1 )
+
+set( _ansakBuildType "notCoverage")
+if( CMAKE_BUILD_TYPE )
+    set(_ansakBuildType "${CMAKE_BUILD_TYPE}")
+endif()
+
+if( CMAKE_GENERATOR MATCHES "Visual Studio" )
+    if( _ansakBuildType STREQUAL "Coverage" )
+        message( FATAL_ERROR "Coverage is not available in Visual Studio Builds." )
+    endif()
+    if( _useTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
+        message( "Tests require Visual Studio 2015 or later. Suppressing..." )
+        set( _useTests 0 )
+    endif()
+endif()
+
+if( ${_ansakBuildType} STREQUAL "Coverage" )
+    if( ${_useTests} EQUAL 0 )
+        message( "Coverage builds require tests to be active." )
+        set( _useTests 1 )
+    endif()
+endif()
+
+if( _useTests )
+    if( ${_ansakRoot} ) 
+        include( CTest )
+        if( _ansakBuildType STREQUAL "Coverage" )
+            if( NOT UNIX )
+                message( "Trying to build code coverage on a non-Linux system isn't going to end well." )
+            endif()
+            include( CodeCoverage )
+        endif()
+        add_subdirectory( submods )
+    endif()
+endif()
+
+# Choose basic compiler options
 if( UNIX )
     set( CMAKE_CXX_STANDARD 11 )
     set( CMAKE_CXX_STANDARD_REQUIRED ON )
@@ -127,68 +132,8 @@ if( UNIX )
     endif()
 endif()
 
-set( ansakString_intfc )
-list( APPEND ansakString_intfc
-             interface/string.hxx
-             interface/string_splitjoin.hxx
-             interface/internal/string_decode_utf8.hxx )
-
-set( bitsDir source/bits${ANSAK_UNICODE_SUPPORT} )
-set( absBitsDir "${PROJECT_SOURCE_DIR}/${bitsDir}" )
-
-set( ansakString_src )
-list( APPEND ansakString_src source/string.cxx
-                             source/string_tolower.cxx
-                             source/string_toutf8.cxx
-                             source/string_decode_utf8.cxx
-                             source/encoding_check_predicate.cxx
-                             source/string_internal.hxx
-                             ${bitsDir}/char_to_lower.cxx
-                             ${bitsDir}/char_is_unicode.cxx
-    )
-
-add_library( ansakString STATIC ${ansakString_src} )
-if (UNIX)
-    target_compile_options( ansakString PRIVATE -Weffc++ )
-endif()
-
-set( ansakString_privIncludes )
-list( APPEND ansakString_privIncludes ${bitsDir} source )
-target_include_directories( ansakString PRIVATE ${ansakString_privIncludes} PUBLIC interface )
-
-if( _useUnitTests )
-  add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
-  target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
-
-  add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-              COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
-                      "${absBitsDir}/UnicodeData.txt"
-                      "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                      COMMENT "Generating test data for charIsUnicode test"
-                      DEPENDS "${absBitsDir}/UnicodeData.txt" mkUnicodeTestData
-                      VERBATIM )
-
-  add_executable( ansakStringTest test/unit/string_test.cxx
-                                  test/unit/string_decode_utf8_test.cxx
-                                  test/unit/encode_predicate_test.cxx
-                                  test/unit/string_splitjoin_test.cxx
-                                  test/unit/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
-                                  test/unit/string_with_predicate_test.cxx
-                                  test/unit/char_is_unicode_test.cxx
-                                  "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                )
-  target_include_directories( ansakStringTest PRIVATE "$<TARGET_PROPERTY:ansakString,INCLUDE_DIRECTORIES>"
-                                                      "${PROJECT_BINARY_DIR}")
-  target_link_libraries( ansakStringTest PRIVATE ansakString gtest_main )
-  if( WIN32 )
-      add_custom_command( TARGET ansakStringTest POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR})
-  endif()
-
-  add_test( NAME ansakStringTest COMMAND ansakStringTest )
-
-  if( _ansakBuildType STREQUAL "Coverage" )
-      SETUP_TARGET_FOR_COVERAGE( ansak-string-coverage ansakStringTest ansakStringCoverage )
-  endif()
+# Bring in the source and test directories
+add_subdirectory( source )
+if( _useTests )
+    add_subdirectory( test )
 endif()
