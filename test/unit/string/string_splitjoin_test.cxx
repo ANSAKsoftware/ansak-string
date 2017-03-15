@@ -49,6 +49,21 @@
 using namespace std;
 using namespace testing;
 
+TEST(StringSplitJoinTest, testEmpties)
+{
+    string emptyString;
+    ASSERT_TRUE(ansak::split(emptyString, ',').empty());
+
+    vector<string> emptyVector;
+    ASSERT_TRUE(ansak::join(emptyVector, ',').empty());
+}
+
+TEST(StringSplitJoinTest, testUnicodeVersion)
+{
+    string emptyString;
+    ASSERT_TRUE(ansak::getUnicodeVersionSupported() >= "7.0");
+}
+
 TEST(StringSplitJoinTest, testSplitter)
 {
     string t0("Now is the time for all good men to come to the aid of the party");

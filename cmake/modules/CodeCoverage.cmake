@@ -156,6 +156,10 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname)
 
 ENDFUNCTION() # SETUP_TARGET_FOR_COVERAGE
 
+MACRO( SETUP_CTEST_FOR_COVERAGE )
+    SETUP_TARGET_FOR_COVERAGE( coverage ctest coverageResults )
+ENDMACRO()
+
 # Param _targetname     The name of new the custom make target
 # Param _testrunner     The name of the target which runs the tests
 # Param _outputname     cobertura output is generated as _outputname.xml
