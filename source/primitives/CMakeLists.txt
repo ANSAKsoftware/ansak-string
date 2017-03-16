@@ -39,7 +39,8 @@ set( _target ansakPrimitives )
 set( _interface ../../interface )
 
 set( ansakPrimitives_src )
-list( APPEND ansakPrimitives_src nullptr_exception.cxx
+list( APPEND ansakPrimitives_src file_path.cxx
+                                 nullptr_exception.cxx
                                  runtime_exception.cxx
                                  time_stamp.cxx
     )
