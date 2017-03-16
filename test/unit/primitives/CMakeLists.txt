@@ -35,5 +35,11 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( string )
-add_subdirectory( primitives )
+add_executable( test-ansakPrimitives nullptr_exception_test.cxx
+                                     runtime_exception_test.cxx
+                                     time_stamp_test.cxx
+            )
+target_link_libraries( test-ansakPrimitives PRIVATE ansakPrimitives gtest_main )
+SETUP_TO_EXECUTE_GTEST()
+
+add_test( NAME ansakPrimitivesTest COMMAND test-ansakPrimitives )
