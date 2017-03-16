@@ -42,6 +42,6 @@ add_executable( test-ansakPrimitives file_path_test.cxx
             )
 target_link_libraries( test-ansakPrimitives
                PRIVATE ansakPrimitives ansakString gtest_main )
-SETUP_TO_EXECUTE_GTEST()
+SETUP_TO_EXECUTE_GTEST( test-ansakPrimitives )
 
 add_test( NAME ansakPrimitivesTest COMMAND test-ansakPrimitives )

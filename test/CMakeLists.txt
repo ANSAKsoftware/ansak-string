@@ -35,9 +35,9 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-MACRO( SETUP_TO_EXECUTE_GTEST )
+MACRO( SETUP_TO_EXECUTE_GTEST TestTarget )
     if( WIN32 )
-      add_custom_command( TARGET test-ansakString POST_BUILD
+      add_custom_command( TARGET ${TestTarget} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
     endif()

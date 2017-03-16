@@ -56,6 +56,6 @@ add_executable( test-ansakString string_test.cxx
 target_include_directories( test-ansakString PRIVATE "${PROJECT_BINARY_DIR}"
                                                      ../../../source/include )
 target_link_libraries( test-ansakString PRIVATE ansakString gtest_main )
-SETUP_TO_EXECUTE_GTEST()
+SETUP_TO_EXECUTE_GTEST( test-ansakString )
 
 add_test( NAME ansakStringTest COMMAND test-ansakString )
