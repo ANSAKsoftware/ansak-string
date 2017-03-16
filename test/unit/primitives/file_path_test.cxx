@@ -494,8 +494,10 @@ TEST(FilePathTest, testRootPathFrom)
 {
 #if defined(WIN32)
     FilePath someCwd("c:\\path\\to\\some\\cwd");
+    EXPECT_EQ("cwd", someCwd.basename());
 #else
     FilePath someCwd("/path/to/some/cwd");
+    EXPECT_EQ("cwd", someCwd.basename());
 #endif
     FilePath uncCwd("\\\\server\\share\\path\\to\\some\\cwd");
 
@@ -517,6 +519,14 @@ TEST(FilePathTest, testRootPathFrom)
 
     EXPECT_FALSE(someCwd.rootPathFrom(realizedNull).isValid());
     EXPECT_FALSE(null.rootPathFrom(child).isValid());
+}
+
+TEST(FilePathTest, testUncServer)
+{
+    auto invalid = FilePath::invalidPath();
+    FilePath uncServer("\\\\server\\share");
+    FilePath dot("..");
+    EXPECT_EQ(invalid, dot.rootPathFrom(uncServer));
 }
 
 #if defined(WIN32)
