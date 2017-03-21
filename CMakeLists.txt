@@ -138,5 +138,6 @@ endif()
 # Bring in the source and test directories
 add_subdirectory( source )
 if( _useTests )
+    add_subdirectory( mock )
     add_subdirectory( test )
 endif()
