@@ -41,22 +41,5 @@ endif()
 
 # bring in google_test
 if(NOT (TARGET "gmock" OR TARGET "gtest"))
-    if( WIN32 )
-        set( BUILD_SHARED_LIBS on )
-    endif()
     add_subdirectory(googletest)
-
-    if( WIN32 )
-        set(CompilerFlags
-                CMAKE_CXX_FLAGS
-                CMAKE_CXX_FLAGS_DEBUG
-                CMAKE_CXX_FLAGS_RELEASE
-                CMAKE_C_FLAGS
-                CMAKE_C_FLAGS_DEBUG
-                CMAKE_C_FLAGS_RELEASE
-                )
-        foreach(CompilerFlag ${CompilerFlags})
-          string(REPLACE "/MT" "/MD" ${CompilerFlag} "${${CompilerFlag}}")
-        endforeach()
-    endif()
 endif()

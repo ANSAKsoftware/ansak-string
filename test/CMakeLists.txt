@@ -36,7 +36,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 MACRO( SETUP_TO_EXECUTE_GTEST TestTarget )
-    if( WIN32 )
+    if( WIN32 AND BUILD_SHARED_LIBS )
       add_custom_command( TARGET ${TestTarget} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
