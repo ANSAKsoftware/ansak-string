@@ -1,3 +1,5 @@
+#pragma once
+
 ///////////////////////////////////////////////////////////////////////////
 //
 // Copyright (c) 2017, Arthur N. Klassen
@@ -50,13 +52,14 @@ class FileSystemPrimitives
 {
 public:
 
-    virtual ~FileSystemPrimitives();
+    virtual ~FileSystemPrimitives() = default;
 
     virtual bool pathExists(const FilePath& filePath) const = 0;
     virtual bool pathIsFile(const FilePath& filePath) const = 0;
     virtual bool pathIsDir(const FilePath& filePath) const = 0;
     virtual uint64_t fileSize(const FilePath& filePath) const = 0;
     virtual TimeStamp lastModTime(const FilePath& filePath) const = 0;
+    virtual FilePath getCurrentWorkingDirectory() const = 0;
     virtual bool createDirectory(const FilePath& filePath) const = 0;
     virtual bool createFile(const FilePath& filePath) const = 0;
     virtual bool rename(const FilePath& filePath, const utf8String& newName) const = 0;
@@ -77,10 +80,12 @@ class DirectoryListPrimitive
 {
 public:
 
-    DirectoryListPrimitive();
-    virtual ~DirectoryListPrimitive();
+    DirectoryListPrimitive() = default;
+    virtual ~DirectoryListPrimitive() = default;
 
     virtual FilePath operator()() = 0;
 };
+
+const FileSystemPrimitives* getPrimitives();
 
 }

@@ -35,6 +35,16 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( string )
-add_subdirectory( primitives )
-add_subdirectory( file )
+set( _target ansakFile )
+set( _interface ../../interface )
+set( _privIncludes ../include )
+
+set( ansakFile_src )
+list( APPEND ansakFile_src file_system_path.cxx
+    )
+
+add_library( ${_target} STATIC ${ansakFile_src} )
+if (UNIX)
+    target_compile_options( ${_target} PRIVATE -Weffc++ )
+endif()
+target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )

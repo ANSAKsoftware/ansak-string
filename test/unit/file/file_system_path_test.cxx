@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2016, Arthur N. Klassen
+// Copyright (c) 2017, Arthur N. Klassen
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2016.11.18 - First version
+// 2017.03.21 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,75 +35,87 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// string_trim.hxx -- defines templates to trim strings
+// file_system_path_test.cxx -- Tests for FileSystemPath in file_system_path.cxx
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#include <file_system_path.hxx>
+#include <file_system_primitives.hxx>
+#include <mock_file_system.hxx>
+#include <memory>
 
-#include "string.hxx"
+#include <gmock/gmock.h>
 
-#include <string>
-#include <type_traits>
+using namespace ansak;
+using namespace std;
+using namespace testing;
 
-namespace ansak {
-
-template<typename C>
-void trim(std::basic_string<C>& victim)
+namespace ansak
 {
-    static_assert(std::is_integral<C>::value, "trim needs an integral type.");
 
-    while (!victim.empty() && victim[victim.size() - 1] == static_cast<C>(' '))
+// a never-used mock of the file system to satisfy static-initialization and validation
+unique_ptr<FileSystemMock> primitive;
+FileSystemMock* theMock = nullptr;
+
+const FileSystemPrimitives* getPrimitives()
+{
+    if (theMock == nullptr && !primitive)
     {
-        victim.erase(victim.size() - 1);
+        primitive.reset(new FileSystemMock());
     }
-    while (!victim.empty() && victim[0] == static_cast<C>(' '))
+    return theMock == nullptr ? primitive.get() : theMock;
+}
+
+extern bool primitivesExist;
+
+#if defined(WIN32)
+
+const char* homeDirP = "C:\\Users\\theUser";
+// const char* foreignPathP = "/usr/sbin";
+
+#else
+
+const char* homeDirP = "/home/theUser";
+// const char* foreignPathP = "C:\\Windows\\System32";
+
+#endif
+
+}
+
+class FileSystemPathFixture : public Test {
+public:
+    FileSystemPathFixture(const char* somePath = "")
+     : m_uut()
     {
-        victim.erase(0, 1);
+        theMock = &m_fileMock;
+        EXPECT_CALL(m_fileMock, mockGetCwd()).WillRepeatedly(Return(FilePath(homeDirP)));
+        m_uut.reset(new FileSystemPath(somePath));
     }
-}
-
-template<typename C>
-void trim(std::basic_string<C>& victim, const std::basic_string<C>& spaces)
-{
-    static_assert(std::is_integral<C>::value, "trim needs an integral type.");
-
-    while (!victim.empty() &&
-           spaces.find_first_of(victim[victim.size() - 1]) != std::basic_string<C>::npos)
+    ~FileSystemPathFixture()
     {
-        victim.erase(victim.size() - 1);
+        theMock = nullptr;
     }
-    while (!victim.empty() && spaces.find_first_of(victim[0]) != std::basic_string<C>::npos)
-    {
-        victim.erase(0, 1);
-    }
-}
 
-inline void trimAscii7WhiteSpace(std::string& victim)
+    FileSystemPath& uut() { return *(m_uut.get()); }
+
+protected:
+
+    NiceMock<FileSystemMock>    m_fileMock;
+
+private:
+    unique_ptr<FileSystemPath>  m_uut;
+};
+
+TEST(FileSystemPathTest, fileSystemPathChecksPrimitives)
 {
-    trim(victim, std::string("\x09\x0a\x0d "));
+    ASSERT_TRUE(ansak::primitivesExist);
+    primitive.reset(nullptr);
 }
 
-inline void trimWhiteSpace(ucs4String& victim)
+TEST_F(FileSystemPathFixture, defaultConstruct)
 {
-    trim(victim, std::u32string(
-            U"\U00000009\U0000000a\U0000000d \U000000a0\U00002000\U00002001\U00002002\U00002003"
-            U"\U00002004\U00002005\U00002006\U00002007\U00002008\U00002009\U0000200a\U0000202f"
-            U"\U0000205f\U00003000"));
-}
-
-inline void trimWhiteSpace(utf16String& victim)
-{
-    trim(victim, std::u16string(
-            u"\u0009\u000a\u000d \u00a0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008"
-            u"\u2009\u200a\u202f\u205f\u3000"));
-}
-
-inline void trimWhiteSpace(utf8String& victim)
-{
-    auto v16 = toUtf16(victim);
-    trimWhiteSpace(v16);
-    victim = toUtf8(v16);
-}
-
+    EXPECT_TRUE(uut().isValid());
+    EXPECT_TRUE(!uut().isRelative());
+    EXPECT_TRUE(!uut().isRoot());
+    EXPECT_EQ(homeDirP, uut().asUtf8String());
 }

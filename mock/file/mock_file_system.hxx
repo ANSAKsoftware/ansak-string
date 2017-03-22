@@ -40,6 +40,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
 #include <file_path.hxx>
 #include <file_system_primitives.hxx>
 
@@ -52,13 +54,14 @@ class FileSystemMock : public FileSystemPrimitives
 {
 public:
 
-    ~FileSystemMock();
+    ~FileSystemMock() = default;
 
     bool pathExists(const FilePath& filePath) const override;
     bool pathIsFile(const FilePath& filePath) const override;
     bool pathIsDir(const FilePath& filePath) const override;
     uint64_t fileSize(const FilePath& filePath) const override;
     TimeStamp lastModTime(const FilePath& filePath) const override;
+    FilePath getCurrentWorkingDirectory() const override;
     bool createDirectory(const FilePath& filePath) const override;
     bool createFile(const FilePath& filePath) const override;
     bool rename(const FilePath& filePath, const utf8String& newName) const override;
@@ -73,13 +76,12 @@ public:
     size_t read(unsigned long long handle, char* destination, size_t destSize) const override;
     size_t write(unsigned long long handle, const char* source, size_t srcSize) const override;
 
-private:
-
     MOCK_CONST_METHOD1(mockPathExists, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockPathIsFile, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockPathIsDir, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockFileSize, uint64_t(const FilePath&));
     MOCK_CONST_METHOD1(mockLastModTime, TimeStamp(const FilePath&));
+    MOCK_CONST_METHOD0(mockGetCwd, FilePath());
     MOCK_CONST_METHOD1(mockCreateDirectory, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockCreateFile, bool(const FilePath&));
     MOCK_CONST_METHOD2(mockRename, bool(const FilePath&, const utf8String&));
@@ -100,7 +102,7 @@ class DirectoryListMock : public DirectoryListPrimitive
 public:
 
     DirectoryListMock(const FilePath& parentDir);
-    ~DirectoryListMock();
+    ~DirectoryListMock() = default;
 
     FilePath operator()() override;
 

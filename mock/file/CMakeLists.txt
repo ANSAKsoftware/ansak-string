@@ -35,6 +35,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( string )
-add_subdirectory( primitives )
-add_subdirectory( file )
+set( _target mock-file )
+add_library( ${_target} STATIC mock_file_system.cxx )
+target_link_libraries( ${_target} PUBLIC ansakString ansakPrimitives gmock gmock_main gtest gtest_main )
+target_include_directories( ${_target} PUBLIC . ../../source/include )

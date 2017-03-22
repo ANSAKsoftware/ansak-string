@@ -46,10 +46,6 @@ using namespace testing;
 
 namespace ansak {
 
-FileSystemMock::~FileSystemMock()
-{
-}
-
 bool FileSystemMock::pathExists(const FilePath& filePath) const
 {
     return mockPathExists(filePath);
@@ -73,6 +69,11 @@ uint64_t FileSystemMock::fileSize(const FilePath& filePath) const
 TimeStamp FileSystemMock::lastModTime(const FilePath& filePath) const
 {
     return mockLastModTime(filePath);
+}
+
+FilePath FileSystemMock::getCurrentWorkingDirectory() const
+{
+    return mockGetCwd();
 }
 
 bool FileSystemMock::createDirectory(const FilePath& filePath) const
