@@ -48,6 +48,8 @@
 namespace ansak
 {
 
+class DirectoryListPrimitive;
+
 class FileSystemPrimitives
 {
 public:
@@ -74,6 +76,8 @@ public:
     virtual void seek(unsigned long long handle, off_t position) const = 0;
     virtual size_t read(unsigned long long handle, char* destination, size_t destSize) const = 0;
     virtual size_t write(unsigned long long handle, const char* source, size_t srcSize) const = 0;
+
+    virtual DirectoryListPrimitive* newPathIterator(const FilePath& directory) const = 0;
 };
 
 class DirectoryListPrimitive

@@ -76,6 +76,8 @@ public:
     size_t read(unsigned long long handle, char* destination, size_t destSize) const override;
     size_t write(unsigned long long handle, const char* source, size_t srcSize) const override;
 
+    DirectoryListPrimitive* newPathIterator(const FilePath& directory) const override;
+
     MOCK_CONST_METHOD1(mockPathExists, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockPathIsFile, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockPathIsDir, bool(const FilePath&));
@@ -95,6 +97,10 @@ public:
     MOCK_CONST_METHOD2(mockSeek, void(unsigned long long, off_t));
     MOCK_CONST_METHOD3(mockRead, size_t(unsigned long long, char*, size_t));
     MOCK_CONST_METHOD3(mockWrite, size_t(unsigned long long, const char*, size_t));
+
+    MOCK_CONST_METHOD1(mockNewPathIterator, DirectoryListPrimitive*(const FilePath& directory));
+
+    mutable DirectoryListPrimitive* m_lister = nullptr;
 };
 
 class DirectoryListMock : public DirectoryListPrimitive
@@ -110,9 +116,9 @@ public:
     void expectOneElement(const char* oneSubDir);
     void expectDone();
 
-private:
-
     MOCK_METHOD0(mockInvocation, FilePath());
+
+private:
 
     FilePath m_parentDir;
 };

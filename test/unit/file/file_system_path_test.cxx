@@ -41,6 +41,7 @@
 
 #include <file_system_path.hxx>
 #include <file_system_primitives.hxx>
+#include <runtime_exception.hxx>
 #include <mock_file_system.hxx>
 #include <memory>
 
@@ -61,6 +62,7 @@ const FileSystemPrimitives* getPrimitives()
 {
     if (theMock == nullptr && !primitive)
     {
+        // this will happen during static-initialization of the FileSystemPath class
         primitive.reset(new FileSystemMock());
     }
     return theMock == nullptr ? primitive.get() : theMock;
@@ -84,26 +86,19 @@ const char* homeDirP = "/home/theUser";
 
 class FileSystemPathFixture : public Test {
 public:
-    FileSystemPathFixture(const char* somePath = "")
-     : m_uut()
+    FileSystemPathFixture()
     {
         theMock = &m_fileMock;
         EXPECT_CALL(m_fileMock, mockGetCwd()).WillRepeatedly(Return(FilePath(homeDirP)));
-        m_uut.reset(new FileSystemPath(somePath));
     }
     ~FileSystemPathFixture()
     {
         theMock = nullptr;
     }
-
-    FileSystemPath& uut() { return *(m_uut.get()); }
-
-protected:
-
-    NiceMock<FileSystemMock>    m_fileMock;
+    FileSystemMock& FileMock() { return m_fileMock; }
 
 private:
-    unique_ptr<FileSystemPath>  m_uut;
+    NiceMock<FileSystemMock>    m_fileMock;
 };
 
 TEST(FileSystemPathTest, fileSystemPathChecksPrimitives)
@@ -114,8 +109,98 @@ TEST(FileSystemPathTest, fileSystemPathChecksPrimitives)
 
 TEST_F(FileSystemPathFixture, defaultConstruct)
 {
-    EXPECT_TRUE(uut().isValid());
-    EXPECT_TRUE(!uut().isRelative());
-    EXPECT_TRUE(!uut().isRoot());
-    EXPECT_EQ(homeDirP, uut().asUtf8String());
+    FileSystemPath uut;
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockPathIsDir(_)).WillOnce(Return(true));
+
+    EXPECT_TRUE(uut.isValid());
+    EXPECT_TRUE(!uut.isRelative());
+    EXPECT_TRUE(!uut.isRoot());
+    EXPECT_EQ(homeDirP, uut.asUtf8String());
+    EXPECT_TRUE(uut.exists());
+    EXPECT_TRUE(!uut.isFile());
+    EXPECT_TRUE(uut.isDir());
+}
+
+TEST_F(FileSystemPathFixture, nonRelativeConstruct)
+{
+    FilePath home(homeDirP);
+    FilePath fileThere = home.child("someFile");
+    FileSystemPath uut(fileThere);
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(_)).WillOnce(Return(false));
+    TimeStamp t { 1909, 6, 22, 10, 0, 35 };
+    EXPECT_CALL(FileMock(), mockLastModTime(_)).WillOnce(Return(t));
+    EXPECT_CALL(FileMock(), mockFileSize(fileThere)).WillOnce(Return(9909ul));
+
+    EXPECT_TRUE(uut.isValid());
+    EXPECT_TRUE(!uut.isRelative());
+    EXPECT_TRUE(!uut.isRoot());
+    EXPECT_EQ(fileThere.asUtf8String(), uut.asUtf8String());
+    EXPECT_TRUE(uut.exists());
+    EXPECT_TRUE(uut.isFile());
+    EXPECT_TRUE(!uut.isDir());
+    EXPECT_EQ(t, uut.lastModTime());
+    EXPECT_EQ(9909ul, uut.size());
+}
+
+TEST_F(FileSystemPathFixture, stringConstruct)
+{
+    FilePath home(homeDirP);
+    FilePath fileThere = home.child("someFile");
+    FileSystemPath uut(fileThere.asUtf8String());
+
+    EXPECT_TRUE(uut.isValid());
+    EXPECT_TRUE(!uut.isRelative());
+    EXPECT_TRUE(!uut.isRoot());
+    EXPECT_EQ(fileThere.asUtf8String(), uut.asUtf8String());
+}
+
+TEST_F(FileSystemPathFixture, getParent)
+{
+    FilePath home(homeDirP);
+    FilePath fileThere = home.child("someFile");
+    FileSystemPath someFile(fileThere);
+    FileSystemPath uut(someFile.parent());
+
+    EXPECT_TRUE(uut.isValid());
+    EXPECT_TRUE(!uut.isRelative());
+    EXPECT_TRUE(!uut.isRoot());
+    EXPECT_EQ(home.asUtf8String(), uut.asUtf8String());
+}
+
+TEST_F(FileSystemPathFixture, getChildren)
+{
+    FileSystemPath homeDirSP(homeDirP);
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(homeDirSP))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(homeDirSP))).WillOnce(Return(true));
+    FilePath child = FilePath(homeDirP).child("alpha");
+
+    FileSystemPath::ChildrenRetriever r = FileSystemPath(homeDirP).children();
+    auto listMock = dynamic_cast<DirectoryListMock*>(FileMock().m_lister);
+    enforce(listMock != nullptr);
+    EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath()));
+    EXPECT_EQ(child, r());
+    EXPECT_EQ(FilePath(), r());
+}
+
+TEST_F(FileSystemPathFixture, getFromEmptyRetriever)
+{
+    FileSystemPath homeDirSP(homeDirP);
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(homeDirSP))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(homeDirSP))).WillOnce(Return(true));
+    FilePath child = FilePath(homeDirP).child("alpha");
+
+    FileSystemPath::ChildrenRetriever r = FileSystemPath(homeDirP).children();
+    auto listMock = dynamic_cast<DirectoryListMock*>(FileMock().m_lister);
+    enforce(listMock != nullptr);
+    EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath()));
+    auto s = move(r);
+    EXPECT_EQ(child, s());
+    EXPECT_EQ(FilePath(), s());
+    EXPECT_EQ(FilePath(), r());
 }

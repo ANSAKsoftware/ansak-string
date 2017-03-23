@@ -132,35 +132,17 @@ size_t FileSystemMock::write(unsigned long long handle, const char* source, size
     return mockWrite(handle, source, srcSize);
 }
 
+DirectoryListPrimitive* FileSystemMock::newPathIterator(const FilePath& directory) const
+{
+    auto r = new DirectoryListMock(directory);
+    m_lister = r;
+    return r;
+}
+
 DirectoryListMock::DirectoryListMock(const FilePath& parentDir)
  : DirectoryListPrimitive(),
    m_parentDir(parentDir)
 {
-}
-
-void DirectoryListMock::expectOneElement(const char* element)
-{
-    EXPECT_CALL(*this, mockInvocation()).WillOnce(Return(m_parentDir.child(element)));
-}
-
-void DirectoryListMock::expectDone()
-{
-    EXPECT_CALL(*this, mockInvocation()).WillOnce(Return(FilePath()));
-}
-
-void DirectoryListMock::setupSimpleMock()
-{
-#if defined(WIN32)
-    m_parentDir = FilePath("C:\\Users\\me");
-#else
-    m_parentDir = FilePath("/home/me");
-#endif
-
-    expectOneElement("alpha");
-    expectOneElement("bravo");
-    expectOneElement("charlie");
-    expectOneElement("delta");
-    expectDone();
 }
 
 FilePath DirectoryListMock::operator()()

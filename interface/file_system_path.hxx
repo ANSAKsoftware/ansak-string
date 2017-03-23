@@ -65,6 +65,8 @@
 
 namespace ansak {
 
+class DirectoryListPrimitive;
+
 ///////////////////////////////////////////////////////////////////////////
 // class FileSystemPath -- things you can do in a file system with a valid
 //                         path. Not just string operations anymore.
@@ -157,7 +159,6 @@ public:
 
     FileSystemPath parent() const;
 
-#if 0
     ///////////////////////////////////////////////////////////////////////
     // class ChildrenRetriever -- utility class to iterate through contents
     // of a sub-directory
@@ -169,17 +170,18 @@ public:
         // is not a real directory, the ChildrenRetreiver does no work.
 
         ChildrenRetriever(const FileSystemPath& path);
+        ChildrenRetriever(ChildrenRetriever&& src);
         ~ChildrenRetriever();
 
         ///////////////////////////////////////////////////////////////////
         // operator() -- For a functional ChildrenRetriever, finds the next
         // sub item.
 
-        FileSystemPath operator()();
+        FilePath operator()();
 
     private:
-        const FileSystemPath&   m_path;
-        intptr_t                m_innerThat = 0;
+        FilePath                                        m_path;
+        mutable std::unique_ptr<DirectoryListPrimitive> m_directoryReader;
     };
 
     ///////////////////////////////////////////////////////////////////////
@@ -187,7 +189,6 @@ public:
     // possible.
 
     ChildrenRetriever children() const;
-#endif
 
     ///////////////////////////////////////////////////////////////////////
     // retrieve the underlying FilePath, explicitly or implicitly.

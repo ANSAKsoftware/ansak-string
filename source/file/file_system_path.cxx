@@ -93,11 +93,11 @@ FileSystemPath FileSystemPath::parent() const
     return FileSystemPath(m_path.parent());
 }
 
-/*
+
 FileSystemPath::ChildrenRetriever FileSystemPath::children() const
 {
     return ChildrenRetriever(*this);
-} */
+}
 
 bool FileSystemPath::copyFromFile(const FileSystemPath& ) // other)
 {
@@ -181,6 +181,36 @@ TimeStamp FileSystemPath::lastModTime() const
     return getPrimitives()->lastModTime(m_path);
 }
 
+FileSystemPath::ChildrenRetriever::ChildrenRetriever
+(
+    const FileSystemPath& path
+) : m_path(path),
+    m_directoryReader()
+{
+    enforce(path.exists() && path.isDir());
+    m_directoryReader.reset(getPrimitives()->newPathIterator(path));
+}
+
+FileSystemPath::ChildrenRetriever::ChildrenRetriever
+(
+    FileSystemPath::ChildrenRetriever&& src
+) : m_path(src.m_path),
+    m_directoryReader(move(src.m_directoryReader.release()))
+{
+}
+
+FilePath FileSystemPath::ChildrenRetriever::operator()()
+{
+    if (m_directoryReader)
+    {
+        return (*(m_directoryReader.get()))();
+    }
+    return FilePath();
+}
+
+FileSystemPath::ChildrenRetriever::~ChildrenRetriever()
+{
+}
 
 #if 0
 FileSystemPath::TempDirectory::TempDirectory()
