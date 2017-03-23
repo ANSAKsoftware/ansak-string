@@ -107,29 +107,34 @@ unsigned long long FileSystemMock::open(const FilePath& path, OpenMode mode, int
 }
 
 
-uint64_t FileSystemMock::fileSize(unsigned long long handle) const
+uint64_t FileSystemMock::fileSize(unsigned long long handle, unsigned int& errorID) const
 {
-    return mockFileSize(handle);
+    return mockFileSize(handle, errorID);
 }
 
-void FileSystemMock::close(unsigned long long handle) const
+void FileSystemMock::close(unsigned long long handle, unsigned int& errorID) const
 {
-    mockClose(handle);
+    mockClose(handle, errorID);
 }
 
-void FileSystemMock::seek(unsigned long long handle, off_t position) const
+void FileSystemMock::seek(unsigned long long handle, off_t position, unsigned int& errorID) const
 {
-    mockSeek(handle, position);
+    mockSeek(handle, position, errorID);
 }
 
-size_t FileSystemMock::read(unsigned long long handle, char* destination, size_t destSize) const
+size_t FileSystemMock::read(unsigned long long handle, char* destination, size_t destSize, unsigned int& errorID) const
 {
-    return mockRead(handle, destination, destSize);
+    return mockRead(handle, destination, destSize, errorID);
 }
 
-size_t FileSystemMock::write(unsigned long long handle, const char* source, size_t srcSize) const
+size_t FileSystemMock::write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const
 {
-    return mockWrite(handle, source, srcSize);
+    return mockWrite(handle, source, srcSize, errorID);
+}
+
+utf8String FileSystemMock::errorAsString(unsigned int errorID) const
+{
+    return mockErrorAsString(errorID);
 }
 
 DirectoryListPrimitive* FileSystemMock::newPathIterator(const FilePath& directory) const

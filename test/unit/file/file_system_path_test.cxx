@@ -40,9 +40,8 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include <file_system_path.hxx>
-#include <file_system_primitives.hxx>
-#include <runtime_exception.hxx>
 #include <mock_file_system.hxx>
+#include <runtime_exception.hxx>
 #include <memory>
 
 #include <gmock/gmock.h>
@@ -69,6 +68,11 @@ const FileSystemPrimitives* getPrimitives()
 }
 
 extern bool primitivesExist;
+
+}
+
+namespace
+{
 
 #if defined(WIN32)
 

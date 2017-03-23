@@ -70,11 +70,13 @@ public:
     unsigned long long create(const FilePath& path, int permissions, unsigned int& errorID) const override;
     unsigned long long open(const FilePath& path, OpenMode mode, int permissions, unsigned int& errorID) const override;
 
-    uint64_t fileSize(unsigned long long handle) const override;
-    void close(unsigned long long handle) const override;
-    void seek(unsigned long long handle, off_t position) const override;
-    size_t read(unsigned long long handle, char* destination, size_t destSize) const override;
-    size_t write(unsigned long long handle, const char* source, size_t srcSize) const override;
+    uint64_t fileSize(unsigned long long handle, unsigned int& errorID) const override;
+    void close(unsigned long long handle, unsigned int& errorID) const override;
+    void seek(unsigned long long handle, off_t position, unsigned int& errorID) const override;
+    size_t read(unsigned long long handle, char* destination, size_t destSize, unsigned int& errorID) const override;
+    size_t write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const override;
+
+    virtual ansak::utf8String errorAsString(unsigned int errorID) const override;
 
     DirectoryListPrimitive* newPathIterator(const FilePath& directory) const override;
 
@@ -92,11 +94,13 @@ public:
     MOCK_CONST_METHOD3(mockCreate, unsigned long long(const FilePath&, int, unsigned int&));
     MOCK_CONST_METHOD4(mockOpen, unsigned long long(const FilePath&, OpenMode, int, unsigned int&));
 
-    MOCK_CONST_METHOD1(mockFileSize, uint64_t(unsigned long long));
-    MOCK_CONST_METHOD1(mockClose, void(unsigned long long));
-    MOCK_CONST_METHOD2(mockSeek, void(unsigned long long, off_t));
-    MOCK_CONST_METHOD3(mockRead, size_t(unsigned long long, char*, size_t));
-    MOCK_CONST_METHOD3(mockWrite, size_t(unsigned long long, const char*, size_t));
+    MOCK_CONST_METHOD2(mockFileSize, uint64_t(unsigned long long, unsigned int&));
+    MOCK_CONST_METHOD2(mockClose, void(unsigned long long, unsigned int&));
+    MOCK_CONST_METHOD3(mockSeek, void(unsigned long long, off_t, unsigned int&));
+    MOCK_CONST_METHOD4(mockRead, size_t(unsigned long long, char*, size_t, unsigned int&));
+    MOCK_CONST_METHOD4(mockWrite, size_t(unsigned long long, const char*, size_t, unsigned int&));
+
+    MOCK_CONST_METHOD1(mockErrorAsString, ansak::utf8String(unsigned int));
 
     MOCK_CONST_METHOD1(mockNewPathIterator, DirectoryListPrimitive*(const FilePath& directory));
 

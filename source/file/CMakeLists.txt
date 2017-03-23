@@ -41,6 +41,7 @@ set( _privIncludes ../include )
 
 set( ansakFile_src )
 list( APPEND ansakFile_src file_system_path.cxx
+                           file_handle.cxx
     )
 
 add_library( ${_target} STATIC ${ansakFile_src} )

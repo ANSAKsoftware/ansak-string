@@ -43,7 +43,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include <string.hxx>
-#include "time_stamp.hxx"
+#include <time_stamp.hxx>
 
 namespace ansak
 {
@@ -71,11 +71,13 @@ public:
 
     virtual unsigned long long create(const FilePath& path, int permissions, unsigned int& errorID) const = 0;
     virtual unsigned long long open(const FilePath& path, OpenMode mode, int permissions, unsigned int& errorID) const = 0;
-    virtual uint64_t fileSize(unsigned long long handle) const = 0;
-    virtual void close(unsigned long long handle) const = 0;
-    virtual void seek(unsigned long long handle, off_t position) const = 0;
-    virtual size_t read(unsigned long long handle, char* destination, size_t destSize) const = 0;
-    virtual size_t write(unsigned long long handle, const char* source, size_t srcSize) const = 0;
+    virtual uint64_t fileSize(unsigned long long handle, unsigned int& errorID) const = 0;
+    virtual void close(unsigned long long handle, unsigned int& errorID) const = 0;
+    virtual void seek(unsigned long long handle, off_t position, unsigned int& errorID) const = 0;
+    virtual size_t read(unsigned long long handle, char* destination, size_t destSize, unsigned int& errorID) const = 0;
+    virtual size_t write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const = 0;
+
+    virtual ansak::utf8String errorAsString(unsigned int errorID) const = 0;
 
     virtual DirectoryListPrimitive* newPathIterator(const FilePath& directory) const = 0;
 };
