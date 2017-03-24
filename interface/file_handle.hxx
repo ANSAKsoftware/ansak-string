@@ -94,7 +94,7 @@ class FileHandle {
 
 public:
 
-    static const size_t         currentSpot = static_cast<off_t>(-1);
+    static const off_t          currentSpot = static_cast<off_t>(-1);
     static const size_t         toFileEnd = static_cast<size_t>(~0);
 
     enum CreateType : int { kFailIfThere, kOpenIfThere };

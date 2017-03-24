@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -45,6 +45,7 @@
 #include <file_handle.hxx>
 #include <file_system_primitives.hxx>
 #include <runtime_exception.hxx>
+#include <nullptr_exception.hxx>
 
 #include <sstream>
 
@@ -90,6 +91,14 @@ namespace {
         int thePermission;
     };
 
+}
+
+//============================================================================
+// public, static
+
+void FileHandle::throwErrors()
+{
+    m_throwErrors = true;
 }
 
 //============================================================================
@@ -139,7 +148,16 @@ FileHandle& FileHandle::operator=(FileHandle&& src)
 }
 
 //============================================================================
-// static, public
+// public
+
+bool FileHandle::operator==(const FileHandle& rhs) const
+{
+    if (this == &rhs)   return true;
+    return m_path == rhs.m_path && m_fh == rhs.m_fh;
+}
+
+//============================================================================
+// public, static
 
 FileHandle FileHandle::create(const FileSystemPath& path, CreateType mode)
 {
@@ -147,7 +165,7 @@ FileHandle FileHandle::create(const FileSystemPath& path, CreateType mode)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't create an invalid path.");
+            throw FileHandleException(path, 0, "path invalid, cannot be created");
         }
         return FileHandle();
     }
@@ -156,7 +174,7 @@ FileHandle FileHandle::create(const FileSystemPath& path, CreateType mode)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't create existing file.");
+            throw FileHandleException(path, 0, "file exists, create using FailIfThere");
         }
         return FileHandle();
     }
@@ -178,7 +196,7 @@ FileHandle FileHandle::create(const FileSystemPath& path, CreateType mode)
 }
 
 //============================================================================
-// static, public
+// public, static
 
 FileHandle FileHandle::open(const FileSystemPath& path, OpenType mode)
 {
@@ -186,7 +204,7 @@ FileHandle FileHandle::open(const FileSystemPath& path, OpenType mode)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't open an invalid path.");
+            throw FileHandleException(path, 0, "path invalid, cannot be opened");
         }
         return FileHandle();
     }
@@ -195,7 +213,7 @@ FileHandle FileHandle::open(const FileSystemPath& path, OpenType mode)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't open a non-existent file.");
+            throw FileHandleException(path, 0, "file does not exist, open using FailIfNotThere");
         }
         return FileHandle();
     }
@@ -203,7 +221,7 @@ FileHandle FileHandle::open(const FileSystemPath& path, OpenType mode)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't open a non-file.");
+            throw FileHandleException(path, 0, "path is not a file, cannot be opened");
         }
         return FileHandle();
     }
@@ -225,7 +243,7 @@ FileHandle FileHandle::open(const FileSystemPath& path, OpenType mode)
 }
 
 //============================================================================
-// static, public
+// public, static
 
 FileHandle FileHandle::openForReading(const FileSystemPath& path)
 {
@@ -235,7 +253,7 @@ FileHandle FileHandle::openForReading(const FileSystemPath& path)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't read an invalid path.");
+            throw FileHandleException(path, 0, "path invalid, cannot be opened for reading");
         }
         return FileHandle();
     }
@@ -244,7 +262,7 @@ FileHandle FileHandle::openForReading(const FileSystemPath& path)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't read a non-existent path.");
+            throw FileHandleException(path, 0, "path does not exist, cannot be opened for reading");
         }
         return FileHandle();
     }
@@ -252,7 +270,7 @@ FileHandle FileHandle::openForReading(const FileSystemPath& path)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't read a non-file.");
+            throw FileHandleException(path, 0, "path is not a file, cannot be opened for reading");
         }
         return FileHandle();
     }
@@ -269,7 +287,7 @@ FileHandle FileHandle::openForReading(const FileSystemPath& path)
 }
 
 //============================================================================
-// static, public
+// public, static
 
 FileHandle FileHandle::openForAppending(const FileSystemPath& path, OpenType mode)
 {
@@ -277,7 +295,7 @@ FileHandle FileHandle::openForAppending(const FileSystemPath& path, OpenType mod
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't append to an invalid path.");
+            throw FileHandleException(path, 0, "path invalid, cannot be opened for appending");
         }
         return FileHandle();
     }
@@ -286,7 +304,7 @@ FileHandle FileHandle::openForAppending(const FileSystemPath& path, OpenType mod
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't append to a non-existent path.");
+            throw FileHandleException(path, 0, "file does not exist, openForAppending using FailIfNotThere");
         }
         return FileHandle();
     }
@@ -299,7 +317,7 @@ FileHandle FileHandle::openForAppending(const FileSystemPath& path, OpenType mod
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "Can't append to a non-file.");
+            throw FileHandleException(path, 0, "path is not a file, cannot be opened for appending");
         }
         return FileHandle();
     }
@@ -318,18 +336,183 @@ FileHandle FileHandle::openForAppending(const FileSystemPath& path, OpenType mod
 //============================================================================
 // public
 
-size_t FileHandle::copyFrom(FileHandle& otherFile, off_t start, size_t count)
+void FileHandle::close()
+{
+    if (isOpen())
+    {
+        auto h = m_fh;
+        m_fh = nullHandle;
+        unsigned int errorCode = 0;
+        getPrimitives()->close(h, errorCode);
+        if (errorCode != 0 && m_throwErrors)
+        {
+            throw FileHandleException(m_path, errorCode, "closing file failed");
+        }
+    }
+    else if (m_throwErrors)
+    {
+        throw FileHandleException(m_path, 0, "close called when file not open");
+    }
+}
+
+//============================================================================
+// public
+
+uint64_t FileHandle::size()
+{
+    if (isOpen())
+    {
+        unsigned int errorCode = 0;
+        auto r = getPrimitives()->fileSize(m_fh, errorCode);
+        if (!errorCode)
+        {
+            return r;
+        }
+        if (m_throwErrors)
+        {
+            throw FileHandleException(m_path, errorCode, "checking size of open file failed");
+        }
+    }
+    else
+    {
+        return m_path.size();
+    }
+
+    return static_cast<uint64_t>(-1);
+}
+
+//============================================================================
+// public
+
+void FileHandle::seek(off_t pos)
+{
+    if (isOpen())
+    {
+        unsigned int errorCode = 0;
+        getPrimitives()->seek(m_fh, pos, errorCode);
+        if (errorCode != 0 && m_throwErrors)
+        {
+            stringstream os;
+            os << "seeking to position " << pos << " failed";
+            throw FileHandleException(m_path, errorCode, os.str());
+        }
+    }
+    else if (m_throwErrors)
+    {
+        throw FileHandleException(m_path, 0, "seek called when file not open");
+    }
+}
+
+//============================================================================
+// public
+
+size_t FileHandle::read(char* dest, size_t destSize)
+{
+    if (!isOpen())
+    {
+        if (m_throwErrors)
+        {
+            throw FileHandleException(m_path, 0, "read called when file not open");
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    if (dest == nullptr && destSize != 0)
+    {
+        if (m_throwErrors)
+        {
+            throw NullPtrException(__FUNCTION__, __LINE__);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    if (destSize == 0)
+    {
+        return 0;
+    }
+    unsigned int errorCode = 0;
+    auto r = getPrimitives()->read(m_fh, dest, destSize, errorCode);
+
+    if (r == static_cast<size_t>(~0ull))
+    {
+        if (m_throwErrors)
+        {
+            stringstream os;
+            os << "reading " << destSize << " bytes failed";
+            throw FileHandleException(m_path, errorCode, os.str());
+        }
+        return 0;
+    }
+    return static_cast<size_t>(r);
+}
+
+//============================================================================
+// public
+
+size_t FileHandle::write(const char* src, size_t srcSize)
+{
+    if (!isOpen())
+    {
+        if (m_throwErrors)
+        {
+            throw FileHandleException(m_path, 0, "write called when file not open");
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    if (src == nullptr && srcSize != 0)
+    {
+        if (m_throwErrors)
+        {
+            throw NullPtrException(__FUNCTION__, __LINE__);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    if (srcSize == 0)
+    {
+        return 0;
+    }
+
+    unsigned int errorCode = 0;
+    auto r = getPrimitives()->write(m_fh, src, srcSize, errorCode);
+
+    if (r == static_cast<size_t>(~0ull))
+    {
+        if (m_throwErrors)
+        {
+            stringstream os;
+            os << "writing " << srcSize << " bytes failed";
+            throw FileHandleException(m_path, errorCode, os.str());
+        }
+        return 0;
+    }
+    return static_cast<size_t>(r);
+}
+
+//============================================================================
+// public
+
+size_t FileHandle::copyFrom(FileHandle& srcFile, off_t start, size_t count)
 {
     size_t bytesDone = 0;
     try
     {
         if (!isOpen())
         {
-            throw FileHandleException(m_path, 0, "Can't copyFrom to a non-file.");
+            throw FileHandleException(m_path, 0, "copyFrom destination file was not open");
         }
-        if (!otherFile.isOpen())
+        if (!srcFile.isOpen())
         {
-            throw FileHandleException(otherFile.m_path, 0, "Can't copyFrom from a non-file.");
+            throw FileHandleException(srcFile.m_path, 0, "copyFrom source file was not open");
         }
         if (count == 0)
         {
@@ -344,7 +527,7 @@ size_t FileHandle::copyFrom(FileHandle& otherFile, off_t start, size_t count)
         // set/determine starting point
         if (start >= 0)
         {
-            otherFile.seek(start);
+            srcFile.seek(start);
         }
         // determine endpoint (count-or-eof, or eof)
         bool untilEOF = count == toFileEnd;
@@ -354,34 +537,39 @@ size_t FileHandle::copyFrom(FileHandle& otherFile, off_t start, size_t count)
         bool hitEndOfFile = false;
         while (!hitEndOfFile && (copied + bufferSize < count))
         {
-            auto readIn = otherFile.read(m_buffer.data(), bufferSize);
+            auto readIn = srcFile.read(m_buffer.data(), bufferSize);
+            if (readIn > bufferSize)
+            {
+                throw FileHandleException(srcFile.m_path, 0, "read in copyFrom returned too much returned");
+            }
             hitEndOfFile |= readIn < bufferSize;
             auto writtenOut = write(m_buffer.data(), readIn);
             bytesDone += writtenOut;
             if (writtenOut != readIn)
             {
-                throw FileHandleException(m_path, 0, "Write in copyFrom didn't complete.");
+                throw FileHandleException(srcFile.m_path, 0, "read in copyFrom was incomplete");
             }
             copied += writtenOut;
         }
 
         if (!hitEndOfFile && !untilEOF)
         {
-            auto readIn = otherFile.read(m_buffer.data(), count - copied);
+            auto readIn = srcFile.read(m_buffer.data(), count - copied);
             auto writtenOut = write(m_buffer.data(), readIn);
+            bytesDone += writtenOut;
             if (writtenOut != readIn)
             {
-                throw FileHandleException(m_path, 0, "Write in copyFrom didn't complete.");
+                throw FileHandleException(m_path, 0, "write in copyFrom was incomplete");
             }
-            bytesDone += writtenOut;
         }
     }
     catch (std::bad_alloc& e)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(m_path, 0, "Can't copyFrom, memory allocation problem");
+            throw FileHandleException(m_path, 0, "copyFrom memory allocation failed");
         }
+        throw;
     }
     catch (FileHandleException& e)
     {
@@ -392,23 +580,6 @@ size_t FileHandle::copyFrom(FileHandle& otherFile, off_t start, size_t count)
     }
 
     return bytesDone;
-}
-
-//============================================================================
-// public
-
-bool FileHandle::operator==(const FileHandle& rhs) const
-{
-    if (this == &rhs)   return true;
-    return m_path == rhs.m_path && m_fh == rhs.m_fh;
-}
-
-//============================================================================
-// static, public
-
-void FileHandle::throwErrors()
-{
-    m_throwErrors = true;
 }
 
 //============================================================================
@@ -423,11 +594,11 @@ bool FileHandle::create()
 
     unsigned int errorNumber = 0;
     auto fd = getPrimitives()->create(m_path, p.getPermission(), errorNumber);
-    if (fd == ~0u)
+    if (fd == ~0ull)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(m_path, errorNumber, "Can't create this file.");
+            throw FileHandleException(m_path, errorNumber, "creating file failed");
         }
         return false;
     }
@@ -454,7 +625,7 @@ bool FileHandle::open(int mode)
 
     unsigned int errorNumber = 0;
     auto fd = getPrimitives()->open(m_path.asFilePath(), openMode, p.getPermission(), errorNumber);
-    if (fd == ~0u)
+    if (fd == ~0ull)
     {
         if (m_throwErrors)
         {
@@ -464,54 +635,6 @@ bool FileHandle::open(int mode)
     }
     m_fh = static_cast<unsigned long long>(fd);
     return true;
-}
-
-//============================================================================
-// public
-
-uint64_t FileHandle::size()
-{
-    if (isOpen())
-    {
-        unsigned int errorCode = 0;
-        auto r = getPrimitives()->fileSize(m_fh, errorCode);
-        if (!errorCode)
-        {
-            return r;
-        }
-        if (m_throwErrors)
-        {
-            throw FileHandleException(m_path, errorCode, "checking open file's size failed");
-        }
-    }
-    else
-    {
-        return m_path.size();
-    }
-
-    return static_cast<uint64_t>(-1);
-}
-
-//============================================================================
-// public
-
-void FileHandle::close()
-{
-    if (isOpen())
-    {
-        auto h = m_fh;
-        m_fh = nullHandle;
-        unsigned int errorCode = 0;
-        getPrimitives()->close(h, errorCode);
-        if (errorCode != 0 && m_throwErrors)
-        {
-            throw FileHandleException(m_path, errorCode, "closing file failed");
-        }
-    }
-    else if (m_throwErrors)
-    {
-        throw FileHandleException(m_path, 0, "closing file twice");
-    }
 }
 
 //============================================================================
@@ -526,17 +649,13 @@ FileHandleException::FileHandleException
     m_code(errorCode)
 {
     ostringstream os;
-    os << "FileHandleException: " << message;
-    if (errorCode == 0)
-    {
-        os << " no related OS error; ";
-    }
-    else
+    os << "FileHandleException: " << message <<
+          "file = \"" << problem.asUtf8String() << "\"; ";
+    if (errorCode != 0)
     {
         os << " code = " << errorCode <<
-              "; error explanation: " << getPrimitives()->errorAsString(errorCode) << "; ";
+              "; code explanation: " << getPrimitives()->errorAsString(errorCode) << "; ";
     }
-    os << "file = \"" << problem.asUtf8String() << "\".";
     m_what = os.str();
 }
 
@@ -565,7 +684,6 @@ FileHandleException::~FileHandleException() noexcept
 
 const char* FileHandleException::what() const noexcept
 {
-    enforce(!m_what.empty(), "The only constructor always writes m_what");
     return m_what.c_str();
 }
 
