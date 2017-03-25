@@ -203,7 +203,7 @@ FilePath FileSystemPath::ChildrenRetriever::operator()()
     {
         return (*(m_directoryReader.get()))();
     }
-    return FilePath();
+    return FilePath::invalidPath();
 }
 
 FileSystemPath::ChildrenRetriever::~ChildrenRetriever()

@@ -195,9 +195,9 @@ TEST_F(FileSystemPathFixture, getChildren)
     FileSystemPath::ChildrenRetriever r = FileSystemPath(homeDirP).children();
     auto listMock = dynamic_cast<DirectoryListMock*>(FileMock().m_lister);
     enforce(listMock != nullptr);
-    EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath()));
+    EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath::invalidPath()));
     EXPECT_EQ(child, r());
-    EXPECT_EQ(FilePath(), r());
+    EXPECT_EQ(FilePath::invalidPath(), r());
 }
 
 TEST_F(FileSystemPathFixture, getFromEmptyRetriever)
@@ -210,11 +210,11 @@ TEST_F(FileSystemPathFixture, getFromEmptyRetriever)
     FileSystemPath::ChildrenRetriever r = FileSystemPath(homeDirP).children();
     auto listMock = dynamic_cast<DirectoryListMock*>(FileMock().m_lister);
     enforce(listMock != nullptr);
-    EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath()));
+    EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath::invalidPath()));
     auto s = move(r);
     EXPECT_EQ(child, s());
-    EXPECT_EQ(FilePath(), s());
-    EXPECT_EQ(FilePath(), r());
+    EXPECT_EQ(FilePath::invalidPath(), s());
+    EXPECT_EQ(FilePath::invalidPath(), r());
 }
 
 TEST_F(FileSystemPathFixture, copyWont)

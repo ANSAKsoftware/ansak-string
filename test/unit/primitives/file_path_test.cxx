@@ -316,6 +316,8 @@ TEST(FilePathTest, testParentOfUNC)
     EXPECT_FALSE(invalid.isRelative());
     EXPECT_FALSE(invalid.isRoot());
     EXPECT_FALSE(invalid.isUNCPath());
+
+    EXPECT_EQ(FilePath::invalidPath(), invalid);
 }
 
 TEST(FilePathTest, testParentCorners)
