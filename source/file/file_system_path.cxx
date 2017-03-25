@@ -42,10 +42,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "file_system_path.hxx"
-#include "file_system_primitives.hxx"
-#include "runtime_exception.hxx"
-// #include "file_handle.hxx"
+#include <file_system_path.hxx>
+#include <file_system_primitives.hxx>
+#include <runtime_exception.hxx>
+#include <file_handle.hxx>
+#include <file_system_primitives.hxx>
 
 using namespace std;
 
@@ -56,8 +57,8 @@ namespace {
 
 bool checkFileSystemPrimitives()
 {
-    enforce(getPrimitives() != nullptr);
-    return getPrimitives() != nullptr;
+    enforce(getFileSystemPrimitives() != nullptr);
+    return getFileSystemPrimitives() != nullptr;
 }
 
 }
@@ -99,24 +100,22 @@ FileSystemPath::ChildrenRetriever FileSystemPath::children() const
     return ChildrenRetriever(*this);
 }
 
-bool FileSystemPath::copyFromFile(const FileSystemPath& ) // other)
+bool FileSystemPath::copyFromFile(const FileSystemPath& src)
 {
-    return false;
-    /*
     // validity check
-    FileSystemPath rhs(other);
-    realize(); rhs.realize();
-    if (!isValid() || !rhs.isValid() || m_path.isRelative() || rhs.m_path.isRelative())
+    FileSystemPath srcPath(src);
+    realize(); srcPath.realize();
+    if (!isValid() || !srcPath.isValid() || m_path.isRelative() || srcPath.m_path.isRelative())
     {
         return false;
     }
     // one's not a file or source doesn't exist?
-    if ((exists() && !isFile()) || (!other.exists() || !other.isFile()))
+    if ((exists() && !isFile()) || (!src.exists() || !src.isFile()))
     {
         return false;
     }
     // They're already the same...
-    if (m_path == rhs.m_path)
+    if (m_path == srcPath.m_path)
     {
         return true;
     }
@@ -124,7 +123,7 @@ bool FileSystemPath::copyFromFile(const FileSystemPath& ) // other)
     FileSystemPath parentPath(parent());
     if (exists())
     {
-        if (!remove() || exists())
+        if (!getFileSystemPrimitives()->remove(m_path) || exists())
         {
             return false;
         }
@@ -134,11 +133,10 @@ bool FileSystemPath::copyFromFile(const FileSystemPath& ) // other)
         return false;
     }
 
-    auto src = FileHandle::openForReading(rhs);
-    auto dest = FileHandle::create(*this);
+    auto srcH = FileHandle::openForReading(srcPath);
+    auto destH = FileHandle::create(*this);
 
-    return dest.copyFrom(src) != 0;
-    */
+    return destH.copyFrom(srcH) != 0;
 }
 
 void FileSystemPath::realize()
@@ -147,7 +145,7 @@ void FileSystemPath::realize()
     {
         return;
     }
-    FilePath cwd = getPrimitives()->getCurrentWorkingDirectory();
+    FilePath cwd = getFileSystemPrimitives()->getCurrentWorkingDirectory();
     auto rooted = m_path.rootPathFrom(cwd);
     m_isValid = rooted.isValid();
     if (m_isValid)
@@ -158,27 +156,27 @@ void FileSystemPath::realize()
 
 bool FileSystemPath::exists() const
 {
-    return getPrimitives()->pathExists(m_path);
+    return getFileSystemPrimitives()->pathExists(m_path);
 }
 
 bool FileSystemPath::isFile() const
 {
-    return getPrimitives()->pathIsFile(m_path);
+    return getFileSystemPrimitives()->pathIsFile(m_path);
 }
 
 bool FileSystemPath::isDir() const
 {
-    return getPrimitives()->pathIsDir(m_path);
+    return getFileSystemPrimitives()->pathIsDir(m_path);
 }
 
 uint64_t FileSystemPath::size() const
 {
-    return getPrimitives()->fileSize(m_path);
+    return getFileSystemPrimitives()->fileSize(m_path);
 }
 
 TimeStamp FileSystemPath::lastModTime() const
 {
-    return getPrimitives()->lastModTime(m_path);
+    return getFileSystemPrimitives()->lastModTime(m_path);
 }
 
 FileSystemPath::ChildrenRetriever::ChildrenRetriever
@@ -188,7 +186,7 @@ FileSystemPath::ChildrenRetriever::ChildrenRetriever
     m_directoryReader()
 {
     enforce(path.exists() && path.isDir());
-    m_directoryReader.reset(getPrimitives()->newPathIterator(path));
+    m_directoryReader.reset(getFileSystemPrimitives()->newPathIterator(path));
 }
 
 FileSystemPath::ChildrenRetriever::ChildrenRetriever

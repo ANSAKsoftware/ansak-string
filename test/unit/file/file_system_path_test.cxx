@@ -57,7 +57,7 @@ namespace ansak
 unique_ptr<FileSystemMock> primitive;
 FileSystemMock* theMock = nullptr;
 
-const FileSystemPrimitives* getPrimitives()
+const FileSystemPrimitives* getFileSystemPrimitives()
 {
     if (theMock == nullptr && !primitive)
     {
@@ -77,12 +77,20 @@ namespace
 #if defined(WIN32)
 
 const char* homeDirP = "C:\\Users\\theUser";
-// const char* foreignPathP = "/usr/sbin";
+const char* copySrcP = "C:\\Users\\theUser\\source";
+const char* copyDestP = "C:\\Users\\theUser\\dest";
+const char* copyDest2P = "C:\\Users\\theUser\\dest\\two";
+const char* foreignPathP1 = "/usr/sbin/nonesuch1";
+const char* foreignPathP2 = "/usr/sbin/nonesuch2";
 
 #else
 
 const char* homeDirP = "/home/theUser";
-// const char* foreignPathP = "C:\\Windows\\System32";
+const char* copySrcP = "/home/theUser/source";
+const char* copyDestP = "/home/theUser/dest";
+const char* copyDest2P = "/home/theUser/dest/two";
+const char* foreignPathP1 = "C:\\Windows\\System32\\nonesuch1";
+const char* foreignPathP2 = "C:\\Windows\\System32\\nonesuch2";
 
 #endif
 
@@ -207,4 +215,68 @@ TEST_F(FileSystemPathFixture, getFromEmptyRetriever)
     EXPECT_EQ(child, s());
     EXPECT_EQ(FilePath(), s());
     EXPECT_EQ(FilePath(), r());
+}
+
+TEST_F(FileSystemPathFixture, copyWont)
+{
+    FileSystemPath fsp1, fsp2;
+    EXPECT_FALSE(fsp1.copyFromFile(fsp2));
+}
+
+TEST_F(FileSystemPathFixture, copyWontBecause)
+{
+    FileSystemPath fspGood;
+    FileSystemPath foreigner1(foreignPathP1);
+    FileSystemPath foreigner2(foreignPathP2);
+
+    EXPECT_FALSE(fspGood.copyFromFile(foreigner1));
+    EXPECT_FALSE(foreigner2.copyFromFile(fspGood));
+    EXPECT_FALSE(foreigner2.copyFromFile(foreigner1));
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillRepeatedly(Return(true));
+    EXPECT_TRUE(fspGood.copyFromFile(fspGood));
+}
+
+TEST_F(FileSystemPathFixture, copyWontDestProblem)
+{
+    FileSystemPath fspSrc(copySrcP);
+    FileSystemPath fspDest(copyDestP);
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockRemove(_)).WillOnce(Return(false));
+    EXPECT_FALSE(fspDest.copyFromFile(fspSrc));
+}
+
+TEST_F(FileSystemPathFixture, copyWontDestNotInDirectory)
+{
+    FileSystemPath fspSrc(copySrcP);
+    FileSystemPath fspDest(copyDest2P);
+
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(copySrcP)))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(Eq(FilePath(copySrcP)))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(copyDest2P)))).WillRepeatedly(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(copyDestP)))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(FilePath(copyDestP)))).WillRepeatedly(Return(false));
+    EXPECT_FALSE(fspDest.copyFromFile(fspSrc));
+}
+
+TEST_F(FileSystemPathFixture, copyCallThrough)
+{
+    FileSystemPath fspSrc(copySrcP);
+    FileSystemPath fspDest(copyDest2P);
+
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(copySrcP)))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(Eq(FilePath(copySrcP)))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(copyDest2P)))).WillRepeatedly(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(copyDestP)))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(FilePath(copyDestP)))).WillRepeatedly(Return(true));
+
+    EXPECT_CALL(FileMock(), mockCreate(_, _, _)).WillOnce(Return(10221u));
+    EXPECT_CALL(FileMock(), mockOpen(_, _, _, _)).WillOnce(Return(10222u));
+
+    EXPECT_CALL(FileMock(), mockRead(_, _, _, _)).WillOnce(Return(4080ull));
+    EXPECT_CALL(FileMock(), mockWrite(_, _, _, _)).WillOnce(Return(4080ull));
+
+    EXPECT_TRUE(fspDest.copyFromFile(fspSrc));
 }

@@ -92,6 +92,6 @@ public:
     virtual FilePath operator()() = 0;
 };
 
-const FileSystemPrimitives* getPrimitives();
+const FileSystemPrimitives* getFileSystemPrimitives();
 
 }

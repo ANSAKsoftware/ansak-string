@@ -343,7 +343,7 @@ void FileHandle::close()
         auto h = m_fh;
         m_fh = nullHandle;
         unsigned int errorCode = 0;
-        getPrimitives()->close(h, errorCode);
+        getFileSystemPrimitives()->close(h, errorCode);
         if (errorCode != 0 && m_throwErrors)
         {
             throw FileHandleException(m_path, errorCode, "closing file failed");
@@ -363,7 +363,7 @@ uint64_t FileHandle::size()
     if (isOpen())
     {
         unsigned int errorCode = 0;
-        auto r = getPrimitives()->fileSize(m_fh, errorCode);
+        auto r = getFileSystemPrimitives()->fileSize(m_fh, errorCode);
         if (!errorCode)
         {
             return r;
@@ -389,7 +389,7 @@ void FileHandle::seek(off_t pos)
     if (isOpen())
     {
         unsigned int errorCode = 0;
-        getPrimitives()->seek(m_fh, pos, errorCode);
+        getFileSystemPrimitives()->seek(m_fh, pos, errorCode);
         if (errorCode != 0 && m_throwErrors)
         {
             stringstream os;
@@ -435,7 +435,7 @@ size_t FileHandle::read(char* dest, size_t destSize)
         return 0;
     }
     unsigned int errorCode = 0;
-    auto r = getPrimitives()->read(m_fh, dest, destSize, errorCode);
+    auto r = getFileSystemPrimitives()->read(m_fh, dest, destSize, errorCode);
 
     if (r == static_cast<size_t>(~0ull))
     {
@@ -483,7 +483,7 @@ size_t FileHandle::write(const char* src, size_t srcSize)
     }
 
     unsigned int errorCode = 0;
-    auto r = getPrimitives()->write(m_fh, src, srcSize, errorCode);
+    auto r = getFileSystemPrimitives()->write(m_fh, src, srcSize, errorCode);
 
     if (r == static_cast<size_t>(~0ull))
     {
@@ -593,7 +593,7 @@ bool FileHandle::create()
     PermissionHolder p;
 
     unsigned int errorNumber = 0;
-    auto fd = getPrimitives()->create(m_path, p.getPermission(), errorNumber);
+    auto fd = getFileSystemPrimitives()->create(m_path, p.getPermission(), errorNumber);
     if (fd == ~0ull)
     {
         if (m_throwErrors)
@@ -624,7 +624,7 @@ bool FileHandle::open(int mode)
     PermissionHolder p;
 
     unsigned int errorNumber = 0;
-    auto fd = getPrimitives()->open(m_path.asFilePath(), openMode, p.getPermission(), errorNumber);
+    auto fd = getFileSystemPrimitives()->open(m_path.asFilePath(), openMode, p.getPermission(), errorNumber);
     if (fd == ~0ull)
     {
         if (m_throwErrors)
@@ -654,7 +654,7 @@ FileHandleException::FileHandleException
     if (errorCode != 0)
     {
         os << " code = " << errorCode <<
-              "; code explanation: " << getPrimitives()->errorAsString(errorCode) << "; ";
+              "; code explanation: " << getFileSystemPrimitives()->errorAsString(errorCode) << "; ";
     }
     m_what = os.str();
 }
