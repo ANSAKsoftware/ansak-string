@@ -98,10 +98,12 @@ const char* foreignPathP2 = "C:\\Windows\\System32\\nonesuch2";
 
 class FileSystemPathFixture : public Test {
 public:
+    const FilePath m_home = FilePath(homeDirP);
+
     FileSystemPathFixture()
     {
         theMock = &m_fileMock;
-        EXPECT_CALL(m_fileMock, mockGetCwd()).WillRepeatedly(Return(FilePath(homeDirP)));
+        EXPECT_CALL(m_fileMock, mockGetCwd()).WillRepeatedly(Return(m_home));
     }
     ~FileSystemPathFixture()
     {
@@ -130,7 +132,7 @@ TEST_F(FileSystemPathFixture, defaultConstruct)
     EXPECT_TRUE(uut.isValid());
     EXPECT_TRUE(!uut.isRelative());
     EXPECT_TRUE(!uut.isRoot());
-    EXPECT_EQ(homeDirP, uut.asUtf8String());
+    EXPECT_EQ(m_home.asUtf8String(), uut.asUtf8String());
     EXPECT_TRUE(uut.exists());
     EXPECT_TRUE(!uut.isFile());
     EXPECT_TRUE(uut.isDir());
@@ -138,8 +140,7 @@ TEST_F(FileSystemPathFixture, defaultConstruct)
 
 TEST_F(FileSystemPathFixture, nonRelativeConstruct)
 {
-    FilePath home(homeDirP);
-    FilePath fileThere = home.child("someFile");
+    FilePath fileThere = m_home.child("someFile");
     FileSystemPath uut(fileThere);
 
     EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(true));
@@ -162,8 +163,7 @@ TEST_F(FileSystemPathFixture, nonRelativeConstruct)
 
 TEST_F(FileSystemPathFixture, stringConstruct)
 {
-    FilePath home(homeDirP);
-    FilePath fileThere = home.child("someFile");
+    FilePath fileThere = m_home.child("someFile");
     FileSystemPath uut(fileThere.asUtf8String());
 
     EXPECT_TRUE(uut.isValid());
@@ -174,25 +174,24 @@ TEST_F(FileSystemPathFixture, stringConstruct)
 
 TEST_F(FileSystemPathFixture, getParent)
 {
-    FilePath home(homeDirP);
-    FilePath fileThere = home.child("someFile");
+    FilePath fileThere = m_home.child("someFile");
     FileSystemPath someFile(fileThere);
     FileSystemPath uut(someFile.parent());
 
     EXPECT_TRUE(uut.isValid());
     EXPECT_TRUE(!uut.isRelative());
     EXPECT_TRUE(!uut.isRoot());
-    EXPECT_EQ(home.asUtf8String(), uut.asUtf8String());
+    EXPECT_EQ(m_home.asUtf8String(), uut.asUtf8String());
 }
 
 TEST_F(FileSystemPathFixture, getChildren)
 {
-    FileSystemPath homeDirSP(homeDirP);
+    FileSystemPath homeDirSP(m_home);
     EXPECT_CALL(FileMock(), mockPathExists(Eq(homeDirSP))).WillOnce(Return(true));
     EXPECT_CALL(FileMock(), mockPathIsDir(Eq(homeDirSP))).WillOnce(Return(true));
     FilePath child = FilePath(homeDirP).child("alpha");
 
-    FileSystemPath::ChildrenRetriever r = FileSystemPath(homeDirP).children();
+    FileSystemPath::ChildrenRetriever r = FileSystemPath(m_home).children();
     auto listMock = dynamic_cast<DirectoryListMock*>(FileMock().m_lister);
     enforce(listMock != nullptr);
     EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath::invalidPath()));
@@ -202,12 +201,12 @@ TEST_F(FileSystemPathFixture, getChildren)
 
 TEST_F(FileSystemPathFixture, getFromEmptyRetriever)
 {
-    FileSystemPath homeDirSP(homeDirP);
+    FileSystemPath homeDirSP(m_home);
     EXPECT_CALL(FileMock(), mockPathExists(Eq(homeDirSP))).WillOnce(Return(true));
     EXPECT_CALL(FileMock(), mockPathIsDir(Eq(homeDirSP))).WillOnce(Return(true));
-    FilePath child = FilePath(homeDirP).child("alpha");
+    FilePath child = FilePath(m_home).child("alpha");
 
-    FileSystemPath::ChildrenRetriever r = FileSystemPath(homeDirP).children();
+    FileSystemPath::ChildrenRetriever r = FileSystemPath(m_home).children();
     auto listMock = dynamic_cast<DirectoryListMock*>(FileMock().m_lister);
     enforce(listMock != nullptr);
     EXPECT_CALL(*listMock, mockInvocation()).WillOnce(Return(FilePath(child))).WillOnce(Return(FilePath::invalidPath()));
@@ -215,6 +214,92 @@ TEST_F(FileSystemPathFixture, getFromEmptyRetriever)
     EXPECT_EQ(child, s());
     EXPECT_EQ(FilePath::invalidPath(), s());
     EXPECT_EQ(FilePath::invalidPath(), r());
+}
+
+TEST_F(FileSystemPathFixture, createDirectoryAlreadyThere)
+{
+    FileSystemPath homePath(m_home);
+    FileSystemPath somePath(copySrcP);
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(m_home))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(somePath))).WillOnce(Return(false));
+
+    EXPECT_TRUE(homePath.createDirectory());
+    EXPECT_FALSE(somePath.createDirectory());
+}
+
+TEST_F(FileSystemPathFixture, createDirParentAsDirNotThere)
+{
+    FileSystemPath homePath(m_home);
+    FileSystemPath createPath(copyDestP);
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(homePath.asFilePath()))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(homePath.asFilePath()))).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(createPath.asFilePath()))).WillOnce(Return(false));
+
+    ASSERT_FALSE(createPath.createDirectory());
+}
+
+TEST_F(FileSystemPathFixture, createDirParentNotThereNoRecurse)
+{
+    FileSystemPath homePath(m_home);
+    FileSystemPath createPath(copyDestP);
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(homePath.asFilePath()))).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(createPath.asFilePath()))).WillOnce(Return(false));
+
+    ASSERT_FALSE(createPath.createDirectory());
+}
+
+TEST_F(FileSystemPathFixture, createDirRecursively)
+{
+    FileSystemPath homePath(m_home);
+    FileSystemPath step1(homePath.child("row"));
+    FileSystemPath step2(step1.child("your"));
+    FileSystemPath step3(step2.child("boat"));
+
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(homePath.asFilePath()))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(homePath.asFilePath()))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(step1.asFilePath()))).WillRepeatedly(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(step2.asFilePath()))).WillRepeatedly(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(step3.asFilePath()))).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockCreateDirectory(_)).WillRepeatedly(Return(true));
+
+    ASSERT_TRUE(step3.createDirectory(FileSystemPath::recursively));
+}
+
+TEST_F(FileSystemPathFixture, createDirRecursivelyFail)
+{
+    FileSystemPath homePath(m_home);
+    FileSystemPath step1(homePath.child("row"));
+    FileSystemPath step2(step1.child("your"));
+    FileSystemPath step3(step2.child("boat"));
+
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(homePath.asFilePath()))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(homePath.asFilePath()))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(step1.asFilePath()))).WillRepeatedly(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(step2.asFilePath()))).WillRepeatedly(Return(false));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(step3.asFilePath()))).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockCreateDirectory(_)).WillOnce(Return(false));
+
+    ASSERT_FALSE(step3.createDirectory(FileSystemPath::recursively));
+}
+
+TEST_F(FileSystemPathFixture, createFileExists)
+{
+    FileSystemPath exists(copySrcP);
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillRepeatedly(Return(true));
+
+    ASSERT_TRUE(exists.createFile());
+    ASSERT_FALSE(exists.createFile(FileSystemPath::failIfThere));
+}
+
+TEST_F(FileSystemPathFixture, createFile)
+{
+    FileSystemPath doesntExist(copySrcP);
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockCreateFile(_)).WillOnce(Return(true));
+
+    ASSERT_TRUE(doesntExist.createFile());
 }
 
 TEST_F(FileSystemPathFixture, copyWont)
@@ -279,4 +364,123 @@ TEST_F(FileSystemPathFixture, copyCallThrough)
     EXPECT_CALL(FileMock(), mockWrite(_, _, _, _)).WillOnce(Return(4080ull));
 
     EXPECT_TRUE(fspDest.copyFromFile(fspSrc));
+}
+
+TEST_F(FileSystemPathFixture, moveToWont)
+{
+    FileSystemPath moveNot1(copySrcP);
+    FileSystemPath destination(copyDest2P);
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(moveNot1)))).WillOnce(Return(false));
+    ASSERT_FALSE(moveNot1.moveTo(destination));
+
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(moveNot1)))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(destination.parent())))).WillOnce(Return(false));
+    ASSERT_FALSE(moveNot1.moveTo(destination));
+
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(moveNot1)))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(destination.parent())))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(FilePath(destination.parent())))).WillOnce(Return(false));
+    ASSERT_FALSE(moveNot1.moveTo(destination));
+}
+
+TEST_F(FileSystemPathFixture, moveTo)
+{
+    FileSystemPath moveNot1(copySrcP);
+    FileSystemPath destination(copyDest2P);
+
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(moveNot1)))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathExists(Eq(FilePath(destination.parent())))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(Eq(FilePath(destination.parent())))).WillOnce(Return(true));
+
+    EXPECT_CALL(FileMock(), mockMove(_, _)).WillOnce(Return(true));
+    ASSERT_TRUE(moveNot1.moveTo(destination));
+}
+
+TEST_F(FileSystemPathFixture, removeFile)
+{
+    FileSystemPath removeThisFile(copySrcP);
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(false));
+    EXPECT_TRUE(removeThisFile.remove());
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockRemove(_)).WillOnce(Return(false));
+    EXPECT_FALSE(removeThisFile.remove());
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockRemove(_)).WillOnce(Return(true));
+    EXPECT_TRUE(removeThisFile.remove());
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsDir(_)).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockPathIsFile(_)).WillOnce(Return(false));
+    EXPECT_FALSE(removeThisFile.remove());
+}
+
+void mockRemoveEmptyDir(DirectoryListPrimitive& mockIt)
+{
+    DirectoryListMock& mockMe = dynamic_cast<DirectoryListMock&>(mockIt);
+    EXPECT_CALL(mockMe, mockInvocation()).WillOnce(Return(FilePath::invalidPath()));
+}
+
+TEST_F(FileSystemPathFixture, removeEmptyDirectory)
+{
+    FileSystemPath removeThisDir(copySrcP);
+
+    EXPECT_CALL(FileMock(), mockPathExists(FilePath(removeThisDir))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(FilePath(removeThisDir))).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockPathIsDir(FilePath(removeThisDir))).WillRepeatedly(Return(true));
+
+    FileMock().registerPathIteratorMocker(FilePath(removeThisDir), mockRemoveEmptyDir);
+
+    EXPECT_CALL(FileMock(), mockRemoveDirectory(_)).WillOnce(Return(true));
+    EXPECT_TRUE(removeThisDir.remove());
+}
+
+void mockWontRemoveNonemptyDir(DirectoryListPrimitive& mockIt)
+{
+    DirectoryListMock& mockMe = dynamic_cast<DirectoryListMock&>(mockIt);
+    EXPECT_CALL(mockMe, mockInvocation()).WillOnce(Return(FilePath(copySrcP).child("alpha")));
+}
+
+void mockRemoveNonemptyDir(DirectoryListPrimitive& mockIt)
+{
+    DirectoryListMock& mockMe = dynamic_cast<DirectoryListMock&>(mockIt);
+    EXPECT_CALL(mockMe, mockInvocation()).WillOnce(Return(FilePath(copySrcP).child("alpha"))).
+                                          WillOnce(Return(FilePath(copySrcP).child("bravo"))).
+                                          WillOnce(Return(FilePath(copySrcP).child("charlie"))).
+                                          WillOnce(Return(FilePath::invalidPath()));
+}
+
+TEST_F(FileSystemPathFixture, dontRemoveNonEmptyDirectory)
+{
+    FileSystemPath removeThisDir(copySrcP);
+
+    EXPECT_CALL(FileMock(), mockPathExists(FilePath(removeThisDir))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(FilePath(removeThisDir))).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockPathIsDir(FilePath(removeThisDir))).WillRepeatedly(Return(true));
+
+    FileMock().registerPathIteratorMocker(FilePath(removeThisDir), mockWontRemoveNonemptyDir);
+
+    EXPECT_FALSE(removeThisDir.remove());
+}
+
+TEST_F(FileSystemPathFixture, removeNonEmptyDirectory)
+{
+    FileSystemPath removeThisDir(copySrcP);
+
+    EXPECT_CALL(FileMock(), mockPathExists(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(FilePath(removeThisDir))).WillOnce(Return(false));
+    EXPECT_CALL(FileMock(), mockPathIsDir(FilePath(removeThisDir))).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(FilePath(copySrcP).child("alpha"))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(FilePath(copySrcP).child("bravo"))).WillOnce(Return(true));
+    EXPECT_CALL(FileMock(), mockPathIsFile(FilePath(copySrcP).child("charlie"))).WillOnce(Return(true));
+
+    FileMock().registerPathIteratorMocker(FilePath(removeThisDir), mockRemoveNonemptyDir);
+
+    EXPECT_CALL(FileMock(), mockRemove(_)).WillRepeatedly(Return(true));
+    EXPECT_CALL(FileMock(), mockRemoveDirectory(_)).WillOnce(Return(true));
+    EXPECT_TRUE(removeThisDir.remove(FileSystemPath::recursively));
 }

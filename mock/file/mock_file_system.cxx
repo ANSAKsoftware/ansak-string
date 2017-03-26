@@ -46,6 +46,21 @@ using namespace testing;
 
 namespace ansak {
 
+FilePath FileSystemMock::getTempFilePath() const
+{
+    return mockGetTempFilePath();
+}
+
+utf8String FileSystemMock::getEnvironmentVariable(const char* variableName) const
+{
+    return mockGetEnvironmentVariable(variableName);
+}
+
+unsigned long FileSystemMock::getProcessID() const
+{
+    return mockGetProcessID();
+}
+
 bool FileSystemMock::pathExists(const FilePath& filePath) const
 {
     return mockPathExists(filePath);
@@ -81,14 +96,19 @@ bool FileSystemMock::createDirectory(const FilePath& filePath) const
     return mockCreateDirectory(filePath);
 }
 
+bool FileSystemMock::removeDirectory(const FilePath& filePath) const
+{
+    return mockRemoveDirectory(filePath);
+}
+
 bool FileSystemMock::createFile(const FilePath& filePath) const
 {
     return mockCreateFile(filePath);
 }
 
-bool FileSystemMock::rename(const FilePath& filePath, const utf8String& newName) const
+bool FileSystemMock::move(const FilePath& filePath, const FilePath& newName) const
 {
-    return mockRename(filePath, newName);
+    return mockMove(filePath, newName);
 }
 
 bool FileSystemMock::remove(const FilePath& filePath) const
@@ -140,8 +160,21 @@ utf8String FileSystemMock::errorAsString(unsigned int errorID) const
 DirectoryListPrimitive* FileSystemMock::newPathIterator(const FilePath& directory) const
 {
     auto r = new DirectoryListMock(directory);
-    m_lister = r;
+    auto iMocker = m_dirMockers.find(directory.asUtf8String());
+    if (iMocker != m_dirMockers.end())
+    {
+        iMocker->second(*r);
+    }
+    else
+    {
+        m_lister = r;
+    }
     return r;
+}
+
+void FileSystemMock::registerPathIteratorMocker(const FilePath& dirToIterate, PathIteratorMocker function)
+{
+    m_dirMockers[dirToIterate.asUtf8String()] = function;
 }
 
 DirectoryListMock::DirectoryListMock(const FilePath& parentDir)

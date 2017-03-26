@@ -109,51 +109,6 @@ public:
     FileSystemPath& operator=(const FileSystemPath& src) = default;
 
     ///////////////////////////////////////////////////////////////////////
-    // class TempDirectory -- utility class interface to manage a temporary
-    // directory life-time specific to this process, or even to one sub-
-    // system within this process.
-
-#if 0
-    class TempDirectory {
-    public:
-        static const bool detachIt = true;
-        static const bool dontDetachIt = false;
-
-        ///////////////////////////////////////////////////////////////////
-        // Constructor -- Begin the life-cycle of the temporary directory.
-
-        TempDirectory();
-
-        ///////////////////////////////////////////////////////////////////
-        // Destructor -- On exit, delete the directory and all its contents,
-        // if the directory remains "attached" to the object.
-
-        virtual ~TempDirectory();
-
-        ///////////////////////////////////////////////////////////////////
-        // child -- create a sub-path from the temporary directory, for a
-        // file, a directory or whatever is required and available on the
-        // current platform
-
-        virtual FileSystemPath child(const utf8String& subPath) const = 0;
-
-        ///////////////////////////////////////////////////////////////////
-        // asFileSystemPath -- If you need the path to the temp directory,
-        // here's how to get it -- and to detach it from this object if so
-        // needed.
-
-        virtual FileSystemPath asFileSystemPath(bool detach = dontDetachIt) = 0;
-    };
-
-    ///////////////////////////////////////////////////////////////////////
-    // createTemporaryDirectory -- Instantiate an object that implements the
-    // TempDirectory interface.
-
-    using TempDirectoryPtr = std::unique_ptr<TempDirectory>;
-    static TempDirectoryPtr createTemporaryDirectory();
-#endif
-
-    ///////////////////////////////////////////////////////////////////////
     // parent -- Like the FilePath version, but produces a parent
     // FileSystemPath.
 
@@ -231,9 +186,9 @@ public:
     bool copyFromFile(const FileSystemPath& other);
 
     ///////////////////////////////////////////////////////////////////////
-    // Rename this file to a name in an other file (as FileSystemPath).
+    // Rename this file/move this file to another name/place (as FileSystemPath).
 
-    bool renameTo(const FileSystemPath& other) const;
+    bool moveTo(const FileSystemPath& other) const;
 
     ///////////////////////////////////////////////////////////////////////
     // Remove this file or directory -- if directory, and if recursive,

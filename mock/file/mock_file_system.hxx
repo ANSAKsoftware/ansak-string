@@ -44,6 +44,8 @@
 
 #include <file_path.hxx>
 #include <file_system_primitives.hxx>
+#include <map>
+#include <string>
 
 #include <gmock/gmock.h>
 
@@ -56,6 +58,10 @@ public:
 
     ~FileSystemMock() = default;
 
+    FilePath getTempFilePath() const override;
+    utf8String getEnvironmentVariable(const char* variableName) const override;
+    unsigned long getProcessID() const override;
+
     bool pathExists(const FilePath& filePath) const override;
     bool pathIsFile(const FilePath& filePath) const override;
     bool pathIsDir(const FilePath& filePath) const override;
@@ -63,8 +69,9 @@ public:
     TimeStamp lastModTime(const FilePath& filePath) const override;
     FilePath getCurrentWorkingDirectory() const override;
     bool createDirectory(const FilePath& filePath) const override;
+    bool removeDirectory(const FilePath& filePath) const override;
     bool createFile(const FilePath& filePath) const override;
-    bool rename(const FilePath& filePath, const utf8String& newName) const override;
+    bool move(const FilePath& filePath, const FilePath& newName) const override;
     bool remove(const FilePath& filePath) const override;
 
     unsigned long long create(const FilePath& path, int permissions, unsigned int& errorID) const override;
@@ -76,9 +83,15 @@ public:
     size_t read(unsigned long long handle, char* destination, size_t destSize, unsigned int& errorID) const override;
     size_t write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const override;
 
-    virtual ansak::utf8String errorAsString(unsigned int errorID) const override;
+    ansak::utf8String errorAsString(unsigned int errorID) const override;
 
     DirectoryListPrimitive* newPathIterator(const FilePath& directory) const override;
+    using PathIteratorMocker = void (*)(DirectoryListPrimitive&);
+    void registerPathIteratorMocker(const FilePath& dirToIterate, PathIteratorMocker function);
+
+    MOCK_CONST_METHOD0(mockGetTempFilePath, FilePath());
+    MOCK_CONST_METHOD1(mockGetEnvironmentVariable, utf8String(const char* variableName));
+    MOCK_CONST_METHOD0(mockGetProcessID, unsigned long());
 
     MOCK_CONST_METHOD1(mockPathExists, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockPathIsFile, bool(const FilePath&));
@@ -87,8 +100,9 @@ public:
     MOCK_CONST_METHOD1(mockLastModTime, TimeStamp(const FilePath&));
     MOCK_CONST_METHOD0(mockGetCwd, FilePath());
     MOCK_CONST_METHOD1(mockCreateDirectory, bool(const FilePath&));
+    MOCK_CONST_METHOD1(mockRemoveDirectory, bool(const FilePath&));
     MOCK_CONST_METHOD1(mockCreateFile, bool(const FilePath&));
-    MOCK_CONST_METHOD2(mockRename, bool(const FilePath&, const utf8String&));
+    MOCK_CONST_METHOD2(mockMove, bool(const FilePath&, const FilePath&));
     MOCK_CONST_METHOD1(mockRemove, bool(const FilePath&));
 
     MOCK_CONST_METHOD3(mockCreate, unsigned long long(const FilePath&, int, unsigned int&));
@@ -105,6 +119,10 @@ public:
     MOCK_CONST_METHOD1(mockNewPathIterator, DirectoryListPrimitive*(const FilePath& directory));
 
     mutable DirectoryListPrimitive* m_lister = nullptr;
+
+private:
+
+    std::map<std::string, PathIteratorMocker> m_dirMockers;
 };
 
 class DirectoryListMock : public DirectoryListPrimitive
@@ -115,10 +133,6 @@ public:
     ~DirectoryListMock() = default;
 
     FilePath operator()() override;
-
-    void setupSimpleMock();
-    void expectOneElement(const char* oneSubDir);
-    void expectDone();
 
     MOCK_METHOD0(mockInvocation, FilePath());
 

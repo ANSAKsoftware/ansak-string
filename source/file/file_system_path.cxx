@@ -100,6 +100,51 @@ FileSystemPath::ChildrenRetriever FileSystemPath::children() const
     return ChildrenRetriever(*this);
 }
 
+bool FileSystemPath::createDirectory(bool recursively)
+{
+    if (exists())
+    {
+        return isDir();
+    }
+    else
+    {
+        FileSystemPath parentDir(parent());
+        if (parentDir.exists())
+        {
+            if (!parentDir.isDir())
+            {
+                return false;
+            }
+        }
+        else if (!recursively)
+        {
+            return false;
+        }
+        else
+        {
+            if (!parentDir.createDirectory(true))
+            {
+                return false;
+            }
+        }
+
+        return getFileSystemPrimitives()->createDirectory(*this);
+    }
+}
+
+bool FileSystemPath::createFile(bool failIfThere)
+{
+    auto doesItExist = exists();
+    if (doesItExist)
+    {
+        return isFile() && !failIfThere;
+    }
+    else
+    {
+        return getFileSystemPrimitives()->createFile(*this);
+    }
+}
+
 bool FileSystemPath::copyFromFile(const FileSystemPath& src)
 {
     // validity check
@@ -139,19 +184,59 @@ bool FileSystemPath::copyFromFile(const FileSystemPath& src)
     return destH.copyFrom(srcH) != 0;
 }
 
-void FileSystemPath::realize()
+bool FileSystemPath::moveTo(const FileSystemPath& other) const
 {
-    if (!m_path.isRelative())
+    if (!exists())
     {
-        return;
+        return false;
     }
-    FilePath cwd = getFileSystemPrimitives()->getCurrentWorkingDirectory();
-    auto rooted = m_path.rootPathFrom(cwd);
-    m_isValid = rooted.isValid();
-    if (m_isValid)
+    FileSystemPath otherParent(other.parent());
+    if (!otherParent.exists() || !otherParent.isDir())
     {
-        m_path = rooted;
+        return false;
     }
+
+    return getFileSystemPrimitives()->move(*this, other);
+}
+
+bool FileSystemPath::remove(bool recursive)
+{
+    if (!exists())
+    {
+        return true;
+    }
+    else if (isFile())
+    {
+        return getFileSystemPrimitives()->remove(*this);
+    }
+    else if (isDir())
+    {
+        ChildrenRetriever finder(children());
+        FileSystemPath p(finder());
+        vector<FileSystemPath> victims;
+        if (p.isValid())
+        {
+            if (!recursive)
+            {
+                return false;
+            }
+            else
+            {
+                while (p.isValid())
+                {
+                    victims.push_back(p);
+                    p = finder();
+                }
+            }
+        }
+
+        for (auto& v : victims)
+        {
+            v.remove(recursive);
+        }
+        return getFileSystemPrimitives()->removeDirectory(*this);
+    }
+    return false;
 }
 
 bool FileSystemPath::exists() const
@@ -177,6 +262,21 @@ uint64_t FileSystemPath::size() const
 TimeStamp FileSystemPath::lastModTime() const
 {
     return getFileSystemPrimitives()->lastModTime(m_path);
+}
+
+void FileSystemPath::realize()
+{
+    if (!m_path.isRelative())
+    {
+        return;
+    }
+    FilePath cwd = getFileSystemPrimitives()->getCurrentWorkingDirectory();
+    auto rooted = m_path.rootPathFrom(cwd);
+    m_isValid = rooted.isValid();
+    if (m_isValid)
+    {
+        m_path = rooted;
+    }
 }
 
 FileSystemPath::ChildrenRetriever::ChildrenRetriever
@@ -210,14 +310,4 @@ FileSystemPath::ChildrenRetriever::~ChildrenRetriever()
 {
 }
 
-#if 0
-FileSystemPath::TempDirectory::TempDirectory()
-{
-}
-
-FileSystemPath::TempDirectory::~TempDirectory()
-{
-}
-
-#endif
 }

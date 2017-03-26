@@ -56,6 +56,10 @@ public:
 
     virtual ~FileSystemPrimitives() = default;
 
+    virtual FilePath getTempFilePath() const = 0;
+    virtual utf8String getEnvironmentVariable(const char* variableName) const = 0;
+    virtual unsigned long getProcessID() const = 0;
+
     virtual bool pathExists(const FilePath& filePath) const = 0;
     virtual bool pathIsFile(const FilePath& filePath) const = 0;
     virtual bool pathIsDir(const FilePath& filePath) const = 0;
@@ -63,8 +67,9 @@ public:
     virtual TimeStamp lastModTime(const FilePath& filePath) const = 0;
     virtual FilePath getCurrentWorkingDirectory() const = 0;
     virtual bool createDirectory(const FilePath& filePath) const = 0;
+    virtual bool removeDirectory(const FilePath& filePath) const = 0;
     virtual bool createFile(const FilePath& filePath) const = 0;
-    virtual bool rename(const FilePath& filePath, const utf8String& newName) const = 0;
+    virtual bool move(const FilePath& filePath, const FilePath& newName) const = 0;
     virtual bool remove(const FilePath& filePath) const = 0;
 
     enum OpenMode : int { kForReading, kForAppending, kForReadingAndWriting };
