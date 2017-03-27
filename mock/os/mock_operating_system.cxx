@@ -35,129 +35,129 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_file_system.cxx -- declaration of a mock to the os primitives used by
-//                         FileSystemPath and FileHandle
+// mock_operating_system.cxx -- declaration of a mock to the os primitives used by
+//                              FileSystemPath and FileHandle
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "mock_file_system.hxx"
+#include "mock_operating_system.hxx"
 
 using namespace testing;
 
 namespace ansak {
 
-FilePath FileSystemMock::getTempFilePath() const
+FilePath OperatingSystemMock::getTempFilePath() const
 {
     return mockGetTempFilePath();
 }
 
-utf8String FileSystemMock::getEnvironmentVariable(const char* variableName) const
+utf8String OperatingSystemMock::getEnvironmentVariable(const char* variableName) const
 {
     return mockGetEnvironmentVariable(variableName);
 }
 
-unsigned long FileSystemMock::getProcessID() const
+unsigned long OperatingSystemMock::getProcessID() const
 {
     return mockGetProcessID();
 }
 
-bool FileSystemMock::pathExists(const FilePath& filePath) const
+bool OperatingSystemMock::pathExists(const FilePath& filePath) const
 {
     return mockPathExists(filePath);
 }
 
-bool FileSystemMock::pathIsFile(const FilePath& filePath) const
+bool OperatingSystemMock::pathIsFile(const FilePath& filePath) const
 {
     return mockPathIsFile(filePath);
 }
 
-bool FileSystemMock::pathIsDir(const FilePath& filePath) const
+bool OperatingSystemMock::pathIsDir(const FilePath& filePath) const
 {
     return mockPathIsDir(filePath);
 }
 
-uint64_t FileSystemMock::fileSize(const FilePath& filePath) const
+uint64_t OperatingSystemMock::fileSize(const FilePath& filePath) const
 {
     return mockFileSize(filePath);
 }
 
-TimeStamp FileSystemMock::lastModTime(const FilePath& filePath) const
+TimeStamp OperatingSystemMock::lastModTime(const FilePath& filePath) const
 {
     return mockLastModTime(filePath);
 }
 
-FilePath FileSystemMock::getCurrentWorkingDirectory() const
+FilePath OperatingSystemMock::getCurrentWorkingDirectory() const
 {
     return mockGetCwd();
 }
 
-bool FileSystemMock::createDirectory(const FilePath& filePath) const
+bool OperatingSystemMock::createDirectory(const FilePath& filePath) const
 {
     return mockCreateDirectory(filePath);
 }
 
-bool FileSystemMock::removeDirectory(const FilePath& filePath) const
+bool OperatingSystemMock::removeDirectory(const FilePath& filePath) const
 {
     return mockRemoveDirectory(filePath);
 }
 
-bool FileSystemMock::createFile(const FilePath& filePath) const
+bool OperatingSystemMock::createFile(const FilePath& filePath) const
 {
     return mockCreateFile(filePath);
 }
 
-bool FileSystemMock::move(const FilePath& filePath, const FilePath& newName) const
+bool OperatingSystemMock::move(const FilePath& filePath, const FilePath& newName) const
 {
     return mockMove(filePath, newName);
 }
 
-bool FileSystemMock::remove(const FilePath& filePath) const
+bool OperatingSystemMock::remove(const FilePath& filePath) const
 {
     return mockRemove(filePath);
 }
 
-unsigned long long FileSystemMock::create(const FilePath& path, int permissions, unsigned int& errorID) const
+unsigned long long OperatingSystemMock::create(const FilePath& path, int permissions, unsigned int& errorID) const
 {
     return mockCreate(path, permissions, errorID);
 }
 
-unsigned long long FileSystemMock::open(const FilePath& path, OpenMode mode, int permissions, unsigned int& errorID) const
+unsigned long long OperatingSystemMock::open(const FilePath& path, OpenMode mode, int permissions, unsigned int& errorID) const
 {
     return mockOpen(path, mode, permissions, errorID);
 }
 
 
-uint64_t FileSystemMock::fileSize(unsigned long long handle, unsigned int& errorID) const
+uint64_t OperatingSystemMock::fileSize(unsigned long long handle, unsigned int& errorID) const
 {
     return mockFileSize(handle, errorID);
 }
 
-void FileSystemMock::close(unsigned long long handle, unsigned int& errorID) const
+void OperatingSystemMock::close(unsigned long long handle, unsigned int& errorID) const
 {
     mockClose(handle, errorID);
 }
 
-void FileSystemMock::seek(unsigned long long handle, off_t position, unsigned int& errorID) const
+void OperatingSystemMock::seek(unsigned long long handle, off_t position, unsigned int& errorID) const
 {
     mockSeek(handle, position, errorID);
 }
 
-size_t FileSystemMock::read(unsigned long long handle, char* destination, size_t destSize, unsigned int& errorID) const
+size_t OperatingSystemMock::read(unsigned long long handle, char* destination, size_t destSize, unsigned int& errorID) const
 {
     return mockRead(handle, destination, destSize, errorID);
 }
 
-size_t FileSystemMock::write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const
+size_t OperatingSystemMock::write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const
 {
     return mockWrite(handle, source, srcSize, errorID);
 }
 
-utf8String FileSystemMock::errorAsString(unsigned int errorID) const
+utf8String OperatingSystemMock::errorAsString(unsigned int errorID) const
 {
     return mockErrorAsString(errorID);
 }
 
-DirectoryListPrimitive* FileSystemMock::newPathIterator(const FilePath& directory) const
+DirectoryListPrimitive* OperatingSystemMock::newPathIterator(const FilePath& directory) const
 {
     auto r = new DirectoryListMock(directory);
     auto iMocker = m_dirMockers.find(directory.asUtf8String());
@@ -172,7 +172,7 @@ DirectoryListPrimitive* FileSystemMock::newPathIterator(const FilePath& director
     return r;
 }
 
-void FileSystemMock::registerPathIteratorMocker(const FilePath& dirToIterate, PathIteratorMocker function)
+void OperatingSystemMock::registerPathIteratorMocker(const FilePath& dirToIterate, PathIteratorMocker function)
 {
     m_dirMockers[dirToIterate.asUtf8String()] = function;
 }

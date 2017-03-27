@@ -44,6 +44,9 @@
 
 namespace ansak {
 
+//============================================================================
+// public, comparison
+
 bool TimeStamp::operator==(const TimeStamp& rhs) const
 {
     if (this == &rhs) return true;
@@ -54,6 +57,9 @@ bool TimeStamp::operator==(const TimeStamp& rhs) const
            minute == rhs.minute &&
            second == rhs.second;
 }
+
+//============================================================================
+// public, comparison
 
 bool TimeStamp::operator<(const TimeStamp& rhs) const
 {
@@ -71,6 +77,9 @@ bool TimeStamp::operator<(const TimeStamp& rhs) const
                     else if (second < rhs.second)   return true;
                         else                        return false;
 }
+
+//============================================================================
+// public, comparison
 
 bool TimeStamp::operator>(const TimeStamp& rhs) const
 {

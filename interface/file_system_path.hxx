@@ -75,8 +75,8 @@ class FileSystemPath {
 
 public:
 
-    static const bool failIfThere = true;
-    static const bool recursively = true;
+    static const bool failIfThere = true;       // named boolean for strict file creation
+    static const bool recursively = true;       // named boolean for creating, removing directories
 
     ///////////////////////////////////////////////////////////////////////
     // Constructor -- stores it, based on a file path
@@ -87,7 +87,7 @@ public:
 
     FileSystemPath
     (
-        const FilePath&     path = FilePath()
+        const FilePath&     path = FilePath()   // I - an object to wrap
     );
 
     ///////////////////////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ public:
 
     FileSystemPath
     (
-        const std::string&  pathString
+        const std::string&  pathString          // I - string-form of a file path to wrap
     );
 
     ///////////////////////////////////////////////////////////////////////
@@ -135,8 +135,8 @@ public:
         FilePath operator()();
 
     private:
-        FilePath                                        m_path;
-        mutable std::unique_ptr<DirectoryListPrimitive> m_directoryReader;
+        FilePath                                        m_path;             // the path to scan
+        mutable std::unique_ptr<DirectoryListPrimitive> m_directoryReader;  // an OS-specific directory reader
     };
 
     ///////////////////////////////////////////////////////////////////////
@@ -177,24 +177,39 @@ public:
     ///////////////////////////////////////////////////////////////////////
     // Create this FileSystemPath as a directory of a file.
 
-    bool createDirectory(bool recursively = false);
-    bool createFile(bool failIfThere = false);
+    bool createDirectory
+    (
+        bool        recursively = false     // I - create multiple-level directory if necessary
+    );
+    bool createFile
+    (
+        bool        failIfThere = false     // I - fail if the file already exists
+    );
 
     ///////////////////////////////////////////////////////////////////////
     // Copy other file (as FileSystemPath) to a file at this FileSystemPath.
 
-    bool copyFromFile(const FileSystemPath& other);
+    bool copyFromFile
+    (
+        const FileSystemPath&   src         // I - source file to duplicate to this path
+    );
 
     ///////////////////////////////////////////////////////////////////////
     // Rename this file/move this file to another name/place (as FileSystemPath).
 
-    bool moveTo(const FileSystemPath& other) const;
+    bool moveTo
+    (
+        const FileSystemPath&   dest        // I - destination file name/location
+    ) const;
 
     ///////////////////////////////////////////////////////////////////////
     // Remove this file or directory -- if directory, and if recursive,
     // delete all its contents
 
-    bool remove(bool recursive = false);
+    bool remove
+    (
+        bool        recursive = false       // I - if directory, remove all sub elements
+    );
 
     ///////////////////////////////////////////////////////////////////////
     // Accessors: is it valid? is it relative? is it a "root" path?
@@ -219,8 +234,8 @@ private:
 
     void realize();
 
-    FilePath                m_path;
-    bool                    m_isValid;
+    FilePath                m_path;     // wrapped file location
+    bool                    m_isValid;  // status of the wrapped location
 };
 
 }

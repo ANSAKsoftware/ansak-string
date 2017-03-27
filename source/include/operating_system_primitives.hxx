@@ -29,7 +29,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2016.03.16 - First version
+// 2017.03.16 - First version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -37,8 +37,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// file_system_primitives.hxx -- Definition of file system abstraction layer
-//          interfaces
+// operating_system_primitives.hxx -- Definition of file system abstraction
+//                                    layer interfaces
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -48,13 +48,19 @@
 namespace ansak
 {
 
+/////////////////////////////////////////////////////////////////////////////
+// Forward Declaration
+
 class DirectoryListPrimitive;
 
-class FileSystemPrimitives
+/////////////////////////////////////////////////////////////////////////////
+// Class to wrap the real OS primitives, allows OS-free mocking
+
+class OperatingSystemPrimitives
 {
 public:
 
-    virtual ~FileSystemPrimitives() = default;
+    virtual ~OperatingSystemPrimitives() = default;
 
     virtual FilePath getTempFilePath() const = 0;
     virtual utf8String getEnvironmentVariable(const char* variableName) const = 0;
@@ -87,6 +93,10 @@ public:
     virtual DirectoryListPrimitive* newPathIterator(const FilePath& directory) const = 0;
 };
 
+/////////////////////////////////////////////////////////////////////////////
+// Class to wrap the real OS-specific, Directory-scanning primitives, allows
+// OS-free mocking
+
 class DirectoryListPrimitive
 {
 public:
@@ -94,9 +104,16 @@ public:
     DirectoryListPrimitive() = default;
     virtual ~DirectoryListPrimitive() = default;
 
+    /////////////////////////////////////////////////////////////////////////
+    // Get the next element in a sub-directory, return FilePath::invalidPath
+    // after the last value
+
     virtual FilePath operator()() = 0;
 };
 
-const FileSystemPrimitives* getFileSystemPrimitives();
+/////////////////////////////////////////////////////////////////////////////
+// Retrieve the compile-time selection of OS primitives
+
+const OperatingSystemPrimitives* getOperatingSystemPrimitives();
 
 }

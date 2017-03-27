@@ -44,14 +44,22 @@
 
 namespace ansak {
 
-struct TimeStamp {
-    unsigned int year;
-    unsigned int month;
-    unsigned int day;
-    unsigned int hour;
-    unsigned int minute;
-    unsigned int second;
+/////////////////////////////////////////////////////////////////////////////
+// A platform-independent TimeStamp record to be used in File attribute
+// generation etc. Made for easy generation/parsing of YYYY-MM-DD and HH:mm:ss
+// dates. Not suitable for precision finer than nearest-second.
+//
+// Does not include constructor. Use of an initializer should be sufficient.
 
+struct TimeStamp {
+    unsigned int year;              // only dealing with CE years
+    unsigned int month;             // month, 1 to 12
+    unsigned int day;               // days of the calendar 1 to 28, 29, 30 or 31
+    unsigned int hour;              // hours 0 to 23
+    unsigned int minute;            // minutes 0 to 59
+    unsigned int second;            // seconds 0 to 59
+
+    // helpful comparsion operators
     bool operator==(const TimeStamp& rhs) const;
     bool operator!=(const TimeStamp& rhs) const { return !operator==(rhs); }
     bool operator<(const TimeStamp& rhs) const;

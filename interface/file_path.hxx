@@ -94,7 +94,7 @@
 namespace ansak {
 
 ///////////////////////////////////////////////////////////////////////////
-// class FilePath -- mostly string operations but access to file-system
+// class FilePath -- mostly string operations but access to file-system-aware
 //                   APIs around file path manipulations
 
 class FilePath {
@@ -105,8 +105,8 @@ public:
     // are conditionally compiled appropriately
     static const char windowsPathSep;       //  = '\\'
     static const char linuxPathSep;         //  = '/'
-    static const char pathSep;
-    static const char foreignPathSep;
+    static const char pathSep;              // these two constants are selected
+    static const char foreignPathSep;       //      at compile time from the first two
 
     ///////////////////////////////////////////////////////////////////////
     // Constructor -- stores it, if empty, stores current working directory
@@ -123,6 +123,10 @@ public:
     FilePath& operator=(const FilePath& src) = default;
 
     ///////////////////////////////////////////////////////////////////////
+    // Factory for an invalid path object
+    static FilePath invalidPath();
+
+    ///////////////////////////////////////////////////////////////////////
     // Return the parent directory or a sub-path
 
     FilePath parent() const;
@@ -133,16 +137,14 @@ public:
     utf8String basename() const;
 
     ///////////////////////////////////////////////////////////////////////
-    // Factory for an invalid path object
-    static FilePath invalidPath();
-
-    ///////////////////////////////////////////////////////////////////////
     // Return the underlying path string, as 8-bit or 16-bit wide string
 
     utf8String asUtf8String() const { return m_path; }
     utf16String asUtf16String() const { return toUtf16(m_path); }
 
-    // I don't want to fight with comparisons -- compare the strings
+    ///////////////////////////////////////////////////////////////////////
+    // given the normalization that happens during construction of
+    // FileSystemPath, string comparisions will do the right thing
 
     bool operator==(const FilePath& other) const { return m_path == other.m_path; }
     bool operator!=(const FilePath& other) const { return m_path != other.m_path; }
@@ -150,6 +152,14 @@ public:
     bool operator<=(const FilePath& other) const { return m_path <= other.m_path; }
     bool operator>(const FilePath& other) const { return m_path > other.m_path; }
     bool operator>=(const FilePath& other) const { return m_path >= other.m_path; }
+
+    ///////////////////////////////////////////////////////////////////////
+    // Accessors for flags determined during construction:
+    //     * is the path valid?
+    //     * is it real (valid for the current platform)?
+    //     * is it relative? (tends to be false)
+    //     * is it a "root" ("/", "\\server\volume" or "c:\")
+    //     * is it a Windows UNC path
 
     bool isValid() const { return m_isValid; }
     bool isReal() const { return m_isValid && m_isNative; }
@@ -161,9 +171,32 @@ private:
 
     using PathComponentsType = std::vector<utf8String>;
 
+    ///////////////////////////////////////////////////////////////////////
+    // Return a FilePath of this' parent using '..' with the right file separator
+
     FilePath relativeParentOfPath() const;
+
+    ///////////////////////////////////////////////////////////////////////
+    // Returns a FilePath of this' parent (when this is a UNC path), returning
+    // invalidPath if the UNC path is already \\server\volume.
+
     FilePath parentOfUNC() const;
-    static FilePath fromFullComponents(const PathComponentsType& components, bool fromUnc);
+
+    ///////////////////////////////////////////////////////////////////////
+    // Returns a FilePath from a set of components, honouring UNC construction
+    // if necessary
+
+    static FilePath fromFullComponents
+    (
+        const PathComponentsType&   components,     // I - split-ups components to build from
+        bool                        fromUnc         // I - whether to start \\server\volume or not
+    );
+
+    ///////////////////////////////////////////////////////////////////////
+    // Returns true if the components could be valid on Windows.
+    // Characters invalid for Windows are back-slash, forward-slash, colon
+    // asterisk, question mark, double quote, less than, greater than and
+    // vertical bar
 
     bool componentsHaveNoInvalidWindowsCharacters() const;
 

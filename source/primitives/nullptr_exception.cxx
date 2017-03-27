@@ -50,7 +50,11 @@ namespace ansak
 //============================================================================
 // public, constructor
 
-NullPtrException::NullPtrException(const char* function, unsigned int line) noexcept
+NullPtrException::NullPtrException
+(
+    const char*     function,       // I - __FILE__ if desired, def nulllptr
+    unsigned int    line            // I - __LINE__ if desired, def 0
+) noexcept
 {
     ostringstream os;
 

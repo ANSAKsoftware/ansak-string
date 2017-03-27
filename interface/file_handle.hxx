@@ -55,24 +55,29 @@ namespace ansak
 
 class FileSystemPath;
 
-//===========================================================================
+///////////////////////////////////////////////////////////////////////////
 // std::exception-derived exception when the arguments are problematic
 
 class FileHandleException : public std::exception
 {
 public:
-    //=====================================================================
+    ///////////////////////////////////////////////////////////////////////
     // Constructor -- includes platform specific error ID (GetLastError() on
     // Windows, errno otherwise) and a string to describe the problem
 
     FileHandleException
     (
-        const FileSystemPath&   problem,
-        unsigned int            errorCode,
-        const std::string&      message
+        const FileSystemPath&   problem,        // I - file system path in play
+        unsigned int            errorCode,      // I - OS-specific error code, if any
+        const std::string&      message         // I - a message describing the problem
     ) noexcept;
 
-    FileHandleException(const FileHandleException& src, size_t inProgress);
+    FileHandleException
+    (
+        const FileHandleException&  src,            // I - a source FileHandleException
+        size_t                      inProgress      // I - a progress report around something that failed
+    );
+
     virtual ~FileHandleException() noexcept override;
     virtual const char* what() const noexcept override;
     unsigned int whatCode() const noexcept { return m_code; }
@@ -80,10 +85,14 @@ public:
     size_t getInProgress() const noexcept { return m_inProgress; }
 
 private:
-    std::string         m_what = std::string();
-    unsigned int        m_code;
-    size_t              m_inProgress = 0;
+    std::string         m_what = std::string();     // what-message
+    unsigned int        m_code;                     // OS-specific error code, if any
+    size_t              m_inProgress = 0;           // an in-progress marker, if important
 };
+
+///////////////////////////////////////////////////////////////////////////
+// class FileHandle -- operations around a file that generate or require an
+//                     OS-specific file handle; wraps them to hide the details
 
 class FileHandle {
 
@@ -103,7 +112,7 @@ public:
     FileHandle() : m_path() { }
     ~FileHandle();
 
-    //=======================================================================
+    ///////////////////////////////////////////////////////////////////////==
     // Disable assign but allow move
 
     FileHandle(FileHandle& src) = delete;

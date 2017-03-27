@@ -43,10 +43,9 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include <file_system_path.hxx>
-#include <file_system_primitives.hxx>
+#include <operating_system_primitives.hxx>
 #include <runtime_exception.hxx>
 #include <file_handle.hxx>
-#include <file_system_primitives.hxx>
 
 using namespace std;
 
@@ -57,17 +56,20 @@ namespace {
 
 bool checkFileSystemPrimitives()
 {
-    enforce(getFileSystemPrimitives() != nullptr);
-    return getFileSystemPrimitives() != nullptr;
+    enforce(getOperatingSystemPrimitives() != nullptr);
+    return getOperatingSystemPrimitives() != nullptr;
 }
 
 }
 
 bool primitivesExist = checkFileSystemPrimitives();
 
+///////////////////////////////////////////////////////////////////////////
+// public, constructor
+
 FileSystemPath::FileSystemPath
 (
-    const FilePath&     path
+    const FilePath&     path        // I - an object to wrap, default FilePath()
 ) : m_path(path),
     m_isValid(path.isReal())
 {
@@ -77,9 +79,12 @@ FileSystemPath::FileSystemPath
     }
 }
 
+///////////////////////////////////////////////////////////////////////////
+// public, constructor
+
 FileSystemPath::FileSystemPath
 (
-    const string&       pathString
+    const string&       pathString          // I - string-form of a file path to wrap
 ) : m_path(FilePath(pathString)),
     m_isValid(m_path.isReal())
 {
@@ -89,18 +94,29 @@ FileSystemPath::FileSystemPath
     }
 }
 
+///////////////////////////////////////////////////////////////////////////
+// public
+
 FileSystemPath FileSystemPath::parent() const
 {
     return FileSystemPath(m_path.parent());
 }
 
+///////////////////////////////////////////////////////////////////////////
+// public
 
 FileSystemPath::ChildrenRetriever FileSystemPath::children() const
 {
     return ChildrenRetriever(*this);
 }
 
-bool FileSystemPath::createDirectory(bool recursively)
+///////////////////////////////////////////////////////////////////////////
+// public
+
+bool FileSystemPath::createDirectory
+(
+    bool        recursively     // I - create multiple-level directory if necessary, def. false
+)
 {
     if (exists())
     {
@@ -128,11 +144,17 @@ bool FileSystemPath::createDirectory(bool recursively)
             }
         }
 
-        return getFileSystemPrimitives()->createDirectory(*this);
+        return getOperatingSystemPrimitives()->createDirectory(*this);
     }
 }
 
-bool FileSystemPath::createFile(bool failIfThere)
+///////////////////////////////////////////////////////////////////////////
+// public
+
+bool FileSystemPath::createFile
+(
+    bool        failIfThere     // I - fail if the file already exists, def. false
+)
 {
     auto doesItExist = exists();
     if (doesItExist)
@@ -141,11 +163,17 @@ bool FileSystemPath::createFile(bool failIfThere)
     }
     else
     {
-        return getFileSystemPrimitives()->createFile(*this);
+        return getOperatingSystemPrimitives()->createFile(*this);
     }
 }
 
-bool FileSystemPath::copyFromFile(const FileSystemPath& src)
+///////////////////////////////////////////////////////////////////////////
+// public
+
+bool FileSystemPath::copyFromFile
+(
+    const FileSystemPath&   src         // I - source file to duplicate to this path
+)
 {
     // validity check
     FileSystemPath srcPath(src);
@@ -168,7 +196,7 @@ bool FileSystemPath::copyFromFile(const FileSystemPath& src)
     FileSystemPath parentPath(parent());
     if (exists())
     {
-        if (!getFileSystemPrimitives()->remove(m_path) || exists())
+        if (!getOperatingSystemPrimitives()->remove(m_path) || exists())
         {
             return false;
         }
@@ -184,22 +212,34 @@ bool FileSystemPath::copyFromFile(const FileSystemPath& src)
     return destH.copyFrom(srcH) != 0;
 }
 
-bool FileSystemPath::moveTo(const FileSystemPath& other) const
+///////////////////////////////////////////////////////////////////////////
+// public
+
+bool FileSystemPath::moveTo
+(
+    const FileSystemPath&   dest        // I - destination file name/location
+) const
 {
     if (!exists())
     {
         return false;
     }
-    FileSystemPath otherParent(other.parent());
-    if (!otherParent.exists() || !otherParent.isDir())
+    FileSystemPath destParent(dest.parent());
+    if (!destParent.exists() || !destParent.isDir())
     {
         return false;
     }
 
-    return getFileSystemPrimitives()->move(*this, other);
+    return getOperatingSystemPrimitives()->move(*this, dest);
 }
 
-bool FileSystemPath::remove(bool recursive)
+///////////////////////////////////////////////////////////////////////////
+// public
+
+bool FileSystemPath::remove
+(
+    bool        recursive       // I - if directory, remove all sub elements, def. false
+)
 {
     if (!exists())
     {
@@ -207,7 +247,7 @@ bool FileSystemPath::remove(bool recursive)
     }
     else if (isFile())
     {
-        return getFileSystemPrimitives()->remove(*this);
+        return getOperatingSystemPrimitives()->remove(*this);
     }
     else if (isDir())
     {
@@ -234,35 +274,53 @@ bool FileSystemPath::remove(bool recursive)
         {
             v.remove(recursive);
         }
-        return getFileSystemPrimitives()->removeDirectory(*this);
+        return getOperatingSystemPrimitives()->removeDirectory(*this);
     }
     return false;
 }
 
+///////////////////////////////////////////////////////////////////////////
+// public
+
 bool FileSystemPath::exists() const
 {
-    return getFileSystemPrimitives()->pathExists(m_path);
+    return getOperatingSystemPrimitives()->pathExists(m_path);
 }
+
+///////////////////////////////////////////////////////////////////////////
+// public
 
 bool FileSystemPath::isFile() const
 {
-    return getFileSystemPrimitives()->pathIsFile(m_path);
+    return getOperatingSystemPrimitives()->pathIsFile(m_path);
 }
+
+///////////////////////////////////////////////////////////////////////////
+// public
 
 bool FileSystemPath::isDir() const
 {
-    return getFileSystemPrimitives()->pathIsDir(m_path);
+    return getOperatingSystemPrimitives()->pathIsDir(m_path);
 }
+
+///////////////////////////////////////////////////////////////////////////
+// public
 
 uint64_t FileSystemPath::size() const
 {
-    return getFileSystemPrimitives()->fileSize(m_path);
+    return getOperatingSystemPrimitives()->fileSize(m_path);
 }
+
+///////////////////////////////////////////////////////////////////////////
+// public
 
 TimeStamp FileSystemPath::lastModTime() const
 {
-    return getFileSystemPrimitives()->lastModTime(m_path);
+    return getOperatingSystemPrimitives()->lastModTime(m_path);
 }
+
+///////////////////////////////////////////////////////////////////////////
+// private
 
 void FileSystemPath::realize()
 {
@@ -270,7 +328,7 @@ void FileSystemPath::realize()
     {
         return;
     }
-    FilePath cwd = getFileSystemPrimitives()->getCurrentWorkingDirectory();
+    FilePath cwd = getOperatingSystemPrimitives()->getCurrentWorkingDirectory();
     auto rooted = m_path.rootPathFrom(cwd);
     m_isValid = rooted.isValid();
     if (m_isValid)
@@ -279,6 +337,9 @@ void FileSystemPath::realize()
     }
 }
 
+///////////////////////////////////////////////////////////////////////////
+// public, constructor
+
 FileSystemPath::ChildrenRetriever::ChildrenRetriever
 (
     const FileSystemPath& path
@@ -286,8 +347,11 @@ FileSystemPath::ChildrenRetriever::ChildrenRetriever
     m_directoryReader()
 {
     enforce(path.exists() && path.isDir());
-    m_directoryReader.reset(getFileSystemPrimitives()->newPathIterator(path));
+    m_directoryReader.reset(getOperatingSystemPrimitives()->newPathIterator(path));
 }
+
+///////////////////////////////////////////////////////////////////////////
+// public, move constructor
 
 FileSystemPath::ChildrenRetriever::ChildrenRetriever
 (
@@ -297,6 +361,16 @@ FileSystemPath::ChildrenRetriever::ChildrenRetriever
 {
 }
 
+///////////////////////////////////////////////////////////////////////////
+// public, destructor
+
+FileSystemPath::ChildrenRetriever::~ChildrenRetriever()
+{
+}
+
+///////////////////////////////////////////////////////////////////////////
+// public
+
 FilePath FileSystemPath::ChildrenRetriever::operator()()
 {
     if (m_directoryReader)
@@ -304,10 +378,6 @@ FilePath FileSystemPath::ChildrenRetriever::operator()()
         return (*(m_directoryReader.get()))();
     }
     return FilePath::invalidPath();
-}
-
-FileSystemPath::ChildrenRetriever::~ChildrenRetriever()
-{
 }
 
 }

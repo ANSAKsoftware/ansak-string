@@ -48,7 +48,7 @@
 namespace ansak
 {
 
-//=========================================================================
+///////////////////////////////////////////////////////////////////////////
 // class RuntimeException -- a std::exception-derived friendly assertion
 //                           exception
 
@@ -56,20 +56,20 @@ class RuntimeException : public std::exception
 {
 public:
 
-    //=====================================================================
+    ///////////////////////////////////////////////////////////////////////
     // Constructor -- expected to be called from ansak::enforce()
 
     RuntimeException
     (
-        const char*         complaint,
-        const char*         fileName,
-        unsigned int        lineNumber
+        const char*         complaint,      // I - text describing the violation
+        const char*         fileName,       // I - __FILE__ if you will
+        unsigned int        lineNumber      // I - __LINE__ if you will
     ) noexcept;
 
     virtual ~RuntimeException() noexcept override { }
     virtual const char* what() const noexcept override;
 
-    //=====================================================================
+    ///////////////////////////////////////////////////////////////////////
     // Accessors for inner bits of a runtime exception.
 
     const char* fileName() const noexcept { return m_fileName.c_str(); }
@@ -78,19 +78,19 @@ public:
 private:
     std::string             m_what = std::string();
     std::string             m_fileName = std::string();
-    unsigned int            m_lineNumber = ~0U;
+    unsigned int            m_lineNumber = 0u;
 };
 
-//=========================================================================
+///////////////////////////////////////////////////////////////////////////
 // A friendlier way to assert your interfaces (called "enforce", not to
 // collide with assert.h)
 
 inline void enforce
 (
-    bool                condition,
-    const char*         complaint = nullptr,
-    const char*         fileName = nullptr,
-    unsigned int        lineNumber = 0
+    bool                condition,              // I - condition to test
+    const char*         complaint = nullptr,    // I - a description of the condition
+    const char*         fileName = nullptr,     // I - __FILE__ if you will
+    unsigned int        lineNumber = 0          // I - __LINE__ if you will
 )
 {
     if (!condition) throw RuntimeException(complaint, fileName, lineNumber);

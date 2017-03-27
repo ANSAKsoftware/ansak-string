@@ -41,7 +41,7 @@
 
 #include <file_handle.hxx>
 #include <nullptr_exception.hxx>
-#include <mock_file_system.hxx>
+#include <mock_operating_system.hxx>
 
 #include <gmock/gmock.h>
 
@@ -52,7 +52,7 @@ using namespace testing;
 namespace ansak
 {
 
-extern FileSystemMock* theMock;
+extern OperatingSystemMock* theMock;
 
 namespace internal
 {
@@ -88,25 +88,25 @@ class FileHandleFixture : public Test {
 public:
     FileHandleFixture()
     {
-        theMock = &m_fileMock;
-        EXPECT_CALL(m_fileMock, mockGetCwd()).WillRepeatedly(Return(FilePath(homeDirP)));
+        theMock = &m_osMock;
+        EXPECT_CALL(m_osMock, mockGetCwd()).WillRepeatedly(Return(FilePath(homeDirP)));
     }
     ~FileHandleFixture()
     {
         theMock = nullptr;
         ansak::internal::resetThrowErrors();
     }
-    FileSystemMock& FileMock() { return m_fileMock; }
+    OperatingSystemMock& OSMock() { return m_osMock; }
 
 private:
-    NiceMock<FileSystemMock>    m_fileMock;
+    NiceMock<OperatingSystemMock>    m_osMock;
 };
 
 class OpenFileHandleFixture : public FileHandleFixture {
 public:
     OpenFileHandleFixture() : FileHandleFixture()
     {
-        auto& mock = FileMock();
+        auto& mock = OSMock();
         EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
         EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(false));
         EXPECT_CALL(mock, mockCreate(Eq(FilePath(someFileP)), _, _)).WillOnce(Return(123010ull));
@@ -123,7 +123,7 @@ class CopyFileHandleFixture : public FileHandleFixture {
 public:
     CopyFileHandleFixture() : FileHandleFixture()
     {
-        auto& mock = FileMock();
+        auto& mock = OSMock();
         EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
         EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(false));
         EXPECT_CALL(mock, mockPathExists(Eq(FilePath(srcFileP)))).WillOnce(Return(true));
@@ -157,14 +157,14 @@ TEST_F(FileHandleFixture, defaultConstruct)
 
 TEST_F(CopyFileHandleFixture, breakCloseOnMoveAssignment)
 {
-    EXPECT_CALL(FileMock(), mockClose(_,_)).WillRepeatedly(SetArgReferee<1>(300u));
+    EXPECT_CALL(OSMock(), mockClose(_,_)).WillRepeatedly(SetArgReferee<1>(300u));
     FileHandle::throwErrors();
     uutSrc() = move(uutDest());
 }
 
 TEST_F(FileHandleFixture, createSimple)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(false));
     EXPECT_CALL(mock, mockCreate(Eq(FilePath(someFileP)), _, _)).WillOnce(Return(123010ull));
@@ -175,7 +175,7 @@ TEST_F(FileHandleFixture, createSimple)
 
 TEST_F(FileHandleFixture, closeThrowsInDestructor)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(false));
     EXPECT_CALL(mock, mockCreate(Eq(FilePath(someFileP)), _, _)).WillOnce(Return(123010ull));
@@ -199,7 +199,7 @@ TEST_F(FileHandleFixture, createFailOnInvalidPath)
 
 TEST_F(FileHandleFixture, createFailOnInvalidParent)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillRepeatedly(Return(false));
     auto fsp = FileSystemPath(someFileP);
     auto fh = FileHandle::create(fsp);
@@ -211,7 +211,7 @@ TEST_F(FileHandleFixture, createFailOnInvalidParent)
 
 TEST_F(FileHandleFixture, createFailIfThere)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     auto fsp = FileSystemPath(someFileP);
@@ -224,7 +224,7 @@ TEST_F(FileHandleFixture, createFailIfThere)
 
 TEST_F(FileHandleFixture, createSucceedIfThere)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
@@ -236,7 +236,7 @@ TEST_F(FileHandleFixture, createSucceedIfThere)
 
 TEST_F(FileHandleFixture, createSimpleFailed)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     EXPECT_CALL(mock, mockCreate(Eq(FilePath(someFileP)), _, _)).WillRepeatedly(Return(~0ull));
@@ -250,7 +250,7 @@ TEST_F(FileHandleFixture, createSimpleFailed)
 
 TEST_F(FileHandleFixture, openSimple)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockOpen(Eq(FilePath(someFileP)), _, _, _)).WillOnce(Return(123010ull));
@@ -271,7 +271,7 @@ TEST_F(FileHandleFixture, openFailOnInvalidPath)
 
 TEST_F(FileHandleFixture, openFailIfNotThere)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     auto fsp = FileSystemPath(someFileP);
     auto fh = FileHandle::open(fsp);
@@ -283,7 +283,7 @@ TEST_F(FileHandleFixture, openFailIfNotThere)
 
 TEST_F(FileHandleFixture, openFailIfNotFile)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     auto fsp = FileSystemPath(someFileP);
@@ -296,7 +296,7 @@ TEST_F(FileHandleFixture, openFailIfNotFile)
 
 TEST_F(FileHandleFixture, openSucceedIfNotThere)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
@@ -308,7 +308,7 @@ TEST_F(FileHandleFixture, openSucceedIfNotThere)
 
 TEST_F(FileHandleFixture, openSimpleFailed)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockOpen(Eq(FilePath(someFileP)), _, _, _)).WillRepeatedly(Return(~0ull));
@@ -322,7 +322,7 @@ TEST_F(FileHandleFixture, openSimpleFailed)
 
 TEST_F(FileHandleFixture, openForReadingSimple)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockOpen(Eq(FilePath(someFileP)), _, _, _)).WillOnce(Return(123010ull));
@@ -333,7 +333,7 @@ TEST_F(FileHandleFixture, openForReadingSimple)
 
 TEST_F(FileHandleFixture, openForReadingSimpleFailed)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockOpen(Eq(FilePath(someFileP)), _, _, _)).WillRepeatedly(Return(~0ull));
@@ -357,7 +357,7 @@ TEST_F(FileHandleFixture, openForReadingFailOnInvalidPath)
 
 TEST_F(FileHandleFixture, openForReadingFailIfNotThere)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     auto fsp = FileSystemPath(someFileP);
     auto fh = FileHandle::openForReading(fsp);
@@ -369,7 +369,7 @@ TEST_F(FileHandleFixture, openForReadingFailIfNotThere)
 
 TEST_F(FileHandleFixture, openForReadingFailIfNotFile)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     auto fsp = FileSystemPath(someFileP);
@@ -382,7 +382,7 @@ TEST_F(FileHandleFixture, openForReadingFailIfNotFile)
 
 TEST_F(FileHandleFixture, openForAppendingSimple)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockOpen(Eq(FilePath(someFileP)), _, _, _)).WillOnce(Return(123010ull));
@@ -393,7 +393,7 @@ TEST_F(FileHandleFixture, openForAppendingSimple)
 
 TEST_F(FileHandleFixture, openForAppendingCreateIfNotThere)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     EXPECT_CALL(mock, mockCreate(Eq(FilePath(someFileP)), _, _)).WillOnce(Return(123010ull));
@@ -404,7 +404,7 @@ TEST_F(FileHandleFixture, openForAppendingCreateIfNotThere)
 
 TEST_F(FileHandleFixture, openForAppendingSimpleFailed)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockOpen(Eq(FilePath(someFileP)), _, _, _)).WillRepeatedly(Return(~0ull));
@@ -428,7 +428,7 @@ TEST_F(FileHandleFixture, openForAppendingFailOnInvalidPath)
 
 TEST_F(FileHandleFixture, openForAppendingFailIfNotThere)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     auto fsp = FileSystemPath(someFileP);
     auto fh = FileHandle::openForAppending(fsp, FileHandle::OpenType::kFailIfNotThere);
@@ -440,7 +440,7 @@ TEST_F(FileHandleFixture, openForAppendingFailIfNotThere)
 
 TEST_F(FileHandleFixture, openForAppendingFailIfNotFile)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillRepeatedly(Return(true));
     EXPECT_CALL(mock, mockPathIsFile(Eq(FilePath(someFileP)))).WillRepeatedly(Return(false));
     auto fsp = FileSystemPath(someFileP);
@@ -462,7 +462,7 @@ TEST_F(FileHandleFixture, doubleCloseFile)
 
 TEST_F(OpenFileHandleFixture, size)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockFileSize(_)).WillOnce(Return(32966ull));
     EXPECT_CALL(mock, mockFileSize(_, _)).WillOnce(Return(32965ull));
 
@@ -473,7 +473,7 @@ TEST_F(OpenFileHandleFixture, size)
 
 TEST_F(OpenFileHandleFixture, sizeFails)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockFileSize(_, _)).WillRepeatedly(DoAll(SetArgReferee<1>(334u), Return(~0ull)));
 
     EXPECT_EQ(static_cast<uint64_t>(~0ull), uut().size());
@@ -484,7 +484,7 @@ TEST_F(OpenFileHandleFixture, sizeFails)
 
 TEST_F(OpenFileHandleFixture, seekOpenAndClose)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockSeek(_, _, _)).WillOnce(SetArgReferee<2>(0u));
 
     uut().seek(35u);
@@ -497,7 +497,7 @@ TEST_F(OpenFileHandleFixture, seekOpenAndClose)
 
 TEST_F(OpenFileHandleFixture, seekFails)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockSeek(_, _, _)).WillRepeatedly(SetArgReferee<2>(335u));
 
     uut().seek(35u);
@@ -516,7 +516,7 @@ TEST_F(OpenFileHandleFixture, seekFails)
 
 TEST_F(OpenFileHandleFixture, read)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockRead(_, _, _, _)).WillOnce(Return(static_cast<size_t>(422u)));
 
     char dest[500];
@@ -539,7 +539,7 @@ TEST_F(FileHandleFixture, readClosed)
 
 TEST_F(OpenFileHandleFixture, readFails)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockRead(_, _, _, _)).WillRepeatedly(DoAll(SetArgReferee<3>(336u), Return(~static_cast<size_t>(0u))));
 
     char dest[500];
@@ -550,7 +550,7 @@ TEST_F(OpenFileHandleFixture, readFails)
 
 TEST_F(OpenFileHandleFixture, write)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockWrite(_, _, _, _)).WillOnce(Return(423u));
 
     char src[500];
@@ -573,7 +573,7 @@ TEST_F(FileHandleFixture, writeClosed)
 
 TEST_F(OpenFileHandleFixture, writeFails)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockWrite(_, _, _, _)).WillRepeatedly(DoAll(SetArgReferee<3>(337u), Return(~static_cast<size_t>(0u))));
 
     char src[500];
@@ -584,7 +584,7 @@ TEST_F(OpenFileHandleFixture, writeFails)
 
 TEST_F(FileHandleFixture, copyFromNotOpen)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockPathIsDir(Eq(FilePath(homeDirP)))).WillOnce(Return(true));
     EXPECT_CALL(mock, mockPathExists(Eq(FilePath(someFileP)))).WillOnce(Return(false));
     EXPECT_CALL(mock, mockCreate(Eq(FilePath(someFileP)), _, _)).WillOnce(Return(123010ull));
@@ -603,7 +603,7 @@ TEST_F(CopyFileHandleFixture, copyZeroBytes)
 
 TEST_F(CopyFileHandleFixture, copyAFewBytes)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillOnce(Return(static_cast<size_t>(424u)));
     EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillOnce(Return(static_cast<size_t>(424u)));
 
@@ -612,7 +612,7 @@ TEST_F(CopyFileHandleFixture, copyAFewBytes)
 
 TEST_F(CopyFileHandleFixture, copyMoreBytes)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4096u)));
     EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4096u)));
 
@@ -621,7 +621,7 @@ TEST_F(CopyFileHandleFixture, copyMoreBytes)
 
 TEST_F(CopyFileHandleFixture, copyTooManyBytes)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(40960u)));
     EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(40960u)));
 
@@ -633,7 +633,7 @@ TEST_F(CopyFileHandleFixture, copyTooManyBytes)
 
 TEST_F(CopyFileHandleFixture, writeFails)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(4096u));
     EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(4086u));
 
@@ -645,7 +645,7 @@ TEST_F(CopyFileHandleFixture, writeFails)
 
 TEST_F(CopyFileHandleFixture, writeFailsOnCopyLimitedAndEndOfSource)
 {
-    auto& mock = FileMock();
+    auto& mock = OSMock();
     EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4095u)));
     EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4086u)));
 

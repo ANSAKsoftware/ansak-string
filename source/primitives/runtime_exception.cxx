@@ -50,11 +50,14 @@ using namespace std;
 namespace ansak
 {
 
+//============================================================================
+// public, constructor
+
 RuntimeException::RuntimeException
 (
-    const char* complaint,
-    const char* fileName,
-    unsigned int lineNumber
+    const char*         complaint,      // I - text describing the violation
+    const char*         fileName,       // I - __FILE__ if you will
+    unsigned int        lineNumber      // I - __LINE__ if you will
 ) noexcept
 {
     const char* realComplaint = (complaint == nullptr || *complaint == '\0') ?
@@ -83,6 +86,9 @@ RuntimeException::RuntimeException
     os << '.';
     m_what = os.str();
 }
+
+//============================================================================
+// public, virtual
 
 const char* RuntimeException::what() const noexcept
 {

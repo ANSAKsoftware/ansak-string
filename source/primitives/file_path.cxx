@@ -205,6 +205,18 @@ FilePath::FilePath
 }
 
 //==========================================================================
+// public -- factory method for an invalid FilePath
+
+FilePath FilePath::invalidPath()
+{
+    FilePath parentOfRoot;
+    parentOfRoot.m_isRelative = parentOfRoot.m_isRoot =
+        parentOfRoot.m_isNative = parentOfRoot.m_isValid =
+        parentOfRoot.m_isUNC = false;
+    return parentOfRoot;
+}
+
+//==========================================================================
 // public
 
 FilePath FilePath::parent() const
@@ -323,22 +335,6 @@ FilePath FilePath::parent() const
 //==========================================================================
 // public
 
-utf8String FilePath::basename() const
-{
-    if (!isValid())
-    {
-        return utf8String();
-    }
-    else
-    {
-        return *(m_components.rbegin());
-    }
-
-}
-
-//==========================================================================
-// public
-
 FilePath FilePath::child(const std::string& subPath) const
 {
     if (!isValid())
@@ -431,15 +427,19 @@ FilePath FilePath::rootPathFrom(const FilePath& cwd)
 }
 
 //==========================================================================
-// public -- factory method for an invalid FilePath
+// public
 
-FilePath FilePath::invalidPath()
+utf8String FilePath::basename() const
 {
-    FilePath parentOfRoot;
-    parentOfRoot.m_isRelative = parentOfRoot.m_isRoot =
-        parentOfRoot.m_isNative = parentOfRoot.m_isValid =
-        parentOfRoot.m_isUNC = false;
-    return parentOfRoot;
+    if (!isValid())
+    {
+        return utf8String();
+    }
+    else
+    {
+        return *(m_components.rbegin());
+    }
+
 }
 
 //==========================================================================

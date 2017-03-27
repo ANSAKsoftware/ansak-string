@@ -36,14 +36,14 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 // mock_file_system.hxx -- implementation of a mock to the os primitives
-//                         used by FileSystemPath and FileHandle
+//                         first used by FileSystemPath and FileHandle
 //
 ///////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
 #include <file_path.hxx>
-#include <file_system_primitives.hxx>
+#include <operating_system_primitives.hxx>
 #include <map>
 #include <string>
 
@@ -52,11 +52,11 @@
 namespace ansak
 {
 
-class FileSystemMock : public FileSystemPrimitives
+class OperatingSystemMock : public OperatingSystemPrimitives
 {
 public:
 
-    ~FileSystemMock() = default;
+    ~OperatingSystemMock() = default;
 
     FilePath getTempFilePath() const override;
     utf8String getEnvironmentVariable(const char* variableName) const override;

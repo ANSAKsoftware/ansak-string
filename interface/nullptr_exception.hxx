@@ -47,19 +47,36 @@
 namespace ansak
 {
 
-//===========================================================================
+/////////////////////////////////////////////////////////////////////////////
 // std::exception-derived exception when a parameter is null when it ought not
 // to be
 
 class NullPtrException : public std::exception
 {
 public:
-    NullPtrException(const char* function = nullptr, unsigned int line = 0) noexcept;
+
+    /////////////////////////////////////////////////////////////////////////
+    // Constructor
+
+    NullPtrException
+    (
+        const char*     function = nullptr,     // I - __FILE__ if desired
+        unsigned int    line = 0                // I - __LINE__ if desired
+    ) noexcept;
+
+    /////////////////////////////////////////////////////////////////////////
+    // Destructor
+
     virtual ~NullPtrException() noexcept override;
+
+    /////////////////////////////////////////////////////////////////////////
+    // Over-ride
+
     virtual const char* what() const noexcept override;
 
 private:
-    std::string         m_what = std::string();
+
+    std::string         m_what = std::string();     // generated description
 };
 
 }

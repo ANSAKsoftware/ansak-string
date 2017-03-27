@@ -39,7 +39,7 @@ add_executable( test-ansakFile file_system_path_test.cxx
                                file_handle_test.cxx
             )
 target_link_libraries( test-ansakFile
-               PRIVATE ansakFile ansakPrimitives ansakString mock-file gmock_main )
+               PRIVATE ansakFile ansakPrimitives ansakString mock-os gmock_main )
 SETUP_TO_EXECUTE_GTEST( test-ansakFile )
 
 add_test( NAME ansakFileTest COMMAND test-ansakFile )

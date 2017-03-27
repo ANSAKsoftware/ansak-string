@@ -43,7 +43,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include <file_handle.hxx>
-#include <file_system_primitives.hxx>
+#include <operating_system_primitives.hxx>
 #include <runtime_exception.hxx>
 #include <nullptr_exception.hxx>
 
@@ -57,7 +57,7 @@ namespace ansak
 namespace internal
 {
 
-using OpenMode = FileSystemPrimitives::OpenMode;
+using OpenMode = OperatingSystemPrimitives::OpenMode;
 
 namespace {
 
@@ -232,7 +232,7 @@ FileHandle FileHandle::open(const FileSystemPath& path, OpenType mode)
     }
 
     FileHandle fh(path);
-    if (fh.open(static_cast<int>(FileSystemPrimitives::OpenMode::kForReadingAndWriting)))
+    if (fh.open(static_cast<int>(OperatingSystemPrimitives::OpenMode::kForReadingAndWriting)))
     {
         return fh;
     }
@@ -276,7 +276,7 @@ FileHandle FileHandle::openForReading(const FileSystemPath& path)
     }
 
     FileHandle fh(path);
-    if (fh.open(FileSystemPrimitives::OpenMode::kForReading))
+    if (fh.open(OperatingSystemPrimitives::OpenMode::kForReading))
     {
         return fh;
     }
@@ -323,7 +323,7 @@ FileHandle FileHandle::openForAppending(const FileSystemPath& path, OpenType mod
     }
 
     FileHandle fh(path);
-    if (fh.open(FileSystemPrimitives::OpenMode::kForAppending))
+    if (fh.open(OperatingSystemPrimitives::OpenMode::kForAppending))
     {
         return fh;
     }
@@ -343,7 +343,7 @@ void FileHandle::close()
         auto h = m_fh;
         m_fh = nullHandle;
         unsigned int errorCode = 0;
-        getFileSystemPrimitives()->close(h, errorCode);
+        getOperatingSystemPrimitives()->close(h, errorCode);
         if (errorCode != 0 && m_throwErrors)
         {
             throw FileHandleException(m_path, errorCode, "closing file failed");
@@ -363,7 +363,7 @@ uint64_t FileHandle::size()
     if (isOpen())
     {
         unsigned int errorCode = 0;
-        auto r = getFileSystemPrimitives()->fileSize(m_fh, errorCode);
+        auto r = getOperatingSystemPrimitives()->fileSize(m_fh, errorCode);
         if (!errorCode)
         {
             return r;
@@ -389,7 +389,7 @@ void FileHandle::seek(off_t pos)
     if (isOpen())
     {
         unsigned int errorCode = 0;
-        getFileSystemPrimitives()->seek(m_fh, pos, errorCode);
+        getOperatingSystemPrimitives()->seek(m_fh, pos, errorCode);
         if (errorCode != 0 && m_throwErrors)
         {
             stringstream os;
@@ -435,7 +435,7 @@ size_t FileHandle::read(char* dest, size_t destSize)
         return 0;
     }
     unsigned int errorCode = 0;
-    auto r = getFileSystemPrimitives()->read(m_fh, dest, destSize, errorCode);
+    auto r = getOperatingSystemPrimitives()->read(m_fh, dest, destSize, errorCode);
 
     if (r == ~static_cast<size_t>(0u))
     {
@@ -483,7 +483,7 @@ size_t FileHandle::write(const char* src, size_t srcSize)
     }
 
     unsigned int errorCode = 0;
-    auto r = getFileSystemPrimitives()->write(m_fh, src, srcSize, errorCode);
+    auto r = getOperatingSystemPrimitives()->write(m_fh, src, srcSize, errorCode);
 
     if (r == ~static_cast<size_t>(0u))
     {
@@ -593,7 +593,7 @@ bool FileHandle::create()
     PermissionHolder p;
 
     unsigned int errorNumber = 0;
-    auto fd = getFileSystemPrimitives()->create(m_path, p.getPermission(), errorNumber);
+    auto fd = getOperatingSystemPrimitives()->create(m_path, p.getPermission(), errorNumber);
     if (fd == ~0ull)
     {
         if (m_throwErrors)
@@ -616,15 +616,15 @@ bool FileHandle::open(int mode)
     // Expects m_path.isFile();
     // Expects !m_path.isDir();
     // Expects !isOpen();
-    auto openMode = static_cast<FileSystemPrimitives::OpenMode>(mode);
-    enforce(openMode == FileSystemPrimitives::OpenMode::kForReading ||
-            openMode == FileSystemPrimitives::OpenMode::kForAppending ||
-            openMode == FileSystemPrimitives::OpenMode::kForReadingAndWriting,
+    auto openMode = static_cast<OperatingSystemPrimitives::OpenMode>(mode);
+    enforce(openMode == OperatingSystemPrimitives::OpenMode::kForReading ||
+            openMode == OperatingSystemPrimitives::OpenMode::kForAppending ||
+            openMode == OperatingSystemPrimitives::OpenMode::kForReadingAndWriting,
             "Invalid mode for open");
     PermissionHolder p;
 
     unsigned int errorNumber = 0;
-    auto fd = getFileSystemPrimitives()->open(m_path.asFilePath(), openMode, p.getPermission(), errorNumber);
+    auto fd = getOperatingSystemPrimitives()->open(m_path.asFilePath(), openMode, p.getPermission(), errorNumber);
     if (fd == ~0ull)
     {
         if (m_throwErrors)
@@ -654,7 +654,7 @@ FileHandleException::FileHandleException
     if (errorCode != 0)
     {
         os << " code = " << errorCode <<
-              "; code explanation: " << getFileSystemPrimitives()->errorAsString(errorCode) << "; ";
+              "; code explanation: " << getOperatingSystemPrimitives()->errorAsString(errorCode) << "; ";
     }
     m_what = os.str();
 }
