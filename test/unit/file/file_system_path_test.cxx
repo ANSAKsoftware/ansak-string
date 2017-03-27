@@ -148,7 +148,7 @@ TEST_F(FileSystemPathFixture, nonRelativeConstruct)
     EXPECT_CALL(FileMock(), mockPathIsDir(_)).WillOnce(Return(false));
     TimeStamp t { 1909, 6, 22, 10, 0, 35 };
     EXPECT_CALL(FileMock(), mockLastModTime(_)).WillOnce(Return(t));
-    EXPECT_CALL(FileMock(), mockFileSize(fileThere)).WillOnce(Return(9909ul));
+    EXPECT_CALL(FileMock(), mockFileSize(fileThere)).WillOnce(Return(static_cast<uint64_t>(9909ul)));
 
     EXPECT_TRUE(uut.isValid());
     EXPECT_TRUE(!uut.isRelative());
@@ -158,7 +158,7 @@ TEST_F(FileSystemPathFixture, nonRelativeConstruct)
     EXPECT_TRUE(uut.isFile());
     EXPECT_TRUE(!uut.isDir());
     EXPECT_EQ(t, uut.lastModTime());
-    EXPECT_EQ(9909ul, uut.size());
+    EXPECT_EQ(static_cast<uint64_t>(9909ul), uut.size());
 }
 
 TEST_F(FileSystemPathFixture, stringConstruct)
@@ -360,8 +360,8 @@ TEST_F(FileSystemPathFixture, copyCallThrough)
     EXPECT_CALL(FileMock(), mockCreate(_, _, _)).WillOnce(Return(10221u));
     EXPECT_CALL(FileMock(), mockOpen(_, _, _, _)).WillOnce(Return(10222u));
 
-    EXPECT_CALL(FileMock(), mockRead(_, _, _, _)).WillOnce(Return(4080ull));
-    EXPECT_CALL(FileMock(), mockWrite(_, _, _, _)).WillOnce(Return(4080ull));
+    EXPECT_CALL(FileMock(), mockRead(_, _, _, _)).WillOnce(Return(static_cast<size_t>(4080u)));
+    EXPECT_CALL(FileMock(), mockWrite(_, _, _, _)).WillOnce(Return(static_cast<size_t>(4080u)));
 
     EXPECT_TRUE(fspDest.copyFromFile(fspSrc));
 }

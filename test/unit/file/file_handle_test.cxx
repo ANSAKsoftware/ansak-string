@@ -517,12 +517,12 @@ TEST_F(OpenFileHandleFixture, seekFails)
 TEST_F(OpenFileHandleFixture, read)
 {
     auto& mock = FileMock();
-    EXPECT_CALL(mock, mockRead(_, _, _, _)).WillOnce(Return(422u));
+    EXPECT_CALL(mock, mockRead(_, _, _, _)).WillOnce(Return(static_cast<size_t>(422u)));
 
     char dest[500];
-    EXPECT_EQ(422u, uut().read(dest, 422u));
-    EXPECT_EQ(0u, uut().read(nullptr, 422u));
-    EXPECT_EQ(0u, uut().read(nullptr, 0u));
+    EXPECT_EQ(static_cast<size_t>(422u), uut().read(dest, 422u));
+    EXPECT_EQ(static_cast<size_t>(0u), uut().read(nullptr, 422u));
+    EXPECT_EQ(static_cast<size_t>(0u), uut().read(nullptr, 0u));
     FileHandle::throwErrors();
     EXPECT_THROW(uut().read(nullptr, 422u), NullPtrException);
 }
@@ -532,7 +532,7 @@ TEST_F(FileHandleFixture, readClosed)
     FileHandle fh;
 
     char dest[500];
-    EXPECT_EQ(0u, fh.read(dest, 422u));
+    EXPECT_EQ(static_cast<size_t>(0u), fh.read(dest, 422u));
     FileHandle::throwErrors();
     EXPECT_THROW(fh.read(dest, 422u), FileHandleException);
 }
@@ -540,7 +540,7 @@ TEST_F(FileHandleFixture, readClosed)
 TEST_F(OpenFileHandleFixture, readFails)
 {
     auto& mock = FileMock();
-    EXPECT_CALL(mock, mockRead(_, _, _, _)).WillRepeatedly(DoAll(SetArgReferee<3>(336u), Return(~0ull)));
+    EXPECT_CALL(mock, mockRead(_, _, _, _)).WillRepeatedly(DoAll(SetArgReferee<3>(336u), Return(~static_cast<size_t>(0u))));
 
     char dest[500];
     EXPECT_EQ(0u, uut().read(dest, 422u));
@@ -554,9 +554,9 @@ TEST_F(OpenFileHandleFixture, write)
     EXPECT_CALL(mock, mockWrite(_, _, _, _)).WillOnce(Return(423u));
 
     char src[500];
-    EXPECT_EQ(423u, uut().write(src, 423u));
-    EXPECT_EQ(0u, uut().write(nullptr, 423u));
-    EXPECT_EQ(0u, uut().write(nullptr, 0u));
+    EXPECT_EQ(static_cast<size_t>(423u), uut().write(src, 423u));
+    EXPECT_EQ(static_cast<size_t>(0u), uut().write(nullptr, 423u));
+    EXPECT_EQ(static_cast<size_t>(0u), uut().write(nullptr, 0u));
     FileHandle::throwErrors();
     EXPECT_THROW(uut().write(nullptr, 423u), NullPtrException);
 }
@@ -566,7 +566,7 @@ TEST_F(FileHandleFixture, writeClosed)
     FileHandle fh;
 
     char src[500];
-    EXPECT_EQ(0u, fh.write(src, 423u));
+    EXPECT_EQ(static_cast<size_t>(0u), fh.write(src, static_cast<size_t>(423u)));
     FileHandle::throwErrors();
     EXPECT_THROW(fh.write(src, 423u), FileHandleException);
 }
@@ -574,10 +574,10 @@ TEST_F(FileHandleFixture, writeClosed)
 TEST_F(OpenFileHandleFixture, writeFails)
 {
     auto& mock = FileMock();
-    EXPECT_CALL(mock, mockWrite(_, _, _, _)).WillRepeatedly(DoAll(SetArgReferee<3>(337u), Return(~0ull)));
+    EXPECT_CALL(mock, mockWrite(_, _, _, _)).WillRepeatedly(DoAll(SetArgReferee<3>(337u), Return(~static_cast<size_t>(0u))));
 
     char src[500];
-    EXPECT_EQ(0u, uut().write(src, 423u));
+    EXPECT_EQ(static_cast<size_t>(0u), uut().write(src, 423u));
     FileHandle::throwErrors();
     EXPECT_THROW(uut().write(src, 423u), FileHandleException);
 }
@@ -591,41 +591,41 @@ TEST_F(FileHandleFixture, copyFromNotOpen)
 
     FileHandle fhDest;
     FileHandle fhSrc;
-    EXPECT_EQ(0ul, fhDest.copyFrom(fhSrc, 0u, 12930u));
+    EXPECT_EQ(static_cast<size_t>(0u), fhDest.copyFrom(fhSrc, 0u, 12930u));
     fhDest = FileHandle::create(FilePath(someFileP));
-    EXPECT_EQ(0ul, fhDest.copyFrom(fhSrc, 0u, 12930u));
+    EXPECT_EQ(static_cast<size_t>(0u), fhDest.copyFrom(fhSrc, 0u, 12930u));
 }
 
 TEST_F(CopyFileHandleFixture, copyZeroBytes)
 {
-    EXPECT_EQ(0ul, uutDest().copyFrom(uutSrc(), 0u, 0u));
+    EXPECT_EQ(static_cast<size_t>(0u), uutDest().copyFrom(uutSrc(), 0u, 0u));
 }
 
 TEST_F(CopyFileHandleFixture, copyAFewBytes)
 {
     auto& mock = FileMock();
-    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillOnce(Return(424u));
-    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillOnce(Return(424u));
+    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillOnce(Return(static_cast<size_t>(424u)));
+    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillOnce(Return(static_cast<size_t>(424u)));
 
-    EXPECT_EQ(424u, uutDest().copyFrom(uutSrc(), 0u, 424u));
+    EXPECT_EQ(static_cast<size_t>(424u), uutDest().copyFrom(uutSrc(), 0u, 424u));
 }
 
 TEST_F(CopyFileHandleFixture, copyMoreBytes)
 {
     auto& mock = FileMock();
-    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(4096u));
-    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(4096u));
+    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4096u)));
+    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4096u)));
 
-    EXPECT_EQ(40960u, uutDest().copyFrom(uutSrc(), 0u, 40960u));
+    EXPECT_EQ(static_cast<size_t>(40960u), uutDest().copyFrom(uutSrc(), 0u, 40960u));
 }
 
 TEST_F(CopyFileHandleFixture, copyTooManyBytes)
 {
     auto& mock = FileMock();
-    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(40960u));
-    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(40960u));
+    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(40960u)));
+    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(40960u)));
 
-    EXPECT_EQ(0u, uutDest().copyFrom(uutSrc(), 0u, 40960u));
+    EXPECT_EQ(static_cast<size_t>(0u), uutDest().copyFrom(uutSrc(), 0u, 40960u));
 
     FileHandle::throwErrors();
     EXPECT_THROW(uutDest().copyFrom(uutSrc(), 0u, 40960u), FileHandleException);
@@ -637,7 +637,7 @@ TEST_F(CopyFileHandleFixture, writeFails)
     EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(4096u));
     EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(4086u));
 
-    EXPECT_EQ(4086u, uutDest().copyFrom(uutSrc(), 0u, 40960u));
+    EXPECT_EQ(static_cast<size_t>(4086u), uutDest().copyFrom(uutSrc(), 0u, 40960u));
 
     FileHandle::throwErrors();
     EXPECT_THROW(uutDest().copyFrom(uutSrc(), 0u, 40960u), FileHandleException);
@@ -646,10 +646,10 @@ TEST_F(CopyFileHandleFixture, writeFails)
 TEST_F(CopyFileHandleFixture, writeFailsOnCopyLimitedAndEndOfSource)
 {
     auto& mock = FileMock();
-    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(4095u));
-    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(4086u));
+    EXPECT_CALL(mock, mockRead(Eq(123011ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4095u)));
+    EXPECT_CALL(mock, mockWrite(Eq(123010ull), _, _, _)).WillRepeatedly(Return(static_cast<size_t>(4086u)));
 
-    EXPECT_EQ(4086u, uutDest().copyFrom(uutSrc(), 0u, 4096));
+    EXPECT_EQ(static_cast<size_t>(4086u), uutDest().copyFrom(uutSrc(), 0u, 4096));
 
     FileHandle::throwErrors();
     EXPECT_THROW(uutDest().copyFrom(uutSrc(), 0u), FileHandleException);

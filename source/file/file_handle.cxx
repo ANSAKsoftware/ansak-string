@@ -437,7 +437,7 @@ size_t FileHandle::read(char* dest, size_t destSize)
     unsigned int errorCode = 0;
     auto r = getFileSystemPrimitives()->read(m_fh, dest, destSize, errorCode);
 
-    if (r == static_cast<size_t>(~0ull))
+    if (r == ~static_cast<size_t>(0u))
     {
         if (m_throwErrors)
         {
@@ -485,7 +485,7 @@ size_t FileHandle::write(const char* src, size_t srcSize)
     unsigned int errorCode = 0;
     auto r = getFileSystemPrimitives()->write(m_fh, src, srcSize, errorCode);
 
-    if (r == static_cast<size_t>(~0ull))
+    if (r == ~static_cast<size_t>(0u))
     {
         if (m_throwErrors)
         {
@@ -563,7 +563,7 @@ size_t FileHandle::copyFrom(FileHandle& srcFile, off_t start, size_t count)
             }
         }
     }
-    catch (std::bad_alloc& e)
+    catch (std::bad_alloc&)
     {
         if (m_throwErrors)
         {
