@@ -36,3 +36,4 @@
 cmake_minimum_required(VERSION 3.1)
 
 add_subdirectory( os )
+add_subdirectory( file )

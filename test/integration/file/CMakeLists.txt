@@ -35,18 +35,16 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-MACRO( SETUP_TO_EXECUTE_GTEST TestTarget )
-    if( WIN32 AND BUILD_SHARED_LIBS )
-      add_custom_command( TARGET ${TestTarget} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
-    endif()
-ENDMACRO()
+set( _target integrate-ansakFile )
+set( _targetPrivateLibs ansakFile ansakPrimitives ansakString ansakOSLayer ) 
+set( _targetAsTest ansakFileIntegrationTest )
+set( _targetSource file_system_path_itest.cxx
+#                  file_handle_itest.cxx
+   )
 
-add_subdirectory( mkUnicodeTestData )
-add_subdirectory( unit )
-add_subdirectory( integration )
+add_executable( ${_target} ${_targetSource} )
+target_link_libraries( ${_target}
+               PRIVATE ${_targetPrivateLibs} gtest_main )
+SETUP_TO_EXECUTE_GTEST( ${_target} )
 
-if ( CMAKE_BUILD_TYPE STREQUAL "Coverage" )
-    SETUP_CTEST_FOR_COVERAGE( )
-endif()
+add_test( NAME ${_targetAsTest} COMMAND ${_target} )

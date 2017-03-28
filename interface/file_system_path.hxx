@@ -60,7 +60,6 @@
 #include "file_path.hxx"
 #include "time_stamp.hxx"
 
-#include <functional>
 #include <memory>
 
 namespace ansak {
@@ -107,6 +106,11 @@ public:
 
     FileSystemPath(const FileSystemPath& src) = default;
     FileSystemPath& operator=(const FileSystemPath& src) = default;
+
+    ///////////////////////////////////////////////////////////////////////
+    // Destructor -- empty, but declared for testing
+
+    ~FileSystemPath();
 
     ///////////////////////////////////////////////////////////////////////
     // parent -- Like the FilePath version, but produces a parent

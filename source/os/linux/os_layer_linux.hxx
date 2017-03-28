@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2017.03.17 - First Version
+// 2017.03.26 - First version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,28 +35,26 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_operating_system.hxx -- implementation of a mock to the os primitives
-//                              first used by FileSystemPath and FileHandle
+// os_layer_linux.hxx -- class for Linux-specific implementations of operating
+//                       system primitives
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
-#include <file_path.hxx>
 #include <operating_system_primitives.hxx>
-#include <map>
-#include <string>
+#include <file_path.hxx>
+#include <string.hxx>
+#include <time_stamp.hxx>
 
-#include <gmock/gmock.h>
+namespace ansak {
 
-namespace ansak
-{
+/////////////////////////////////////////////////////////////////////////////
+// Class to wrap the Linux primitives
 
-class OperatingSystemMock : public OperatingSystemPrimitives
+class LinuxPrimitives : public OperatingSystemPrimitives
 {
 public:
 
-    ~OperatingSystemMock() = default;
+    virtual ~LinuxPrimitives() = default;
 
     bool pathExists(const FilePath& filePath) const override;
     bool pathIsFile(const FilePath& filePath) const override;
@@ -72,7 +70,6 @@ public:
 
     unsigned long long create(const FilePath& path, int permissions, unsigned int& errorID) const override;
     unsigned long long open(const FilePath& path, OpenMode mode, int permissions, unsigned int& errorID) const override;
-
     uint64_t fileSize(unsigned long long handle, unsigned int& errorID) const override;
     void close(unsigned long long handle, unsigned int& errorID) const override;
     void seek(unsigned long long handle, off_t position, unsigned int& errorID) const override;
@@ -83,62 +80,9 @@ public:
     utf8String getEnvironmentVariable(const char* variableName) const override;
     unsigned long getProcessID() const override;
 
-    ansak::utf8String errorAsString(unsigned int errorID) const override;
+    utf8String errorAsString(unsigned int errorID) const override;
 
     DirectoryListPrimitive* newPathIterator(const FilePath& directory) const override;
-    using PathIteratorMocker = void (*)(DirectoryListPrimitive&);
-    void registerPathIteratorMocker(const FilePath& dirToIterate, PathIteratorMocker function);
-
-    MOCK_CONST_METHOD1(mockPathExists, bool(const FilePath&));
-    MOCK_CONST_METHOD1(mockPathIsFile, bool(const FilePath&));
-    MOCK_CONST_METHOD1(mockPathIsDir, bool(const FilePath&));
-    MOCK_CONST_METHOD1(mockFileSize, uint64_t(const FilePath&));
-    MOCK_CONST_METHOD1(mockLastModTime, TimeStamp(const FilePath&));
-    MOCK_CONST_METHOD0(mockGetCwd, FilePath());
-    MOCK_CONST_METHOD1(mockCreateDirectory, bool(const FilePath&));
-    MOCK_CONST_METHOD1(mockRemoveDirectory, bool(const FilePath&));
-    MOCK_CONST_METHOD1(mockCreateFile, bool(const FilePath&));
-    MOCK_CONST_METHOD2(mockMove, bool(const FilePath&, const FilePath&));
-    MOCK_CONST_METHOD1(mockRemove, bool(const FilePath&));
-
-    MOCK_CONST_METHOD3(mockCreate, unsigned long long(const FilePath&, int, unsigned int&));
-    MOCK_CONST_METHOD4(mockOpen, unsigned long long(const FilePath&, OpenMode, int, unsigned int&));
-
-    MOCK_CONST_METHOD2(mockFileSize, uint64_t(unsigned long long, unsigned int&));
-    MOCK_CONST_METHOD2(mockClose, void(unsigned long long, unsigned int&));
-    MOCK_CONST_METHOD3(mockSeek, void(unsigned long long, off_t, unsigned int&));
-    MOCK_CONST_METHOD4(mockRead, size_t(unsigned long long, char*, size_t, unsigned int&));
-    MOCK_CONST_METHOD4(mockWrite, size_t(unsigned long long, const char*, size_t, unsigned int&));
-
-    MOCK_CONST_METHOD0(mockGetTempFilePath, FilePath());
-    MOCK_CONST_METHOD1(mockGetEnvironmentVariable, utf8String(const char* variableName));
-    MOCK_CONST_METHOD0(mockGetProcessID, unsigned long());
-
-    MOCK_CONST_METHOD1(mockErrorAsString, ansak::utf8String(unsigned int));
-
-    MOCK_CONST_METHOD1(mockNewPathIterator, DirectoryListPrimitive*(const FilePath& directory));
-
-    mutable DirectoryListPrimitive* m_lister = nullptr;
-
-private:
-
-    std::map<std::string, PathIteratorMocker> m_dirMockers;
-};
-
-class DirectoryListMock : public DirectoryListPrimitive
-{
-public:
-
-    DirectoryListMock(const FilePath& parentDir);
-    ~DirectoryListMock() = default;
-
-    FilePath operator()() override;
-
-    MOCK_METHOD0(mockInvocation, FilePath());
-
-private:
-
-    FilePath m_parentDir;
 };
 
 }

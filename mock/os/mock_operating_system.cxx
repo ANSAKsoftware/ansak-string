@@ -46,21 +46,6 @@ using namespace testing;
 
 namespace ansak {
 
-FilePath OperatingSystemMock::getTempFilePath() const
-{
-    return mockGetTempFilePath();
-}
-
-utf8String OperatingSystemMock::getEnvironmentVariable(const char* variableName) const
-{
-    return mockGetEnvironmentVariable(variableName);
-}
-
-unsigned long OperatingSystemMock::getProcessID() const
-{
-    return mockGetProcessID();
-}
-
 bool OperatingSystemMock::pathExists(const FilePath& filePath) const
 {
     return mockPathExists(filePath);
@@ -150,6 +135,21 @@ size_t OperatingSystemMock::read(unsigned long long handle, char* destination, s
 size_t OperatingSystemMock::write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const
 {
     return mockWrite(handle, source, srcSize, errorID);
+}
+
+FilePath OperatingSystemMock::getTempFilePath() const
+{
+    return mockGetTempFilePath();
+}
+
+utf8String OperatingSystemMock::getEnvironmentVariable(const char* variableName) const
+{
+    return mockGetEnvironmentVariable(variableName);
+}
+
+unsigned long OperatingSystemMock::getProcessID() const
+{
+    return mockGetProcessID();
 }
 
 utf8String OperatingSystemMock::errorAsString(unsigned int errorID) const

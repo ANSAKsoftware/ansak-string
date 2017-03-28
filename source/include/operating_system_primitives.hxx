@@ -52,6 +52,8 @@ namespace ansak
 // Forward Declaration
 
 class DirectoryListPrimitive;
+class FilePath;
+
 
 /////////////////////////////////////////////////////////////////////////////
 // Class to wrap the real OS primitives, allows OS-free mocking
@@ -61,10 +63,6 @@ class OperatingSystemPrimitives
 public:
 
     virtual ~OperatingSystemPrimitives() = default;
-
-    virtual FilePath getTempFilePath() const = 0;
-    virtual utf8String getEnvironmentVariable(const char* variableName) const = 0;
-    virtual unsigned long getProcessID() const = 0;
 
     virtual bool pathExists(const FilePath& filePath) const = 0;
     virtual bool pathIsFile(const FilePath& filePath) const = 0;
@@ -87,6 +85,10 @@ public:
     virtual void seek(unsigned long long handle, off_t position, unsigned int& errorID) const = 0;
     virtual size_t read(unsigned long long handle, char* destination, size_t destSize, unsigned int& errorID) const = 0;
     virtual size_t write(unsigned long long handle, const char* source, size_t srcSize, unsigned int& errorID) const = 0;
+
+    virtual FilePath getTempFilePath() const = 0;
+    virtual utf8String getEnvironmentVariable(const char* variableName) const = 0;
+    virtual unsigned long getProcessID() const = 0;
 
     virtual ansak::utf8String errorAsString(unsigned int errorID) const = 0;
 
