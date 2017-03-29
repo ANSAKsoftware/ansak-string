@@ -73,6 +73,13 @@ FilePath tryOutEnvironmentForPath(const char* name)
 }
 
 /////////////////////////////////////////////////////////////////////////////
+
+const OperatingSystemPrimitives* getOperatingSystemPrimitives()
+{
+    return &thePrimitives;
+}
+
+/////////////////////////////////////////////////////////////////////////////
 // public, virtual
 
 bool WindowsPrimitives::pathExists
