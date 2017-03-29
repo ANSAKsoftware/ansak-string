@@ -115,9 +115,6 @@ FileSystemPath TempDirectory::asFileSystemPath
 (
     bool        detach      // I - suppress delete on dtor, def. false
 )
-(
-    bool detach
-)
 {
     m_deleteOnExit &= !detach;
     return m_path;

@@ -68,7 +68,7 @@ public:
 
 private:
     FilePath            m_path;
-    unsigned int        m_lastError;
+    unsigned int        m_lastError = 0;
     DIR*                m_dir = nullptr;
 
 };

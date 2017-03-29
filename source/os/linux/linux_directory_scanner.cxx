@@ -46,7 +46,7 @@ namespace ansak
 {
 
 /////////////////////////////////////////////////////////////////////////////
-// private, constructor
+// destructor
 
 LinuxDirectoryScanner::~LinuxDirectoryScanner()
 {
@@ -56,6 +56,9 @@ LinuxDirectoryScanner::~LinuxDirectoryScanner()
         m_dir = nullptr;
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// static, public, factory
 
 LinuxDirectoryScanner* LinuxDirectoryScanner::newIterator(const FilePath& directory)
 {
@@ -71,6 +74,9 @@ LinuxDirectoryScanner* LinuxDirectoryScanner::newIterator(const FilePath& direct
     }
     return new LinuxDirectoryScanner(directory, dir);
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 FilePath LinuxDirectoryScanner::operator()()
 {

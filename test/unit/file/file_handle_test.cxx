@@ -42,6 +42,7 @@
 #include <file_handle.hxx>
 #include <nullptr_exception.hxx>
 #include <mock_operating_system.hxx>
+#include <Windows.h>
 
 #include <gmock/gmock.h>
 

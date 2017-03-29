@@ -54,11 +54,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <atomic>
-#include <ctime>
-#include <memory>
-#include <sstream>
-
 using namespace std;
 
 namespace ansak {
@@ -247,7 +242,7 @@ bool LinuxPrimitives::remove
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// public virtual
+// public, virtual
 
 unsigned long long LinuxPrimitives::create
 (
@@ -265,6 +260,9 @@ unsigned long long LinuxPrimitives::create
     errorID = 0;
     return static_cast<unsigned long long>(fd);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 unsigned long long LinuxPrimitives::open
 (
@@ -292,6 +290,9 @@ unsigned long long LinuxPrimitives::open
     errorID = 0;
     return static_cast<unsigned long long>(fd);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 uint64_t LinuxPrimitives::fileSize
 (
@@ -322,6 +323,9 @@ uint64_t LinuxPrimitives::fileSize
     return static_cast<uint64_t>(endOfFile);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
+
 void LinuxPrimitives::close
 (
     unsigned long long handle,
@@ -332,6 +336,9 @@ void LinuxPrimitives::close
     auto rc = ::close(fd);
     errorID = (rc == -1) ? errno : 0;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 void LinuxPrimitives::seek
 (
@@ -344,6 +351,9 @@ void LinuxPrimitives::seek
     auto r = ::lseek(fd, position, SEEK_SET);
     errorID = (r == static_cast<off_t>(-1)) ? errno : 0;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 size_t LinuxPrimitives::read
 (
@@ -368,6 +378,9 @@ size_t LinuxPrimitives::read
     return r;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
+
 size_t LinuxPrimitives::write
 (
     unsigned long long handle,
@@ -391,10 +404,16 @@ size_t LinuxPrimitives::write
     return r;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
+
 FilePath LinuxPrimitives::getTempFilePath() const
 {
     return FilePath("/tmp");
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 utf8String LinuxPrimitives::getEnvironmentVariable
 (
@@ -413,10 +432,16 @@ utf8String LinuxPrimitives::getEnvironmentVariable
     return utf8String(value);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
+
 unsigned long LinuxPrimitives::getProcessID() const
 {
     return getpid();
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 utf8String LinuxPrimitives::errorAsString
 (
@@ -430,6 +455,9 @@ utf8String LinuxPrimitives::errorAsString
     }
     return utf8String(s);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+// public, virtual
 
 DirectoryListPrimitive* LinuxPrimitives::newPathIterator
 (

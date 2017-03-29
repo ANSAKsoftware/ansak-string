@@ -39,7 +39,7 @@ set( _target test-ansakFileTools )
 set( _targetTest ansakFileToolsTest )
 
 set( _interface ../../interface )
-set( _privLibraries ansakFileTools ansakPrimitives ansakString mock-file mock-os gmock_main gmock )
+set( _privLibraries ansakFileTools ansakPrimitives ansakString mock-file mock-os gmock_main )
 
 set( _targetSrc temp_directory_test.cxx )
 
