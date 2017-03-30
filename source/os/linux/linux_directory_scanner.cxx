@@ -46,18 +46,6 @@ namespace ansak
 {
 
 /////////////////////////////////////////////////////////////////////////////
-// destructor
-
-LinuxDirectoryScanner::~LinuxDirectoryScanner()
-{
-    if (m_dir != nullptr)
-    {
-        closedir(m_dir);
-        m_dir = nullptr;
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////
 // static, public, factory
 
 LinuxDirectoryScanner* LinuxDirectoryScanner::newIterator(const FilePath& directory)
@@ -80,17 +68,14 @@ LinuxDirectoryScanner* LinuxDirectoryScanner::newIterator(const FilePath& direct
 
 FilePath LinuxDirectoryScanner::operator()()
 {
-    if (m_dir == nullptr)
+    if (!m_dir)
     {
         return FilePath::invalidPath();
     }
 
-    struct dirent* storage = readdir(m_dir);
+    auto storage = getNextPath();
     if (storage == nullptr)
     {
-        closedir(m_dir);
-        m_dir = 0;
-        m_lastError = errno;
         return FilePath::invalidPath();
     }
 
@@ -98,12 +83,9 @@ FilePath LinuxDirectoryScanner::operator()()
             ((storage->d_name[1] == '\0') ||
              (storage->d_name[1] == '.' && storage->d_name[2] == '\0')))
     {
-        storage = readdir(m_dir);
+        storage = getNextPath();
         if (storage == nullptr)
         {
-            closedir(m_dir);
-            m_dir = 0;
-            m_lastError = errno;
             return FilePath::invalidPath();
         }
     }
@@ -112,5 +94,15 @@ FilePath LinuxDirectoryScanner::operator()()
     return m_path.child(storage->d_name);
 }
 
+struct dirent* LinuxDirectoryScanner::getNextPath()
+{
+    auto rc = readdir(m_dir.get());
+    if (rc == nullptr)
+    {
+        m_dir.reset(nullptr);
+        m_lastError = errno;
+    }
+    return rc;
+}
 
 }

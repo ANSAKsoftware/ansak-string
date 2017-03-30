@@ -41,5 +41,5 @@ set( _privIncludes ../../include )
 set( _targetSrc os_layer_linux.cxx linux_directory_scanner.cxx )
 
 add_library( ${_target} STATIC ${_targetSrc} )
-# TODO make this happen target_compile_options( ${_target} PRIVATE -Weffc++ )
+target_compile_options( ${_target} PRIVATE -Weffc++ )
 target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )

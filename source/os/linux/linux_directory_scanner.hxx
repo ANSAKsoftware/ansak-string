@@ -48,17 +48,20 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <memory>
 
 namespace ansak
 {
+
+struct DIRCloser { void operator()(DIR* d) { closedir(d); } };
+
+using DIRPtr = std::unique_ptr<DIR, DIRCloser>;
 
 class LinuxDirectoryScanner : public DirectoryListPrimitive
 {
     LinuxDirectoryScanner(const FilePath& directory, DIR* osDir) : m_path(directory), m_dir(osDir) {}
 
 public:
-
-    ~LinuxDirectoryScanner();
 
     static LinuxDirectoryScanner* newIterator(const FilePath& directory);
 
@@ -67,9 +70,12 @@ public:
     unsigned int lastError() const { return m_lastError; }
 
 private:
+
+    struct dirent* getNextPath();
+
     FilePath            m_path;
     unsigned int        m_lastError = 0;
-    DIR*                m_dir = nullptr;
+    DIRPtr              m_dir;
 
 };
 
