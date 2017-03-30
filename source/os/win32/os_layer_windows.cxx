@@ -308,7 +308,7 @@ unsigned long long WindowsPrimitives::open
                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (fd == INVALID_HANDLE_VALUE)
     {
-        errorID = errno;
+        errorID = GetLastError();
         return ~static_cast<unsigned long long>(0);
     }
     errorID = 0;
@@ -332,9 +332,13 @@ uint64_t WindowsPrimitives::fileSize
     result.LowPart = GetFileSize(reinterpret_cast<HANDLE>(handle), reinterpret_cast<LPDWORD>(&result.HighPart));
     if (result.LowPart == INVALID_FILE_SIZE)
     {
-        errorID = GetLastError();
-        return ~static_cast<uint64_t>(0u);
+        if (GetLastError() != 0)
+        {
+            errorID = GetLastError();
+            return ~static_cast<uint64_t>(0u);
+        }
     }
+    errorID = 0;
     return static_cast<uint64_t>(result.QuadPart);
 }
 
@@ -364,7 +368,7 @@ void WindowsPrimitives::seek
     auto fd = reinterpret_cast<HANDLE>(handle);
     LARGE_INTEGER pointHere;
     pointHere.QuadPart = static_cast<LONGLONG>(position);
-    auto r = SetFilePointer(fd, pointHere.LowPart, &pointHere.HighPart, FILE_END);
+    auto r = SetFilePointer(fd, pointHere.LowPart, &pointHere.HighPart, FILE_BEGIN);
     errorID = (r == INVALID_SET_FILE_POINTER) ? GetLastError() : 0;
 }
 
@@ -381,6 +385,7 @@ size_t WindowsPrimitives::read
 {
     if (destination == nullptr || destSize != static_cast<DWORD>(destSize))
     {
+        errorID = 0;
         return ~static_cast<size_t>(0);
     }
     auto fd = reinterpret_cast<HANDLE>(handle);
@@ -393,7 +398,7 @@ size_t WindowsPrimitives::read
         return ~static_cast<size_t>(0u);
     }
     errorID = 0;
-    return r;
+    return destRead;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -409,6 +414,7 @@ size_t WindowsPrimitives::write
 {
     if (source == nullptr || srcSize != static_cast<DWORD>(srcSize))
     {
+        errorID = 0;
         return ~static_cast<size_t>(0);
     }
     auto fd = reinterpret_cast<HANDLE>(handle);
@@ -417,11 +423,11 @@ size_t WindowsPrimitives::write
     auto r = WriteFile(fd, source, srcSizeAsDword, &srcWritten, nullptr);
     if (!r)
     {
-        errorID = errno;
+        errorID = GetLastError();
         return ~static_cast<size_t>(0u);
     }
     errorID = 0;
-    return r;
+    return srcWritten;
 }
 
 //////////////////////////////////////////////////////////////////////////////

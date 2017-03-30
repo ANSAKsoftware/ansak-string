@@ -54,7 +54,7 @@ class LinuxPrimitives : public OperatingSystemPrimitives
 {
 public:
 
-    virtual ~LinuxPrimitives() = default;
+    virtual ~LinuxPrimitives();
 
     bool pathExists(const FilePath& filePath) const override;
     bool pathIsFile(const FilePath& filePath) const override;

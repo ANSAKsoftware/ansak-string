@@ -41,6 +41,7 @@
 
 #include "windows_directory_scanner.hxx"
 #include <file_system_path.hxx>
+#include <runtime_exception.hxx>
 
 namespace ansak
 {
@@ -59,14 +60,10 @@ WindowsDirectoryScanner::~WindowsDirectoryScanner()
 WindowsDirectoryScanner* WindowsDirectoryScanner::newIterator(const FilePath& directory)
 {
     FileSystemPath fsp(directory);
-    if (!fsp.isValid() || !fsp.exists() || !fsp.isDir())
-    {
-        return nullptr;
-    }
-    if (!isUtf8(directory.asUtf8String(), ansak::kUtf16))
-    {
-        return nullptr;
-    }
+    enforce(fsp.isValid() && fsp.exists() && fsp.isDir(),
+            "newIterator must receive valid directory");
+    enforce(isUtf8(directory.asUtf8String(), ansak::kUtf16),
+            "names must be encodable as UTF-16");
     return new WindowsDirectoryScanner(directory);
 }
 
@@ -75,7 +72,8 @@ FilePath WindowsDirectoryScanner::operator()()
     if (m_findHandle == 0)
     {
         auto searchTerm = m_path.child("*.*").asUtf16String();
-        m_findHandle = FindFirstFileExW(reinterpret_cast<LPCWSTR>(searchTerm.c_str()), FindExInfoStandard, &m_findData,
+        m_findHandle = FindFirstFileExW(reinterpret_cast<LPCWSTR>(searchTerm.c_str()),
+                                        FindExInfoStandard, &m_findData,
                                         FindExSearchNameMatch, nullptr, 0);
     }
     else if (m_findHandle != INVALID_HANDLE_VALUE)

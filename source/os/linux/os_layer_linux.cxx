@@ -63,6 +63,13 @@ namespace {
 
 const LinuxPrimitives thePrimitives;
 
+off_t wrappedSeek(int fh, off_t pos, int whence, unsigned int& errorID)
+{
+    auto r = ::lseek(fh, pos, whence);
+    errorID = (r == static_cast<off_t>(-1)) ? errno : 0;
+    return r;
+}
+
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -70,6 +77,10 @@ const LinuxPrimitives thePrimitives;
 const OperatingSystemPrimitives* getOperatingSystemPrimitives()
 {
     return &thePrimitives;
+}
+
+LinuxPrimitives::~LinuxPrimitives()
+{
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -302,22 +313,16 @@ uint64_t LinuxPrimitives::fileSize
 ) const
 {
     auto fd = static_cast<int>(handle);
-    auto hereNow = ::lseek(fd, 0, SEEK_CUR);
-    if (hereNow == static_cast<off_t>(-1))
+    off_t endOfFile = ~static_cast<uint64_t>(0u);
+    off_t hereNow = wrappedSeek(fd, 0, SEEK_CUR, errorID);
+    if (hereNow != static_cast<off_t>(-1))
     {
-        errorID = errno;
-        return ~static_cast<uint64_t>(0u);
-    }
-    auto endOfFile = ::lseek(fd, 0, SEEK_END);
-    if (endOfFile == static_cast<off_t>(-1))
-    {
-        errorID = errno;
-        return ~static_cast<uint64_t>(0u);
-    }
-    if (::lseek(fd, hereNow, SEEK_SET) == static_cast<off_t>(-1))
-    {
-        errorID = errno;
-        return ~static_cast<uint64_t>(0u);
+        endOfFile = wrappedSeek(fd, 0, SEEK_END, errorID);
+        if (endOfFile != static_cast<off_t>(-1))
+        {
+            unsigned int throwAwayErrorID = 0;
+            wrappedSeek(fd, hereNow, SEEK_SET, throwAwayErrorID);
+        }
     }
 
     errorID = 0;
@@ -348,9 +353,7 @@ void LinuxPrimitives::seek
     unsigned int& errorID
 ) const
 {
-    auto fd = static_cast<int>(handle);
-    auto r = ::lseek(fd, position, SEEK_SET);
-    errorID = (r == static_cast<off_t>(-1)) ? errno : 0;
+    wrappedSeek(static_cast<int>(handle), position, SEEK_SET, errorID);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -366,6 +369,7 @@ size_t LinuxPrimitives::read
 {
     if (destination == nullptr)
     {
+        errorID = 0;
         return ~static_cast<size_t>(0);
     }
     auto fd = static_cast<int>(handle);
@@ -392,6 +396,7 @@ size_t LinuxPrimitives::write
 {
     if (source == nullptr)
     {
+        errorID = 0;
         return ~static_cast<size_t>(0);
     }
     auto fd = static_cast<int>(handle);
@@ -450,11 +455,7 @@ utf8String LinuxPrimitives::errorAsString
 ) const
 {
     auto s = strerror(errorID);
-    if (s == nullptr || !*s)
-    {
-        return utf8String();
-    }
-    return utf8String(s);
+    return utf8String(s == nullptr ? "<no string>" : s);
 }
 
 //////////////////////////////////////////////////////////////////////////////

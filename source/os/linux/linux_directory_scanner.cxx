@@ -41,6 +41,7 @@
 
 #include "linux_directory_scanner.hxx"
 #include <file_system_path.hxx>
+#include <runtime_exception.hxx>
 
 namespace ansak
 {
@@ -51,15 +52,10 @@ namespace ansak
 LinuxDirectoryScanner* LinuxDirectoryScanner::newIterator(const FilePath& directory)
 {
     FileSystemPath fsp(directory);
-    if (!fsp.isValid() || !fsp.exists() || !fsp.isDir())
-    {
-        return nullptr;
-    }
+    enforce(fsp.isValid() && fsp.exists() && fsp.isDir(),
+            "newIterator must receive valid directory");
     auto dir = opendir(directory.asUtf8String().c_str());
-    if (dir == nullptr)
-    {
-        return nullptr;
-    }
+    enforce(dir != nullptr, "opendir must return a valid pointer");
     return new LinuxDirectoryScanner(directory, dir);
 }
 

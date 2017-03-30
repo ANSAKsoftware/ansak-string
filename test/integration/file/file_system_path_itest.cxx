@@ -41,8 +41,9 @@
 
 #include <gtest/gtest.h>
 
-#include "file_system_path.hxx"
-#include "string_splitjoin.hxx"
+#include <file_system_path.hxx>
+#include <string_splitjoin.hxx>
+#include <runtime_exception.hxx>
 
 #include <iostream>
 #include <vector>
@@ -247,6 +248,7 @@ TEST(FileSystemPathITest, testScanThisDir)
         for (auto c = retriever(); c.isValid(); ++entriesFound, c = retriever())
             ;
         EXPECT_LT(2, entriesFound);
+        EXPECT_EQ(FilePath::invalidPath(), retriever());
     }
 
     {

@@ -35,8 +35,19 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( string )
-add_subdirectory( primitives )
-add_subdirectory( file )
-add_subdirectory( file-tools )
-add_subdirectory( os )
+set( _target test-ansakOSLayer )
+set( _targetTest ansakOSLayerTest )
+
+set( _privLibraries ansakOSLayer ansakFile ansakPrimitives ansakString gtest_main )
+
+set( _targetSrc test_os_layer.cxx )
+set( _targetIncludes ../../../source/include )
+
+add_executable( ${_target} ${_targetSrc} )
+target_include_directories( ${_target} PRIVATE ${_targetIncludes} )
+target_link_libraries( ${_target}
+                       PRIVATE ${_privLibraries} )
+SETUP_TO_EXECUTE_GTEST( ${_target} )
+
+add_test( NAME ${_targetTest} COMMAND ${_target} )
+
