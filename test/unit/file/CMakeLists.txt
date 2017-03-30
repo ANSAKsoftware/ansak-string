@@ -35,12 +35,17 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_executable( test-ansakFile file_system_path_test.cxx
-                               file_handle_test.cxx
-            )
-target_link_libraries( test-ansakFile
-               PRIVATE ansakFile ansakPrimitives ansakString mock-os gmock_main )
-SETUP_TO_EXECUTE_GTEST( test-ansakFile )
+set( _target test-ansakFile )
+set( _targetTest ansakFileTest )
+set( _privLibraries ansakFile ansakPrimitives ansakString )
+set( _mockLibraries mock-os gmock_main )
 
-add_test( NAME ansakFileTest COMMAND test-ansakFile )
+set( _targetSrc file_system_path_test.cxx
+                file_handle_test.cxx )
+
+add_executable( ${_target} ${_targetSrc} )
+target_link_libraries( ${_target} PRIVATE ${_privLibraries} ${_mockLibraries} )
+SETUP_TO_EXECUTE_GTEST( ${_target} )
+
+add_test( NAME ${_targetTest} COMMAND ${_target} )
 

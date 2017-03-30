@@ -38,14 +38,15 @@ cmake_minimum_required(VERSION 3.1)
 set( _target test-ansakFileTools )
 set( _targetTest ansakFileToolsTest )
 
-set( _interface ../../interface )
-set( _privLibraries ansakFileTools ansakPrimitives ansakString mock-file mock-os gmock_main )
+# set( _interface ../../interface )
+set( _privLibraries ansakFileTools ansakPrimitives ansakString )
+set( _mockLibraries mock-file mock-os gmock_main )
 
 set( _targetSrc temp_directory_test.cxx )
 
 add_executable( ${_target} ${_targetSrc} )
 target_include_directories( ${_target} PUBLIC ${_interface} )
-target_link_libraries( ${_target} PRIVATE ${_privLibraries} )
+target_link_libraries( ${_target} PRIVATE ${_privLibraries} ${_mockLibraries} )
 SETUP_TO_EXECUTE_GTEST( ${_target} )
 
 add_test( NAME ${_targetTest} COMMAND ${_target} )

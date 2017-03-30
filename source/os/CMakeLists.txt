@@ -37,8 +37,8 @@ cmake_minimum_required(VERSION 3.1)
 
 if( WIN32 )
     add_subdirectory(win32)
-endif()
-
-if( UNIX )
+elseif( UNIX )
     add_subdirectory(linux)
+else()
+    message(FATAL_ERROR "Need platform primitives for your environment.")
 endif()

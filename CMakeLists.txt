@@ -78,6 +78,8 @@ else()
     message( "No Unicode version selected. Defaulting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
     set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
 endif()
+# set unicodeSubDir, to be used in ansakString to compile with, and to generate absUnicodeSubDir,
+#                       to be used in test-ansakString to find the Unicode character specs file
 set( unicodeSubDir bits${ANSAK_UNICODE_SUPPORT} )
 
 # Choose unit-tests or not (default on), Coverage or not, based on target platform

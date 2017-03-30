@@ -43,19 +43,25 @@ add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                   DEPENDS "${absUnicodeSubDir}/UnicodeData.txt" mkUnicodeTestData
                   VERBATIM )
 
-add_executable( test-ansakString string_test.cxx
-                              string_decode_utf8_test.cxx
-                              encode_predicate_test.cxx
-                              string_splitjoin_test.cxx
-                              string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
-                              string_trim_test.cxx
-                              string_with_predicate_test.cxx
-                              char_is_unicode_test.cxx
-                              "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-            )
-target_include_directories( test-ansakString PRIVATE "${PROJECT_BINARY_DIR}"
-                                                     ../../../source/include )
-target_link_libraries( test-ansakString PRIVATE ansakString gtest_main )
-SETUP_TO_EXECUTE_GTEST( test-ansakString )
+set( _target test-ansakString )
+set( _targetTest ansakStringTest )
+set( _privLibraries ansakString gtest_main )
+set( _targetIncludes "${PROJECT_BINARY_DIR}" ../../../source/include )
 
-add_test( NAME ansakStringTest COMMAND test-ansakString )
+set( _targetSrc string_test.cxx
+                string_decode_utf8_test.cxx
+                encode_predicate_test.cxx
+                string_splitjoin_test.cxx
+                string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
+                string_trim_test.cxx
+                string_with_predicate_test.cxx
+                char_is_unicode_test.cxx
+                "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
+   )
+
+add_executable( ${_target} ${_targetSrc} )
+target_include_directories( ${_target} PRIVATE ${_targetIncludes} )
+target_link_libraries( ${_target} PRIVATE ${_privLibraries} )
+SETUP_TO_EXECUTE_GTEST( ${_target} )
+
+add_test( NAME ${_targetTest} COMMAND ${_target} )

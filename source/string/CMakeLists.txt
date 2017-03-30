@@ -37,24 +37,22 @@ cmake_minimum_required(VERSION 3.1)
 
 set( _target ansakString )
 set( _interface ../../interface )
-set( _privIncludes )
-list( APPEND _privIncludes ${unicodeSubDir} ../include )
-set( absUnicodeSubDir "${CMAKE_CURRENT_SOURCE_DIR}/${unicodeSubDir}"
-         CACHE STRING "Sub-directory of unicode-version-specific sources" )
+set( _privIncludes ${unicodeSubDir} ../include )
 
-set( ansakString_src )
-list( APPEND ansakString_src string.cxx
-                             string_tolower.cxx
-                             string_toutf8.cxx
-                             string_decode_utf8.cxx
-                             encoding_check_predicate.cxx
-                             ${unicodeSubDir}/char_to_lower.cxx
-                             ${unicodeSubDir}/char_is_unicode.cxx
-    )
+set( _targetSrc string.cxx
+                string_tolower.cxx
+                string_toutf8.cxx
+                string_decode_utf8.cxx
+                encoding_check_predicate.cxx
+                ${unicodeSubDir}/char_to_lower.cxx
+                ${unicodeSubDir}/char_is_unicode.cxx )
 
-add_library( ${_target} STATIC ${ansakString_src} )
+add_library( ${_target} STATIC ${_targetSrc} )
 if (UNIX)
     target_compile_options( ${_target} PRIVATE -Weffc++ )
 endif()
 target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )
 
+# set absUnicodeSubDir, to be used in test-ansakString to find the Unicode character specs file
+set( absUnicodeSubDir "${CMAKE_CURRENT_SOURCE_DIR}/${unicodeSubDir}"
+         CACHE STRING "Sub-directory of unicode-version-specific sources" )

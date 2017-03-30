@@ -38,14 +38,12 @@ cmake_minimum_required(VERSION 3.1)
 set( _target ansakPrimitives )
 set( _interface ../../interface )
 
-set( ansakPrimitives_src )
-list( APPEND ansakPrimitives_src file_path.cxx
-                                 nullptr_exception.cxx
-                                 runtime_exception.cxx
-                                 time_stamp.cxx
-    )
+set( _targetSrc file_path.cxx
+                nullptr_exception.cxx
+                runtime_exception.cxx
+                time_stamp.cxx )
 
-add_library( ${_target} STATIC ${ansakPrimitives_src} )
+add_library( ${_target} STATIC ${_targetSrc} )
 if (UNIX)
     target_compile_options( ${_target} PRIVATE -Weffc++ )
 endif()

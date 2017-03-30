@@ -35,13 +35,18 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_executable( test-ansakPrimitives file_path_test.cxx
-                                     nullptr_exception_test.cxx
-                                     runtime_exception_test.cxx
-                                     time_stamp_test.cxx
-            )
-target_link_libraries( test-ansakPrimitives
-               PRIVATE ansakPrimitives ansakString gtest_main )
-SETUP_TO_EXECUTE_GTEST( test-ansakPrimitives )
+set( _target test-ansakPrimitives )
+set( _targetTest ansakPrimitivesTest )
 
-add_test( NAME ansakPrimitivesTest COMMAND test-ansakPrimitives )
+set( _privLibraries ansakPrimitives ansakString gtest_main )
+
+set( _targetSrc file_path_test.cxx
+                nullptr_exception_test.cxx
+                runtime_exception_test.cxx
+                time_stamp_test.cxx )
+
+add_executable( ${_target} ${_targetSrc} )
+target_link_libraries( ${_target} PRIVATE ${_privLibraries} )
+SETUP_TO_EXECUTE_GTEST( ${_target} )
+
+add_test( NAME ${_targetTest} COMMAND ${_target} )

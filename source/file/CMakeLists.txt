@@ -39,12 +39,9 @@ set( _target ansakFile )
 set( _interface ../../interface )
 set( _privIncludes ../include )
 
-set( ansakFile_src )
-list( APPEND ansakFile_src file_system_path.cxx
-                           file_handle.cxx
-    )
+set( _targetSrc file_system_path.cxx file_handle.cxx )
 
-add_library( ${_target} STATIC ${ansakFile_src} )
+add_library( ${_target} STATIC ${_targetSrc} )
 if (UNIX)
     target_compile_options( ${_target} PRIVATE -Weffc++ )
 endif()
