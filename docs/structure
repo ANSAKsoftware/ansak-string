@@ -1,0 +1,61 @@
+Loosely, the physical structure of the contents of this library can be expressed by this diagram:
+
+ansak-lib
+   +------ cmake------+              # some build script helpers
+   |         +---- modules ----+
+   +--- interface ----+              # header files for everything
+   +------ mock ------+              # mock libraries to support unit testing
+   |        +------ file ------+
+   |        +------- os -------+
+   +----- source -----+              # the actual sources
+   |        +------ file ------+
+   |        +--- file-tools ---+
+   |        +----- include ----+     # some headers private to the library, public to each other
+   |        +------- os -------+     # the platform isolation bits
+   |        |         +----- linux ------+
+   |        |         +----- win32 ------+
+   |        +----- string -----+     # the string library, separate sub-dirs for Unicode 7.0, 8.0, 9.0
+   |                  +----- bits7 ------+
+   |                  +----- bits8 ------+
+   |                  +----- bits9 ------+
+   +------ test ------+              # tests
+            +--- integration --+     # integration tests (they use the underlying OS to test things)
+            |       +------ file ------+
+            +mkUnicodeTestData +     # set up the unicode test data for string tests
+            +------ unit ------+     # the unit tests (they use Mocks, not the underlying OS)
+                    +------ file ------+
+                    +--- file-tools ---+
+                    +------- os -------+  # except for this one: this one tests the underlying OS interface
+                    +--- primitives ---+
+                    +----- string  ----+
+
+The "deployment view" within this library runs like this, based on sub-dirs in the "source" directory:
+
++===========================================================+
+|                       ansak-lib                           |
++===========================================================+
+|                                                           |
+|                       +-------------+                     |
+|                       | file-tools  |                     |
+|                       +--+-----+----+                     |
+|            +-------------+     |                          |
+|            |                   |                          |
+|            v                   |                          |
+|       +-------------+          |   +---------------+      |
+|       |    file     |          |   | os(linux/win) |      |
+|       +--------+----+          |   +--------+------+      |
+|                |               |            |             |
+|                v               v            v             |
+|-----------------------------------------------------------|
+|                      +-------------+                      |
+|                      | primitives  |                      |
+|   +-------------+    +-----+---+---+                      |
+|   |   string    |<---------+   |                          |
+|   +--------+----+              +----+                     |
+|            |                        |                     |
+|            |                        v                     |
+|            |                  +-------------+             |
+|            +----------------->|  include    |             |
+|                               +-----+-------+             |
++===========================================================+
+

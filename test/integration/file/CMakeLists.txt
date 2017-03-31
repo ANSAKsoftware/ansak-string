@@ -36,15 +36,15 @@
 cmake_minimum_required(VERSION 3.1)
 
 set( _target integrate-ansakFile )
-set( _targetPrivateLibs ansakFile ansakPrimitives ansakString ansakOSLayer ) 
+set( _targetPrivateLibs ansakFileTools ansakFile ansakPrimitives ansakString ansakOSLayer )
 set( _targetAsTest ansakFileIntegrationTest )
 set( _targetSource file_system_path_itest.cxx
-#                  file_handle_itest.cxx
+                   file_handle_itest.cxx
    )
 
 add_executable( ${_target} ${_targetSource} )
 target_link_libraries( ${_target}
-               PRIVATE ${_targetPrivateLibs} gtest_main )
+               PRIVATE ${_targetPrivateLibs} gtest_main gmock )
 SETUP_TO_EXECUTE_GTEST( ${_target} )
 
 add_test( NAME ${_targetAsTest} COMMAND ${_target} )

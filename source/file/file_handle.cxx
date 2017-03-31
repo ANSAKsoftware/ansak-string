@@ -102,6 +102,16 @@ void FileHandle::throwErrors()
 }
 
 //============================================================================
+// public, static
+
+void FileHandle::setPermission(int permissionConstant)
+{
+#if !defined(WIN32)
+    nextPermission = permissionConstant;
+#endif
+}
+
+//============================================================================
 // public, destructor
 
 FileHandle::~FileHandle()
@@ -174,7 +184,7 @@ FileHandle FileHandle::create(const FileSystemPath& path, CreateType mode)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "file exists, create using FailIfThere");
+            throw FileHandleException(path, 0, "file exists, create using kFailIfThere");
         }
         return FileHandle();
     }
@@ -213,7 +223,7 @@ FileHandle FileHandle::open(const FileSystemPath& path, OpenType mode)
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "file does not exist, open using FailIfNotThere");
+            throw FileHandleException(path, 0, "file does not exist, open using kFailIfNotThere");
         }
         return FileHandle();
     }
@@ -304,7 +314,7 @@ FileHandle FileHandle::openForAppending(const FileSystemPath& path, OpenType mod
     {
         if (m_throwErrors)
         {
-            throw FileHandleException(path, 0, "file does not exist, openForAppending using FailIfNotThere");
+            throw FileHandleException(path, 0, "file does not exist, openForAppending using kFailIfNotThere");
         }
         return FileHandle();
     }
@@ -650,7 +660,7 @@ FileHandleException::FileHandleException
 {
     ostringstream os;
     os << "FileHandleException: " << message <<
-          "file = \"" << problem.asUtf8String() << "\"; ";
+          "; file = \"" << problem.asUtf8String() << "\"; ";
     if (errorCode != 0)
     {
         os << " code = " << errorCode <<
