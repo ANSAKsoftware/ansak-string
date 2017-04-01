@@ -40,6 +40,7 @@ set( _interface ../../interface )
 
 set( _targetSrc file_path.cxx
                 nullptr_exception.cxx
+                parse_args.cxx
                 runtime_exception.cxx
                 time_stamp.cxx )
 

@@ -42,6 +42,7 @@ set( _privLibraries ansakPrimitives ansakString gtest_main )
 
 set( _targetSrc file_path_test.cxx
                 nullptr_exception_test.cxx
+                parse_args_test.cxx
                 runtime_exception_test.cxx
                 time_stamp_test.cxx )
 
