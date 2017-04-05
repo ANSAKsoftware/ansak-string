@@ -215,7 +215,8 @@ ParseArgs::ParseArgs() noexcept
     m_shippingArgc(0),
     m_shippingArgv(nullptr),
     m_needRewrite(true),
-    m_rewrite(),
+    m_rewriteArgs(),
+    m_rewriteArgPs(),
     m_argsParsed(0),
     m_allArgsParsed(false),
     m_splitForFlags(false)
@@ -237,9 +238,10 @@ ParseArgs::ParseArgs
     m_settings(),
     m_inputs(),
     m_shippingArgc(argc),
-    m_shippingArgv(const_cast<char**>(argv)),
+    m_shippingArgv(argv),
     m_needRewrite(false),
-    m_rewrite(),
+    m_rewriteArgs(),
+    m_rewriteArgPs(),
     m_argsParsed(0),
     m_allArgsParsed(argc <= maximumDefaultParse),
     m_splitForFlags(splitForFlags)
@@ -394,85 +396,68 @@ ParseArgs::ParseArgs
 void ParseArgs::operator()
 (
     int&                argc,           // O - the new argc value
-    char**&             argv            // O - the new argv array
+    const char**&       argv            // O - the new argv array
 )
 {
     if (m_needRewrite)
     {
-        // write this into the ostringstream
-        ostringstream line;
         std::set<int> nullsHere;
-        int runningSize = 0;
-        for (auto f : m_flags)
         {
-            string fl((!m_splitForFlags || f.size() == 1) ? 1 : 2, '-'); fl += f;
-            addToLine(line, fl, runningSize, nullsHere);
-        }
-        for (auto s : m_settings)
-        {
-            string st((!m_splitForFlags || s.first.size() == 1) ? 1 : 2, '-'); st += s.first;
-            addToLine(line, st, runningSize, nullsHere);
-            addToLine(line, s.second, runningSize, nullsHere);
-        }
-        bool doneDoubleDash = false;
-        for (auto i : m_inputs)
-        {
-            if (i[0] == '-' && !doneDoubleDash)
+            // write this into the ostringstream
+            ostringstream line;
+            int runningSize = 0;
+            for (auto f : m_flags)
             {
-                doneDoubleDash = true;
-                addToLine(line, "--", runningSize, nullsHere);
+                string fl((!m_splitForFlags || f.size() == 1) ? 1 : 2, '-'); fl += f;
+                addToLine(line, fl, runningSize, nullsHere);
             }
-            addToLine(line, i, runningSize, nullsHere);
-        }
+            for (auto s : m_settings)
+            {
+                string st((!m_splitForFlags || s.first.size() == 1) ? 1 : 2, '-'); st += s.first;
+                addToLine(line, st, runningSize, nullsHere);
+                addToLine(line, s.second, runningSize, nullsHere);
+            }
+            bool doneDoubleDash = false;
+            for (auto i : m_inputs)
+            {
+                if (i[0] == '-' && !doneDoubleDash)
+                {
+                    doneDoubleDash = true;
+                    addToLine(line, "--", runningSize, nullsHere);
+                }
+                addToLine(line, i, runningSize, nullsHere);
+            }
 
-        // use the cobbled command line to size the rewrite space
-        auto lineOut = line.str();
-        auto lineOutSize = lineOut.size() + 1;
-        auto lineOutSizePointerSizeRemainder = lineOutSize % sizeof(char*);
-        if (lineOutSizePointerSizeRemainder != 0)
-        {
-            lineOutSize -= lineOutSizePointerSizeRemainder;
-            lineOutSize += sizeof(char*);
+            // Add a null terminator for the storage space
+            line << '\0';
+            auto lineOut = line.str();
+            m_rewriteArgs.assign(lineOut.begin(), lineOut.end());
+            m_shippingArgc = 1 + nullsHere.size() + 1;
         }
-        auto rewriteSize = lineOutSize +    // size of all the parameters + '\0' + pad
-                           sizeof(char*) *  (1 +   // pointers for argv[0]
-                           m_flags.size() +         // all flags, once
-                           m_settings.size() * 2 +  // all settings, twice
-                           m_inputs.size());        // all inputs, once
-
         const char* argv0 = m_shippingArgv[0];
-        m_rewrite = std::shared_ptr<char>(new char[rewriteSize]);
-        char* wholeArray = m_rewrite.get();
+        m_rewriteArgPs.reserve(m_shippingArgc);
+        m_rewriteArgPs.assign(1, argv0);
 
-        // write the command line into the rewrite space
-        std::copy(lineOut.begin(), lineOut.end(), wholeArray);
-
-        m_shippingArgv = reinterpret_cast<char**>(m_rewrite.get() + lineOutSize);
-        m_shippingArgc = 1 + nullsHere.size() + 1;
-
-        // write the argv pointers into the rewrite space AFTER the command line
-        char** workingArgv = m_shippingArgv;
-        *(workingArgv++) = const_cast<char*>(argv0);
-
-        char* param = wholeArray;
-        *(workingArgv++) = param;
+        char* param = &m_rewriteArgs[0];
+        m_rewriteArgPs.push_back(param);
 
         while (!nullsHere.empty())
         {
             auto n = nullsHere.lower_bound(0);
-            char* injection = wholeArray + *n;
+            char* injection = &m_rewriteArgs[*n];
             *(injection++) = '\0';
             nullsHere.erase(n);
             if (!nullsHere.empty())  // don't write the pointer after the last null, it's argc+1, verboten
             {
-                *(workingArgv++) = injection;
+                m_rewriteArgPs.push_back(injection);
             }
         }
+        m_shippingArgv = m_rewriteArgPs.data();
     }
 
     // write back argc/argv for the consumer
     argc = m_shippingArgc;
-    argv = const_cast<char**>(m_shippingArgv);
+    argv = m_shippingArgv;
 }
 
 //===========================================================================

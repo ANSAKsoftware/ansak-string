@@ -182,7 +182,7 @@ TEST(ParseArgsTest, testDoubleHyphen)
     EXPECT_TRUE(ho0.allArgsParsed());
 
     int reargc;
-    char** reargv;
+    const char** reargv;
     ho0.set("iarwain");
     ho0(reargc, reargv);
     EXPECT_TRUE(&args[0] != const_cast<const char**>(reargv));
@@ -358,9 +358,9 @@ TEST(ParseArgsTest, testSetAndInvoke)
                            "-i", "-m", "--wwv" };
     ParseArgs settingTest(ParseArgs::preferringShortFlags(11, args));
     int reargc;
-    char** reargv;
+    const char** reargv;
     settingTest(reargc, reargv);
-    EXPECT_EQ(&args[0], const_cast<const char**>(reargv));
+    EXPECT_EQ(&args[0], reargv);
     EXPECT_EQ(11, reargc);
 
     settingTest.set('q', "jester");

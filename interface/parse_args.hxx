@@ -185,7 +185,7 @@ public:
     void operator()
     (
         int&                argc,           // O - the new argc value
-        char**&             argv            // O - the new argv array
+        const char**&       argv            // O - the new argv array
     );
 
     //=======================================================================
@@ -393,9 +393,10 @@ private:
     std::vector<std::string>                m_inputs;           // other parameter from argc/argvs
 
     int                                     m_shippingArgc;     // argc to hand out in operator()
-    char**                                  m_shippingArgv;     // argv to hand out in operator()
+    const char**                            m_shippingArgv;     // argv to hand out in operator()
     bool                                    m_needRewrite;      // argc/argv stale?
-    std::shared_ptr<char>                   m_rewrite;          // re-written argc/argv space
+    std::vector<char>                       m_rewriteArgs;      // re-written argument space
+    std::vector<const char*>                m_rewriteArgPs;     // re-written argv space
 
     int                                     m_argsParsed;       // number of args parsed
     bool                                    m_allArgsParsed;    // were all of argc/argv parsed?
