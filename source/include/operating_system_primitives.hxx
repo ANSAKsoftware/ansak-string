@@ -90,7 +90,7 @@ public:
     virtual utf8String getEnvironmentVariable(const char* variableName) const = 0;
     virtual unsigned long getProcessID() const = 0;
 
-    virtual ansak::utf8String errorAsString(unsigned int errorID) const = 0;
+    virtual utf8String errorAsString(unsigned int errorID) const = 0;
 
     virtual DirectoryListPrimitive* newPathIterator(const FilePath& directory) const = 0;
 };

@@ -35,7 +35,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// temp_directory_test.cxx -- declaration of a mock to FileSystemPath
+// temp_directory_test.cxx -- unit test of the temporary directory wrapper
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -109,6 +109,21 @@ private:
     FileSystemPathMock m_theMainMock;
     OperatingSystemMock m_theOSMock;
 };
+
+TEST(TempDirectoryTest, noPrivs)
+{
+    OperatingSystemMock osMock;
+    EXPECT_CALL(osMock, mockGetTempFilePath()).WillOnce(Return(tmpRoot));
+    EXPECT_CALL(osMock, mockGetProcessID()).WillOnce(Return(32960));
+    theMock = &osMock;
+
+    FileSystemPathMock fsMock;
+    EXPECT_CALL(fsMock, createDirectory(_)).WillOnce(Return(false));
+
+    auto theNonDir = createTempDirectory();
+    EXPECT_EQ(FileSystemPath(FilePath::invalidPath()), theNonDir->asFileSystemPath());
+    theMock = nullptr;
+}
 
 TEST_F(TempDirectoryTestFixture, detached)
 {

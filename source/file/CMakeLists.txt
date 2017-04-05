@@ -39,7 +39,9 @@ set( _target ansakFile )
 set( _interface ../../interface )
 set( _privIncludes ../include )
 
-set( _targetSrc file_system_path.cxx file_handle.cxx )
+set( _targetSrc file_system_path.cxx
+                file_handle_exception.cxx
+                file_handle.cxx )
 
 add_library( ${_target} STATIC ${_targetSrc} )
 if (UNIX)

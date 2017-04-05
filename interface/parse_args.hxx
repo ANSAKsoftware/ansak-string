@@ -118,7 +118,7 @@ class ParseArgs {
         const char* argv[],         // I - from argv to main()
         bool        splitForFlags,  // I - -abc = -a -b -c
         int         limit           // I - maximum number of args to parse
-    ) throw(BadArgsException);
+    );
 
 public:
 
@@ -131,7 +131,7 @@ public:
         const char* argv[],         // I - from argv to main()
         int         limit =         // I - maximum number of args to parse
                         maximumDefaultParse
-    ) throw(BadArgsException) { return ParseArgs(argc, argv, true, limit); }
+    ) { return ParseArgs(argc, argv, true, limit); }
 
     //=======================================================================
     // Factory method -- preferring short flags and an empty object if input
@@ -154,7 +154,7 @@ public:
         const char* argv[],         // I - from argv to main()
         int         limit =         // I - maximum number of args to parse
                         maximumDefaultParse
-    ) throw(BadArgsException) { return ParseArgs(argc, argv, false, limit); }
+    ) { return ParseArgs(argc, argv, false, limit); }
 
     //=======================================================================
     // Factory method -- preferring words and an empty object if input is

@@ -231,7 +231,7 @@ ParseArgs::ParseArgs
     const char* argv[],         // I - from argv to main()
     bool        splitForFlags,  // I - -abc = -a -b -c
     int         limit           // I - maximum number of args to parse
-) throw(BadArgsException)
+)
   : m_procName((argv != 0 && argv[0] != 0) ? argv[0] : "TestProgram"),
     m_flags(),
     m_settings(),

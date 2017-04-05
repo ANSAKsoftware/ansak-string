@@ -39,7 +39,9 @@ set( _target ansakFileTools )
 set( _interface ../../interface )
 set( _privIncludes ../include )
 
-set( _targetSrc temp_directory.cxx )
+set( _targetSrc file_of_lines_exception.cxx
+                temp_directory.cxx
+   )
 
 add_library( ${_target} STATIC ${_targetSrc} )
 if (UNIX)

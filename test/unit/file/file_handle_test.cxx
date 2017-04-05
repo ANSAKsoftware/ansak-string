@@ -40,6 +40,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include <file_handle.hxx>
+#include <file_handle_exception.hxx>
 #include <nullptr_exception.hxx>
 #include <mock_operating_system.hxx>
 

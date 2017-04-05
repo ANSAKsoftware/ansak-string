@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -74,6 +74,8 @@ class TempDirectory {
         const FileSystemPath&   parent      // I - the parent temp dir
     );
 
+    static std::string m_tempDirectoryMarker;
+
 public:
 
     static const bool detachIt = true;
@@ -91,6 +93,14 @@ public:
     // if the directory remains "attached" to the object.
 
     ~TempDirectory();
+
+    ///////////////////////////////////////////////////////////////////
+    // Change the default name of the temp directory to PID-yourTextHere-N
+    // where PID is the platform-specific process ID as a decimal number,
+    // and N is a natural number in sequence since temporary directories
+    // were being created.
+
+    static void setTempDirectoryMarker(const std::string& marker);
 
     ///////////////////////////////////////////////////////////////////
     // child -- create a sub-path from the temporary directory, for a

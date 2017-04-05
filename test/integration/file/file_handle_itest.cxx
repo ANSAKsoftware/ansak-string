@@ -42,6 +42,7 @@
 #include <gmock/gmock.h>
 
 #include <file_handle.hxx>
+#include <file_handle_exception.hxx>
 #include <file_system_path.hxx>
 #include <temp_directory.hxx>
 #include <nullptr_exception.hxx>
@@ -687,20 +688,20 @@ TEST(FileHandleTest, testCopyFrom)
     {
         FileHandle hThere1 = FileHandle::create(tempDir->child("there1"));
         stuff0 = hThere1.copyFrom(hHere);
-        EXPECT_LT(stuff0, 20091u);
+        EXPECT_GT(stuff0, 20000u);
         // should have copied from 120-chars in to end of file
 
         hThere1.close();
-        fetchStuff = hThere1.size();
+        fetchStuff = static_cast<size_t>(hThere1.size());
     }
 
     {
         FileHandle hThere2 = FileHandle::openForReading(tempDir->child("there1"));
-        fetch0 = hThere2.size();
-        EXPECT_LT(stuff0, 20091u);
+        fetch0 = static_cast<size_t>(hThere2.size());
+        EXPECT_GT(stuff0, 20000u);
     }
     FileSystemPath there1(tempDir->child("there1"));
-    fetch1 = there1.size();
+    fetch1 = static_cast<size_t>(there1.size());
     EXPECT_EQ(stuff0, fetchStuff);
     EXPECT_EQ(stuff0, fetch1);
     EXPECT_EQ(fetch0, fetch1);

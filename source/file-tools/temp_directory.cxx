@@ -51,6 +51,8 @@ using namespace std;
 
 namespace ansak {
 
+string TempDirectory::m_tempDirectoryMarker { "ansak" };
+
 /////////////////////////////////////////////////////////////////////////////
 
 TempDirectoryPtr createTempDirectory()
@@ -60,7 +62,9 @@ TempDirectoryPtr createTempDirectory()
     ostringstream tmpSubPath;
     static atomic<int> tempdirCount { 0 };
 
-    tmpSubPath << getOperatingSystemPrimitives()->getProcessID() << '-' << ++tempdirCount;
+    tmpSubPath << getOperatingSystemPrimitives()->getProcessID() << '-'
+               << TempDirectory::m_tempDirectoryMarker << '-'
+               << ++tempdirCount;
     FileSystemPath tmpDir(getOperatingSystemPrimitives()->getTempFilePath().child(tmpSubPath.str()));
 
     if (tmpDir.createDirectory())
@@ -82,7 +86,7 @@ TempDirectory::TempDirectory
 (
     const FileSystemPath&   parent      // I - the parent temp dir
 ) : m_path(parent),
-    m_deleteOnExit(true)
+    m_deleteOnExit(parent.asFilePath() != FilePath::invalidPath())
 {
 }
 

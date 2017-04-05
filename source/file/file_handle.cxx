@@ -43,10 +43,12 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include <file_handle.hxx>
+#include <file_handle_exception.hxx>
 #include <operating_system_primitives.hxx>
 #include <runtime_exception.hxx>
 #include <nullptr_exception.hxx>
 
+#include <string.hxx>
 #include <sstream>
 
 using namespace std;
@@ -645,56 +647,6 @@ bool FileHandle::open(int mode)
     }
     m_fh = static_cast<unsigned long long>(fd);
     return true;
-}
-
-//============================================================================
-// public, constructor
-
-FileHandleException::FileHandleException
-(
-    const FileSystemPath&   problem,
-    unsigned int            errorCode,
-    const std::string&      message
-) noexcept :
-    m_code(errorCode)
-{
-    ostringstream os;
-    os << "FileHandleException: " << message <<
-          "; file = \"" << problem.asUtf8String() << "\"; ";
-    if (errorCode != 0)
-    {
-        os << " code = " << errorCode <<
-              "; code explanation: " << getOperatingSystemPrimitives()->errorAsString(errorCode) << "; ";
-    }
-    m_what = os.str();
-}
-
-//============================================================================
-// public, constructor (almost copy)
-
-FileHandleException::FileHandleException(const FileHandleException& src, size_t inProgress) :
-    m_what(src.m_what),
-    m_code(src.m_code),
-    m_inProgress(inProgress)
-{
-    ostringstream os;
-    os << " (progress: " << inProgress << ')';
-    m_what += os.str();
-}
-
-//============================================================================
-// public, destructor
-
-FileHandleException::~FileHandleException() noexcept
-{
-}
-
-//============================================================================
-// virtual, public
-
-const char* FileHandleException::what() const noexcept
-{
-    return m_what.c_str();
 }
 
 }
