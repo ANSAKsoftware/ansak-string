@@ -41,6 +41,7 @@ set( _privIncludes ../include )
 
 set( _targetSrc file_of_lines_exception.cxx
                 temp_directory.cxx
+                text_file_utilities.cxx
    )
 
 add_library( ${_target} STATIC ${_targetSrc} )

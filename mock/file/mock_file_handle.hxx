@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2016, Arthur N. Klassen
+// Copyright (c) 2017, Arthur N. Klassen
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2016.01.08 - First version
+// 2017.04.05 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,42 +35,29 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// file_system_path_temp_dir_impl.hxx -- Linux-specific implementations of realize(),
-//          derelativize() and the ChildrenRetriever for
-//          FileSystemPath class.
-//
-// (see file_system_path.hxx for a full explanation)
+// mock_file_handle.hxx -- declaration of a mock to FileHandle
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "file_system_path_temp_dir_impl.hxx"
+#include <file_handle.hxx>
+#include <gmock/gmock.h>
 
 namespace ansak
 {
 
-TempDirectoryImpl::TempDirectoryImpl(const FileSystemPath& tempPath) :
-    m_path(tempPath)
+class FileHandleMock
 {
-}
+public:
+    static FileHandleMock* getMock() { return m_currentMock; }
 
-TempDirectoryImpl::~TempDirectoryImpl()
-{
-    if (m_deleteOnExit)
-    {
-        m_path.remove(true);
-    }
-}
+    FileHandleMock()   { m_currentMock = this; }
+    ~FileHandleMock()  { m_currentMock = nullptr; }
 
-FileSystemPath TempDirectoryImpl::child(const utf8String& subPath) const
-{
-    // Expects(m_path.isValid());
-    return FileSystemPath(m_path.asFilePath().child(subPath));
-}
+    MOCK_METHOD3(mockRead, size_t(FileHandle*, char*, size_t));
 
-FileSystemPath TempDirectoryImpl::asFileSystemPath(bool detach)
-{
-    m_deleteOnExit &= !detach;
-    return m_path;
-}
+private:
+
+    static FileHandleMock* m_currentMock;
+};
 
 }

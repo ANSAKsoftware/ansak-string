@@ -43,6 +43,7 @@ set( _mockLibraries mock-file mock-os gmock_main )
 
 set( _targetSrc file_of_lines_exception_test.cxx
                 temp_directory_test.cxx
+                text_file_utilities_test.cxx
    )
 
 add_executable( ${_target} ${_targetSrc} )

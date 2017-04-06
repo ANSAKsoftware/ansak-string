@@ -35,5 +35,16 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( file )
-add_subdirectory( file-tools )
+set( _target integrate-ansakFileTools )
+set( _targetAsTest ansakFileToolsIntegrationTest )
+set( _targetPrivateLibs ansakFileTools ansakFile ansakPrimitives ansakString ansakOSLayer )
+set( _targetSource itext_file_utilities.cxx )
+
+add_executable( ${_target} ${_targetSource} )
+target_link_libraries( ${_target}
+               PRIVATE ${_targetPrivateLibs} gtest_main gmock )
+target_include_directories( ${_target} PRIVATE ../../../source/include )
+
+SETUP_TO_EXECUTE_GTEST( ${_target} )
+
+add_test( NAME ${_targetAsTest} COMMAND ${_target} )

@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2017.03.27 - First Version
+// 2017.04.05 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,65 +35,42 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_file_system_path.cxx -- implementation of a mock to FileSystemPath
+// mock_file_handle.cxx -- implementation of a mock to FileHandle
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "mock_file_system_path.hxx"
-#include <runtime_exception.hxx>
+#include "mock_file_handle.hxx"
+#include <gmock/gmock.h>
+
+#include <sstream>
 
 using namespace testing;
 
 namespace ansak
 {
 
-FileSystemPath::FileSystemPath(const FilePath& path)
-  : m_path(path),
-    m_isValid(path.isReal())
+FileHandleMock* FileHandleMock::m_currentMock = nullptr;
+
+FileHandle::~FileHandle()
 {
 }
 
-FileSystemPath::~FileSystemPath()
+FileHandle::FileHandle(FileHandle&& src) : m_path(FileSystemPath())
 {
+    m_path = src.m_path;    src.m_path = FileSystemPath();
+    m_fh   = src.m_fh;      src.m_fh = nullHandle;
 }
 
-bool FileSystemPath::createDirectory(bool)
+FileHandle FileHandle::open(const FileSystemPath& path, FileHandle::OpenType)
 {
-    return FileSystemPathMock::getMock()->createDirectory(this);
+    FileHandle result(path);
+    result.m_fh = 35u;
+    return result;
 }
 
-bool FileSystemPath::remove(bool recursive)
+size_t FileHandle::read(char* dest, size_t destSize)
 {
-    return FileSystemPathMock::getMock()->remove(this, recursive);
-}
-
-bool FileSystemPath::exists() const
-{
-    return FileSystemPathMock::getMock()->exists(this);
-}
-
-bool FileSystemPath::isFile() const
-{
-    return FileSystemPathMock::getMock()->isFile(this);
-}
-
-uint64_t FileSystemPath::size() const
-{
-    return FileSystemPathMock::getMock()->size(this);
-}
-
-FileSystemPathMock* FileSystemPathMock::m_currentMock = nullptr;
-
-FileSystemPathMock::FileSystemPathMock()
-{
-    enforce(nullptr == m_currentMock, "Can only have one mock active at a time.");
-    m_currentMock = this;
-}
-
-FileSystemPathMock::~FileSystemPathMock()
-{
-    enforce(this == m_currentMock, "Can only have one mock active at a time (destructor).");
-    m_currentMock = nullptr;
+    return FileHandleMock::getMock()->mockRead(this, dest, destSize);
 }
 
 }
