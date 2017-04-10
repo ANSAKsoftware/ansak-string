@@ -41,7 +41,8 @@ set( _targetTest ansakFileToolsTest )
 set( _privLibraries ansakFileTools ansakPrimitives ansakString )
 set( _mockLibraries mock-file mock-os gmock_main )
 
-set( _targetSrc file_of_lines_exception_test.cxx
+set( _targetSrc file_of_lines_core_test.cxx
+                file_of_lines_exception_test.cxx
                 temp_directory_test.cxx
                 text_file_utilities_test.cxx
    )

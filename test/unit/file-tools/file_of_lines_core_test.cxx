@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2017.04.05 - First Version
+// 2017.04.10 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,31 +35,45 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_file_handle.hxx -- declaration of a mock to FileHandle
+// file_of_lines_exception_test.cxx -- unit test for file-of-lines exceptions
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include <file_handle.hxx>
-#include <gmock/gmock.h>
+#include <file_of_lines_core.hxx>
 
-namespace ansak
+#include <file_path.hxx>
+#include <file_handle_exception.hxx>
+#include <mock_operating_system.hxx>
+#include <mock_file_system_path.hxx>
+#include <memory>
+
+#include <gtest/gtest.h>
+
+using namespace ansak;
+using namespace ansak::internal;
+using namespace std;
+using namespace testing;
+
+namespace ansak {
+
+extern unique_ptr<OperatingSystemMock> primitive;
+extern OperatingSystemMock* theMock;
+
+}
+
+using namespace ansak;
+
+namespace
 {
+#if defined(WIN32)
+FilePath problemFile("c:\\Users\\jvplasmeuden\\homeworklines.txt");
+#else
+FilePath problemFile("/home/jvplasmeuden/homeworklines.txt");
+#endif
+}
 
-class FileHandleMock
+TEST(LinesCoreTest, construct)
 {
-public:
-    static FileHandleMock* getMock() { return m_currentMock; }
-
-    FileHandleMock()   { m_currentMock = this; }
-    ~FileHandleMock()  { m_currentMock = nullptr; }
-
-    MOCK_METHOD3(mockRead, size_t(FileHandle*, char*, size_t));
-    MOCK_METHOD1(mockClose, void(FileHandle*));
-    MOCK_METHOD2(mockSeek, void(FileHandle*, off_t));
-
-private:
-
-    static FileHandleMock* m_currentMock;
-};
-
+    auto path = FileSystemPath(problemFile);
+    EXPECT_FALSE(FileOfLinesCore(path).isFileOpen());
 }

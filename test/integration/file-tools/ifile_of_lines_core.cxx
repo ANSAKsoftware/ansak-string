@@ -45,17 +45,12 @@
 
 #include <gmock/gmock.h>
 
-#include "file_of_lines_core.hxx"
-#include "file_of_lines_exception.hxx"
-#include "runtime_exception.hxx"
+#include <file_of_lines_core.hxx>
+#include <file_of_lines_exception.hxx>
+#include <runtime_exception.hxx>
 #include "temp_file_wrapper.hxx"
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <iostream>
-#include <string>
+#include <string.hxx>
 
 using namespace std;
 using namespace ansak;

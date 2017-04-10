@@ -61,11 +61,44 @@ FileHandle::FileHandle(FileHandle&& src) : m_path(FileSystemPath())
     m_fh   = src.m_fh;      src.m_fh = nullHandle;
 }
 
+FileHandle& FileHandle::operator=(FileHandle&& src)
+{
+    if (this != &src)
+    {
+        if (isOpen())
+        {
+            try
+            {
+                close();
+            }
+            catch (...) { }
+        }
+        m_path = src.m_path;    src.m_path = FileSystemPath();
+        m_fh = src.m_fh;        src.m_fh = nullHandle;
+    }
+
+    return *this;
+}
+
 FileHandle FileHandle::open(const FileSystemPath& path, FileHandle::OpenType)
 {
     FileHandle result(path);
     result.m_fh = 35u;
     return result;
+}
+
+void FileHandle::close()
+{
+    try
+    {
+        FileHandleMock::getMock()->mockClose(this);
+        m_fh = 0;
+    }
+    catch (...)
+    {
+        m_fh = 0;
+        throw;
+    }
 }
 
 bool FileHandle::operator==(const FileHandle& rhs) const
@@ -77,6 +110,11 @@ bool FileHandle::operator==(const FileHandle& rhs) const
 size_t FileHandle::read(char* dest, size_t destSize)
 {
     return FileHandleMock::getMock()->mockRead(this, dest, destSize);
+}
+
+void FileHandle::seek(off_t pos)
+{
+    FileHandleMock::getMock()->mockSeek(this, pos);
 }
 
 }
