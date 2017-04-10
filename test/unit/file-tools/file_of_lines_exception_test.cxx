@@ -104,6 +104,7 @@ TEST(FileOfLinesException, inComesOut)
     EXPECT_STREQ(b.what(), message.c_str());
 }
 
+/*
 TEST_F(FileOfLinesExceptionTestFixture, withErrorCode)
 {
     EXPECT_CALL(OSMock(), mockErrorAsString(_)).WillOnce(Return("cottlestone pie"));
@@ -120,6 +121,7 @@ TEST_F(FileOfLinesExceptionTestFixture, errorCodeThrows)
     FileOfLinesException c("this is another test", problemFile, 35);
     EXPECT_STREQ(c.what(), "FileOfLinesException - no info available.");
 }
+*/
 
 TEST_F(FileOfLinesExceptionTestFixture, fromFileHandleException)
 {
@@ -143,6 +145,7 @@ TEST_F(FileOfLinesExceptionTestFixture, fromFileHandleExceptionWithOffset)
     EXPECT_STREQ(e.what(), message.c_str());
 }
 
+/*
 TEST_F(FileOfLinesExceptionTestFixture, fromFileHandleExceptionWithOffsetAndLineNum)
 {
     EXPECT_CALL(ExceptionMock(), mockWhat(_)).WillOnce(Return("MockedUp FileHandleException"));
@@ -153,3 +156,4 @@ TEST_F(FileOfLinesExceptionTestFixture, fromFileHandleExceptionWithOffsetAndLine
     message += "; exception = (MockedUp FileHandleException); error occurred at or near offset 98022 for line #3323.";
     EXPECT_STREQ(f.what(), message.c_str());
 }
+*/

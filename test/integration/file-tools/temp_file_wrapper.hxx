@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2014, Arthur N. Klassen
+// Copyright (c) 2016, Arthur N. Klassen
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2014.02.01 - First version
+// 2016.06.11 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,26 +35,48 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// endianness.hxx -- determine platform endian-ness at compile time
+// temp_file_wrapper.hxx -- A temporary-directory and file-creation wrapper
+//                          for test suites.
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#include <file_handle.hxx>
+#include <file_system_path.hxx>
+#include <temp_directory.hxx>
 
-namespace ansak
-{
+namespace ansak {
+    namespace internal {
 
-// Endian-ness of platform
+class TempFileWrapper {
 
-namespace endian {
+public:
 
-static const char n[2] = { 3, 5 };
+    void writeTestFile
+    (
+        const char*     fileName,       // I - file name to write
+        const char*     fileContents,   // I - contents to write
+        size_t          contentSize     // I - length of contents to write
+    )
+    {
+        FileSystemPath where(child(fileName));
+        auto fh = FileHandle::create(where);
 
-}
+        if (contentSize != 0)
+        {
+            fh.write(fileContents, contentSize);
+        }
+    }
 
-inline bool isLittleEndian()
-{
-    return *reinterpret_cast<const char16_t*>(&ansak::endian::n[0]) == 0x503;
+    FileSystemPath child(const utf8String& subPath) const
+    {
+        return m_tempDir->child(subPath);
+    }
+
+private:
+
+    ansak::TempDirectoryPtr    m_tempDir = ansak::createTempDirectory();
+};
+
 }
 
 }

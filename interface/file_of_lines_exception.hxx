@@ -65,7 +65,8 @@ public:
         const char*                 message,        // I - a message about a FileOfLines failure
         const FilePath&             fileName        // I - the file name being parsed
                                             = FilePath::invalidPath(),
-        unsigned int                code = 0        // I - an errorCode if one is involved
+        unsigned long long          fileOffset      // I - an offset into the file, if available
+                                            = ~static_cast<unsigned long long>(0)
     ) noexcept;
 
     FileOfLinesException
@@ -74,9 +75,7 @@ public:
         const FilePath&             fileName,       // I - the file name being parsed
         const FileHandleException&  ioProblem,      // I - a FileHandle problem being wrapped
         unsigned long long          fileOffset      // I - an offset into the file, if available
-                                            = ~static_cast<unsigned long long>(0),
-        size_t                      lineNumber      // I - a line number of the file, if available
-                                            = ~static_cast<size_t>(0)
+                                            = ~static_cast<unsigned long long>(0)
     ) noexcept;
 
     /////////////////////////////////////////////////////////////////////////

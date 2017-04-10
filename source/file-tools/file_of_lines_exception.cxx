@@ -59,7 +59,7 @@ FileOfLinesException::FileOfLinesException
 (
     const char*                 message,        // I - a message about a FileOfLines failure
     const FilePath&             fileName,       // I - the file name being parsed, def invalidPath
-    unsigned int                code            // I - an errorCode if one is involved, def 0
+    unsigned long long          fileOffset      // I - an offset into the file, if available, def ~0
 ) noexcept :
     m_what()
 {
@@ -74,14 +74,13 @@ FileOfLinesException::FileOfLinesException
         else
         {
             os << "; file = " << fileName.asUtf8String();
-            if (code == 0)
+            if (fileOffset == ~static_cast<unsigned long long>(0))
             {
                 os << '.';
             }
             else
             {
-                os << "; code = " << code <<
-                      "; code explanation: " << getOperatingSystemPrimitives()->errorAsString(code) << '.';
+                os << "; error occurred at or near offset " << fileOffset << '.';
             }
         }
         m_what = os.str();
@@ -99,8 +98,7 @@ FileOfLinesException::FileOfLinesException
     const char*                 message,        // I - a message about a FileOfLines failure
     const FilePath&             fileName,       // I - the file name being parsed
     const FileHandleException&  ioProblem,      // I - a FileHandle problem being wrapped
-    unsigned long long          fileOffset,     // I - an offset into the file, if available, def ~0
-    size_t                      lineNumber      // I - a line number of the file, if available, def ~0
+    unsigned long long          fileOffset      // I - an offset into the file, if available, def ~0
 ) noexcept :
     m_what()
 {
@@ -116,16 +114,7 @@ FileOfLinesException::FileOfLinesException
         }
         else
         {
-            os << "; error occurred at or near offset " << fileOffset;
-
-            if (lineNumber == ~static_cast<size_t>(0))
-            {
-                os << '.';
-            }
-            else
-            {
-                os << " for line #" << lineNumber << '.';
-            }
+            os << "; error occurred at or near offset " << fileOffset << '.';
         }
 
         m_what = os.str();

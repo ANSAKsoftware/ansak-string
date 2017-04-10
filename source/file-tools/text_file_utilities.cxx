@@ -98,24 +98,14 @@ inline const unsigned char* asUCharPtr(const char* p)
     return reinterpret_cast<const unsigned char*>(p);
 }
 
-FileOfLinesException PathInvalid(const FilePath& filePath)
+inline FileOfLinesException OpenFailed(const FilePath& filePath)
 {
-    return FileOfLinesException("path is invalid", filePath);
+    return FileOfLinesException("path could not be opened", filePath);
 }
 
-FileOfLinesException PathIsNotFile(const FilePath& filePath)
+inline FileOfLinesException ReadFailed(const FilePath& filePath)
 {
-    return FileOfLinesException("path is not a file", filePath);
-}
-
-FileOfLinesException ReadFailed(const FilePath& filePath)
-{
-    return FileOfLinesException("path is not a file", filePath);
-}
-
-FileOfLinesException ReadFailed(const FilePath& filePath, const FileHandleException& problem)
-{
-    return FileOfLinesException("path is not a file", filePath, problem);
+    return FileOfLinesException("path could not be read", filePath);
 }
 
 }
@@ -141,11 +131,11 @@ bool looksLikeText
     {
         if (!file.isValid() || !file.exists())
         {
-            throw PathInvalid(file);
+            throw FileOfLinesException("path is invalid", file);
         }
         if (!file.isFile())
         {
-            throw PathIsNotFile(file);
+            throw FileOfLinesException("path is not a file", file);
         }
         auto fileSize = file.size();
         int allocateSize = fileSize > 4096 ? 4096 : static_cast<int>(fileSize);
@@ -159,6 +149,10 @@ bool looksLikeText
         int rd = 0;
         {
             FileHandle fileH = FileHandle::open(file);
+            if (fileH == FileHandle())
+            {
+                throw OpenFailed(file);
+            }
             rd = fileH.read(work.get(), allocateSize);
         }
 
@@ -173,7 +167,7 @@ bool looksLikeText
     }
     catch (FileHandleException& f)
     {
-        throw ReadFailed(file, f);
+        throw FileOfLinesException("contents of file could not be examined", file, f);
     }
 }
 

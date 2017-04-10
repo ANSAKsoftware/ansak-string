@@ -68,6 +68,12 @@ FileHandle FileHandle::open(const FileSystemPath& path, FileHandle::OpenType)
     return result;
 }
 
+bool FileHandle::operator==(const FileHandle& rhs) const
+{
+    if (this == &rhs)   return true;
+    return m_path == rhs.m_path && m_fh == rhs.m_fh;
+}
+
 size_t FileHandle::read(char* dest, size_t destSize)
 {
     return FileHandleMock::getMock()->mockRead(this, dest, destSize);
