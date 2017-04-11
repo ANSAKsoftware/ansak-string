@@ -51,6 +51,16 @@ namespace ansak
 
 FileHandleMock* FileHandleMock::m_currentMock = nullptr;
 
+bool FileHandleMock::shouldFailNextOpen()
+{
+    if (m_failNextOpen)
+    {
+        m_failNextOpen = false;
+        return true;
+    }
+    return false;
+}
+
 FileHandle::~FileHandle()
 {
 }
@@ -82,6 +92,11 @@ FileHandle& FileHandle::operator=(FileHandle&& src)
 
 FileHandle FileHandle::open(const FileSystemPath& path, FileHandle::OpenType)
 {
+    if (FileHandleMock::getMock()->shouldFailNextOpen())
+    {
+        return FileHandle();
+    }
+
     FileHandle result(path);
     result.m_fh = 35u;
     return result;
@@ -105,6 +120,11 @@ bool FileHandle::operator==(const FileHandle& rhs) const
 {
     if (this == &rhs)   return true;
     return m_path == rhs.m_path && m_fh == rhs.m_fh;
+}
+
+uint64_t FileHandle::size()
+{
+    return FileHandleMock::getMock()->mockSize(this);
 }
 
 size_t FileHandle::read(char* dest, size_t destSize)

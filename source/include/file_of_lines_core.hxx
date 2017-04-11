@@ -163,13 +163,6 @@ private:
     void classifyFile();
 
     //=======================================================================
-    // enforceTextIsUnicode -- Utility function called from within open()
-    //
-    // Throws RuntimeException if classifyFile should have thrown and didn't
-
-    void enforceTextIsUnicode();
-
-    //=======================================================================
     // getDataBounds -- Utility function called from within open()
     //
     // Coerces the class' noted end of file to be something consistent with
@@ -230,19 +223,8 @@ private:
     // 
     // Throws FileIsntText or LineIsTooLong on error.
 
-    unsigned int getLineLengthUtf8
-    (
-        unsigned long long  startOfLine,    // I - line starting position in file
-        bool*               atEndOfFile     // O - set true if at end of file (opt.)
-    );
-
-    unsigned int getLineLengthUtf16
-    (
-        unsigned long long  startOfLine,    // I - line starting position in file
-        bool*               atEndOfFile     // O - set true if at end of file (opt.)
-    );
-
-    unsigned int getLineLengthUcs4
+    template<typename C>
+    unsigned int getLineLength
     (
         unsigned long long  startOfLine,    // I - line starting position in file
         bool*               atEndOfFile     // O - set true if at end of file (opt.)
@@ -263,14 +245,8 @@ private:
         unsigned int*       length          // O - string length in code points (opt.)
     );
 
-    bool isRangeUnicodeUtf16
-    (
-        unsigned int        startIndex,     // I - index in buffer to scan from
-        unsigned int        endIndex,       // I - index in buffer to scan to
-        unsigned int*       length          // O - string length in code points (opt.)
-    );
-
-    bool isRangeUnicodeUcs4
+    template<typename C>
+    bool isRangeUnicode
     (
         unsigned int        startIndex,     // I - index in buffer to scan from
         unsigned int        endIndex,       // I - index in buffer to scan to
@@ -289,13 +265,8 @@ private:
         unsigned int        endIndex        // I - index in buffer to retrieve to
     );
 
-    std::string toStringUtf16
-    (
-        unsigned int        startIndex,     // I - index in buffer to retrieve from
-        unsigned int        endIndex        // I - index in buffer to retrieve to
-    );
-
-    std::string toStringUcs4
+    template<typename C>
+    std::string toStringFromWide
     (
         unsigned int        startIndex,     // I - index in buffer to retrieve from
         unsigned int        endIndex        // I - index in buffer to retrieve to
@@ -311,6 +282,12 @@ private:
     // phantom 0-length files. EWONTFIX
     //
     // Returns the string
+
+    template<typename C>
+    unsigned int getNextOffset
+    (
+        unsigned int        endOfLastIndex  // I - index of end-of-last-string
+    );
 
     unsigned int getNextOffsetUtf8
     (
@@ -361,8 +338,6 @@ private:
     int                         m_bufferContentLength;  // length of loaded contents
 
     std::string                 m_lastLineRetrieved = std::string();
-    unsigned long long          m_lastLineStartInFile = ~0UL;
-    unsigned long long          m_lastLineStartInBuffer = ~0UL;
     size_t                      m_lineStartsSize = 0;
 };
 

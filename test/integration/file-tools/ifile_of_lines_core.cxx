@@ -39,7 +39,7 @@
 // (Is it too much to suggest retaining this header on this file?)
 ///////////////////////////////////////////////////////////////////////////
 //
-// file_of_lines_core_test.cxx -- unit tests for the FileOfLinesCore class
+// file_of_lines_core_test.cxx -- integration tests for the FileOfLinesCore class
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -82,66 +82,8 @@ using namespace testing;
 // get() -- check endOfFile return
 //
 // 10 x 3 (+1) x 4  -- 1200 possible combinations; if we test all rows and all
-// columns at least once, that'd be good -- but even that is too big to qualify
-// as strictly "UnitTests".
-//
-// This unit test will test open() and get() for small files in all 10 encoding
-// cases and leave sampling of the larger set to a separate tool (like RDMTest)
-
-TEST(FileOfLinesCoreTest, testOpen)
-{
-    TempFileWrapper tempDir;
-    tempDir.writeTestFile("testOpen", nullptr, 0);
-
-    FileOfLinesCore testOpen(tempDir.child("testOpen"));
-    EXPECT_FALSE(testOpen.isFileOpen());
-
-    try
-    {
-        testOpen.open();
-        ASSERT_TRUE(true);
-        EXPECT_FALSE(testOpen.isFileOpen()); // file isn't opened because it's 0-length
-    }
-    catch (FileOfLinesException& e)
-    {
-        ASSERT_TRUE(false);
-    }
-
-    bool isEndOfFile = false;
-    string empty = testOpen.get(0, &isEndOfFile);
-    EXPECT_TRUE(empty.empty());
-    EXPECT_TRUE(isEndOfFile);
-    EXPECT_TRUE(testOpen.isEndOfFileKnown());
-    EXPECT_EQ(static_cast<size_t>(0), testOpen.lineCount());
-}
-
-TEST(FileOfLinesCoreTest, testGetUnopened)
-{
-    TempFileWrapper tempDir;
-    tempDir.writeTestFile("testUnopened", "This\nis\nonly\na\ntest.", 20);
-
-    FileOfLinesCore testUnopened(tempDir.child("testUnopened"));
-    EXPECT_FALSE(testUnopened.isFileOpen());
-
-    try
-    {
-        testUnopened.get(0);
-        ASSERT_FALSE(false);
-    }
-    catch (RuntimeException& e)
-    {
-        // EXPECT_EQ(static_cast<int>(ansak::error::Runtime), e.cause());
-    }
-    EXPECT_FALSE(testUnopened.isEndOfFileKnown());
-    try
-    {
-        EXPECT_EQ(static_cast<size_t>(0), testUnopened.lineCount());
-    }
-    catch (RuntimeException& e)
-    {
-        // EXPECT_EQ(static_cast<int>(ansak::error::Runtime), e.cause());
-    }
-}
+// columns at least once, that'd be good -- but exhaustive enough to be
+// ponderous.
 
 TEST(FileOfLinesCoreTest, testUtf8)
 {

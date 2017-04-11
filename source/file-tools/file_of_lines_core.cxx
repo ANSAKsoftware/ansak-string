@@ -177,7 +177,6 @@ void FileOfLinesCore::open()
         }
 
         classifyFile();
-        enforceTextIsUnicode();
 
         m_fHandle = FileHandle::open(m_path);
 
@@ -214,7 +213,6 @@ string FileOfLinesCore::get
             string val = getLine(m_lineStarts[nLine], m_lineStarts[nLine + 1]);
             eofRef = false;
             m_lastLineRetrieved = val;
-            m_lastLineStartInFile = m_lineStarts[nLine];
             return val;
         }
         else if (nLine == m_lineStarts.size() - 1)
@@ -222,7 +220,6 @@ string FileOfLinesCore::get
             string val = getLine(m_lineStarts[nLine]);
             eofRef = m_foundEndOfFile;
             m_lastLineRetrieved = val;
-            m_lastLineStartInFile = m_lineStarts[nLine];
             return val;
         }
     }
@@ -260,45 +257,27 @@ void FileOfLinesCore::classifyFile()
         break;
 
     case ansak::file::TextType::kUtf8:
-        m_getLengthFunc = &FileOfLinesCore::getLineLengthUtf8;
+        m_getLengthFunc = &FileOfLinesCore::getLineLength<char>;
         m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicodeUtf8;
         m_toStringFunc = &FileOfLinesCore::toStringUtf8;
-        m_getNextOffsetFunc = &FileOfLinesCore::getNextOffsetUtf8;
+        m_getNextOffsetFunc = &FileOfLinesCore::getNextOffset<char>;
         break;
 
     case ansak::file::TextType::kUtf16LE:
     case ansak::file::TextType::kUtf16BE:
-        m_getLengthFunc = &FileOfLinesCore::getLineLengthUtf16;
-        m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicodeUtf16;
-        m_toStringFunc = &FileOfLinesCore::toStringUtf16;
-        m_getNextOffsetFunc = &FileOfLinesCore::getNextOffsetUtf16;
+        m_getLengthFunc = &FileOfLinesCore::getLineLength<char16_t>;
+        m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicode<char16_t>;
+        m_toStringFunc = &FileOfLinesCore::toStringFromWide<char16_t>;
+        m_getNextOffsetFunc = &FileOfLinesCore::getNextOffset<char16_t>;
         break;
 
     case ansak::file::TextType::kUcs4LE:
     case ansak::file::TextType::kUcs4BE:
-        m_getLengthFunc = &FileOfLinesCore::getLineLengthUcs4;
-        m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicodeUcs4;
-        m_toStringFunc = &FileOfLinesCore::toStringUcs4;
-        m_getNextOffsetFunc = &FileOfLinesCore::getNextOffsetUcs4;
+        m_getLengthFunc = &FileOfLinesCore::getLineLength<char32_t>;
+        m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicode<char32_t>;
+        m_toStringFunc = &FileOfLinesCore::toStringFromWide<char32_t>;
+        m_getNextOffsetFunc = &FileOfLinesCore::getNextOffset<char32_t>;
         break;
-    }
-}
-
-//===========================================================================
-// private
-
-void FileOfLinesCore::enforceTextIsUnicode()
-{
-    switch(m_textType)
-    {
-    case ansak::file::TextType::kUtf8:
-    case ansak::file::TextType::kUtf16LE:
-    case ansak::file::TextType::kUtf16BE:
-    case ansak::file::TextType::kUcs4LE:
-    case ansak::file::TextType::kUcs4BE:
-        break;
-
-    default: enforce(false, "classifyFile should have thrown");
     }
 }
 
@@ -500,7 +479,7 @@ void FileOfLinesCore::moveBuffer
 }
 
 //===========================================================================
-// algorithm for getLineLengthU* routines:
+// algorithm for getLineLength* template:
 //
 // search from here... (a)find control characters? give up; throw exception (file isn't text)
 //                 ... (b)find more than bufferSize character data? give up;
@@ -511,7 +490,8 @@ void FileOfLinesCore::moveBuffer
 //===========================================================================
 // private
 
-unsigned int FileOfLinesCore::getLineLengthUtf8
+template<typename C>
+unsigned int FileOfLinesCore::getLineLength
 (
     unsigned long long  startOfLine,    // I - line starting position in file
     bool*               atEndOfFile     // O - set true if at end of file (opt.)
@@ -529,27 +509,29 @@ unsigned int FileOfLinesCore::getLineLengthUtf8
     }
 
     unsigned int startOfLineInBuffer =
-                static_cast<unsigned int>(startOfLine - m_bufferFilePos);
-    m_lastLineStartInFile = startOfLine;
-    m_lastLineStartInBuffer = startOfLineInBuffer;
+                static_cast<unsigned int>(startOfLine - m_bufferFilePos) / sizeof(C);
+
+    C* pBufferAsC = reinterpret_cast<C*>(&m_buffer[0]);
     unsigned int endOfBuffer = bufferSize;
     if (m_fileSize < bufferSize)
     {
         // if that if succeeds this cast is fine.
         endOfBuffer = static_cast<unsigned int>(m_fileSize);
     }
+    unsigned int endOfSearchArea = endOfBuffer / sizeof(C);
 
     for (;;)    // probably only gets run once, at most twice
     {
-        char* startP = m_buffer + startOfLineInBuffer;
-        char* endP = m_buffer + endOfBuffer;
+        C* startP = pBufferAsC + startOfLineInBuffer;
+        C* endP = pBufferAsC + endOfSearchArea;
         auto found = scanInputBuffer(startP, endP);
 
         if (found == kEndOfLine)
         {
             // (c)
             eolRef = false;
-            return endP - startP + 1;
+            // cast always okay -- see buffer size (passim)
+            return static_cast<unsigned int>(endP - startP + 1) * sizeof(C);
         }
         else if (found == kEndOfBuffer)
         {
@@ -557,14 +539,15 @@ unsigned int FileOfLinesCore::getLineLengthUtf8
             {
                 // (d)
                 eolRef = true;
-                return static_cast<unsigned int>(endP - startP);
+                return static_cast<unsigned int>(endP - startP) * sizeof(C);
             }
             else if (startOfLineInBuffer != 0)
             {
                 moveBuffer(startOfLine);
                 // probably 0; at end of file, probably not
                 startOfLineInBuffer =
-                    static_cast<unsigned int>(startOfLine - m_bufferFilePos);
+                    static_cast<unsigned int>(startOfLine - m_bufferFilePos) /
+                            sizeof(C);
             }
             else
             {
@@ -576,166 +559,6 @@ unsigned int FileOfLinesCore::getLineLengthUtf8
         {
             // (a)
             throw FileOfLinesException("in FileOfLinesCore::getLineLengthUtf8, scanning UTF-8 found control characters",
-                                       m_path, startOfLine);
-        }
-    }
-}
-
-//===========================================================================
-// private
-
-unsigned int FileOfLinesCore::getLineLengthUtf16
-(
-    unsigned long long  startOfLine,    // I - line starting position in file
-    bool*               atEndOfFile     // O - set to true if at end of file (opt.)
-)
-{
-    enforce(isFileOpen(), "The file must have been opened by now.");
-    enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
-
-    bool eolDummy;
-    bool& eolRef = atEndOfFile == nullptr ? eolDummy : *atEndOfFile;
-
-    if (startOfLine < m_bufferFilePos)
-    {
-        moveBuffer(startOfLine);
-    }
-
-    unsigned int startOfLineUtf16 =
-            static_cast<unsigned int>(startOfLine - m_bufferFilePos) / sizeof(char16_t);
-
-    char16_t* pBufferAsUtf16 = reinterpret_cast< char16_t* >(&m_buffer[0]);
-    unsigned int endOfBuffer = bufferSize;
-    if (m_fileSize < bufferSize)
-    {
-        // if that if succeeds this cast is fine.
-        endOfBuffer = static_cast<unsigned int>(m_fileSize);
-    }
-    unsigned int endOfSearchArea = endOfBuffer / sizeof(char16_t);
-
-    for (;;)    // probably only gets run once, at most twice
-    {
-        char16_t* startP = pBufferAsUtf16 + startOfLineUtf16;
-        char16_t* endP = pBufferAsUtf16 + endOfSearchArea;
-        auto found = scanInputBuffer(startP, endP);
-
-        enforce(static_cast<unsigned int>(startP - pBufferAsUtf16) ==
-                                          startP - pBufferAsUtf16,
-                "d-char16_t* to int math failing when it shouldn't");
-
-        if(found == kEndOfLine)
-        {
-            // (c)
-            eolRef = false;
-            // cast always okay -- see buffer size (passim)
-            return static_cast<unsigned int>(endP + 1 - startP) * sizeof(char16_t);
-        }
-        else if (found == kEndOfBuffer)
-        {
-            if (m_bufferFilePos >= getMaximumBufferFilePos())
-            {
-                // (d)
-                eolRef = true;
-                return static_cast<unsigned int>(endP - startP) * sizeof(char16_t);
-            }
-            else if (startOfLineUtf16 != 0)
-            {
-                moveBuffer(startOfLine);
-                // probably 0; at end of file, probably not
-                startOfLineUtf16 =
-                    static_cast<unsigned int>(startOfLine - m_bufferFilePos) /
-                            sizeof(char16_t);
-            }
-            else
-            {
-                // (b)
-                throw FileOfLinesException("line too long", m_path, startOfLine);
-            }
-        }
-        else // if (found == kControlCharacters)
-        {
-            // (a)
-            throw FileOfLinesException("in FileOfLinesCore::getLineLengthUtf16, scanning UTF-16 found control characters",
-                                       m_path, startOfLine);
-        }
-    }
-}
-
-//===========================================================================
-// private
-
-unsigned int FileOfLinesCore::getLineLengthUcs4
-(
-    unsigned long long  startOfLine,    // I - line starting position in file
-    bool*               atEndOfFile     // O - set true if at end of file (opt.)
-)
-{
-    enforce(isFileOpen(), "The file must have been opened by now.");
-    enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
-
-    bool eolDummy;
-    bool& eolRef = atEndOfFile == nullptr ? eolDummy : *atEndOfFile;
-
-    if (startOfLine < m_bufferFilePos)
-    {
-        moveBuffer(startOfLine);
-    }
-
-    unsigned int startOfLineUcs4 =
-            static_cast<unsigned int>(startOfLine - m_bufferFilePos) / sizeof(char32_t);
-
-    char32_t* pBufferAsUcs4 = reinterpret_cast< char32_t* >(&m_buffer[0]);
-    unsigned int endOfBuffer = bufferSize;
-    if (m_fileSize < bufferSize)
-    {
-        // if that if succeeds this cast is fine.
-        endOfBuffer = static_cast<unsigned int>(m_fileSize);
-    }
-    unsigned int endOfSearchArea = endOfBuffer / sizeof(char32_t);
-
-    for (;;)    // probably only gets run once, at most twice
-    {
-        char32_t* startP = pBufferAsUcs4 + startOfLineUcs4;
-        char32_t* endP = pBufferAsUcs4 + endOfSearchArea;
-        auto found = scanInputBuffer(startP, endP);
-
-        enforce(static_cast<unsigned int>(startP - pBufferAsUcs4) ==
-                                          startP - pBufferAsUcs4,
-                "d-char32-t* to int math failing when it shouldn't");
-
-        if (found == kEndOfLine)
-        {
-            // (c)
-            eolRef = false;
-            // cast always okay -- see buffer size (passim)
-            return static_cast<unsigned int>(endP + 1 - startP) * sizeof(char32_t);
-        }
-        else if (found == kEndOfBuffer)
-        {
-            if (m_bufferFilePos >= getMaximumBufferFilePos())
-            {
-                // (d)
-                eolRef = true;
-                return static_cast<unsigned int>(endP - startP) * sizeof(char32_t);
-            }
-            else if (startOfLineUcs4 != 0)
-            {
-                moveBuffer(startOfLine);
-                // probably 0; at end of file, probably not
-                startOfLineUcs4 =
-                        static_cast<unsigned int>(startOfLine - m_bufferFilePos) /
-                                sizeof(char32_t);
-            }
-            else
-            {
-                // (b)
-                throw FileOfLinesException("line too long", m_path, startOfLine);
-            }
-        }
-        else // if (found == kControlCharacters)
-        {
-            // (a)
-            throw FileOfLinesException("in FileOfLinesCore::getLineLengthUcs4, scanning UCS-4 found control characters",
                                        m_path, startOfLine);
         }
     }
@@ -784,18 +607,19 @@ bool FileOfLinesCore::isRangeUnicodeUtf8
 //===========================================================================
 // private
 
-bool FileOfLinesCore::isRangeUnicodeUtf16
+template<typename C>
+bool FileOfLinesCore::isRangeUnicode
 (
     unsigned int        startIndex,     // I - index in buffer to scan from
     unsigned int        endIndex,       // I - index in buffer to scan to
-    unsigned int*       length          // O - length in code points of string
+    unsigned int*       length          // O - string length in code points (opt.)
 )
 {
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
 
-    enforce((startIndex & 1) == 0, "isRange: UTF-16 strings must start on 2-byte boundaries.");
-    enforce((endIndex & 1) == 0, "isRange: UTF-16 strings must end on 2-byte boundaries.");
+    enforce((startIndex & (sizeof(C) - 1)) == 0, "isRange: multi-byte strings must start on even-value boundaries.");
+    enforce((endIndex & (sizeof(C) - 1)) == 0, "isRange: multi-byte strings must end on even-value boundaries.");
 
     unsigned int dummyLength = 0;
     unsigned int& lengthRef = length == nullptr ? dummyLength : *length;
@@ -805,45 +629,8 @@ bool FileOfLinesCore::isRangeUnicodeUtf16
         lengthRef = 0;
         return true;
     }
-    const char16_t* asUtf16 = reinterpret_cast<char16_t*>(m_buffer + startIndex);
-    auto l = unicodeLength(asUtf16, (endIndex - startIndex) / sizeof(char16_t));
-    if (l == 0)
-    {
-        return false;
-    }
-    else
-    {
-        lengthRef = l;
-        return true;
-    }
-}
-
-//===========================================================================
-// private
-
-bool FileOfLinesCore::isRangeUnicodeUcs4
-(
-    unsigned int        startIndex,     // I - index in buffer to scan from
-    unsigned int        endIndex,       // I - index in buffer to scan to
-    unsigned int*       length          // O - length in code points of string
-)
-{
-    enforce(isFileOpen(), "The file must have been opened by now.");
-    enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
-
-    enforce((startIndex & 3) == 0, "isRange: UCS-4 strings must start on 4-byte boundaries.");
-    enforce((endIndex & 3) == 0, "isRange: UCS-4 strings must end on 4-byte boundaries.");
-
-    unsigned int dummyLength = 0;
-    unsigned int& lengthRef = length == nullptr ? dummyLength : *length;
-
-    if (startIndex == endIndex)
-    {
-        lengthRef = 0;
-        return true;
-    }
-    const char32_t* asUcs4 = reinterpret_cast<char32_t*>(m_buffer + startIndex);
-    auto l = unicodeLength(asUcs4, (endIndex - startIndex) / sizeof(char32_t));
+    const C* asC = reinterpret_cast<C*>(m_buffer + startIndex);
+    auto l = unicodeLength(asC, (endIndex - startIndex) / sizeof(C));
     if (l == 0)
     {
         return false;
@@ -879,7 +666,8 @@ string FileOfLinesCore::toStringUtf8
 //===========================================================================
 // private
 
-string FileOfLinesCore::toStringUtf16
+template<typename C>
+string FileOfLinesCore::toStringFromWide
 (
     unsigned int        startIndex,     // I - index in buffer to retrieve from
     unsigned int        endIndex        // I - index in buffer to retrieve to
@@ -888,13 +676,13 @@ string FileOfLinesCore::toStringUtf16
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
 
-    enforce((startIndex & 1) == 0, "toString: UTF-16 strings must start on 2-byte boundaries.");
-    enforce((endIndex & 1) == 0, "toString: UTF-16 strings must end on 2-byte boundaries.");
+    enforce((startIndex & (sizeof(C) - 1)) == 0, "toString: multi-byte strings must start on even-value boundaries.");
+    enforce((endIndex & (sizeof(C) - 1)) == 0, "toString: multi-byte strings must end on even-value boundaries.");
 
-    char16_t* startPoint = reinterpret_cast<char16_t*>(m_buffer + startIndex);
-    char16_t* endPoint = reinterpret_cast<char16_t*>(m_buffer + endIndex);
-    char16_t saveEnd = *endPoint;
-    *endPoint = u'\0';
+    C* startPoint = reinterpret_cast<C*>(m_buffer + startIndex);
+    C* endPoint = reinterpret_cast<C*>(m_buffer + endIndex);
+    C saveEnd = *endPoint;
+    *endPoint = static_cast<C>(0);
     string r(toUtf8(startPoint));
     *endPoint = saveEnd;
     
@@ -904,32 +692,8 @@ string FileOfLinesCore::toStringUtf16
 //===========================================================================
 // private
 
-string FileOfLinesCore::toStringUcs4
-(
-    unsigned int        startIndex,     // I - index in buffer to retrieve from
-    unsigned int        endIndex        // I - index in buffer to retrieve to
-)
-{
-    enforce(isFileOpen(), "The file must have been opened by now.");
-    enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
-
-    enforce((startIndex & 3) == 0, "toString: UCS-4 strings must start on 4-byte boundaries.");
-    enforce((endIndex & 3) == 0, "toString: UCS-4 strings must end on 4-byte boundaries.");
-
-    char32_t* startPoint = reinterpret_cast<char32_t*>(m_buffer + startIndex);
-    char32_t* endPoint = reinterpret_cast<char32_t*>(m_buffer + endIndex);
-    char32_t saveEnd = *endPoint;
-    *endPoint = u'\0';
-    string r(toUtf8(startPoint));
-    *endPoint = saveEnd;
-
-    return r;
-}
-
-//===========================================================================
-// private
-
-unsigned int FileOfLinesCore::getNextOffsetUtf8
+template<typename C>
+unsigned int FileOfLinesCore::getNextOffset
 (
     unsigned int        endOfLastIndex  // I - index of end-of-last-string
 )
@@ -937,58 +701,12 @@ unsigned int FileOfLinesCore::getNextOffsetUtf8
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
 
-    unsigned int nextStart = endOfLastIndex + 1;
-    char* charPoint = reinterpret_cast<char*>(m_buffer + nextStart);
+    unsigned int nextStart = endOfLastIndex + sizeof(C);
+    C* charPoint = reinterpret_cast<C*>(m_buffer + nextStart);
 
     while (nextStart < bufferSize && isEndOfLine(*charPoint))
     {
-        ++nextStart;
-        ++charPoint;
-    }
-
-    return nextStart;
-}
-
-//===========================================================================
-// private
-
-unsigned int FileOfLinesCore::getNextOffsetUtf16
-(
-    unsigned int        endOfLastIndex  // I - index of end-of-last-string
-)
-{
-    enforce(isFileOpen(), "The file must have been opened by now.");
-    enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
-
-    unsigned int nextStart = endOfLastIndex + sizeof(char16_t);
-    char16_t* charPoint = reinterpret_cast<char16_t*>(m_buffer + nextStart);
-
-    while (nextStart < bufferSize && isEndOfLine(*charPoint))
-    {
-        nextStart += sizeof(char16_t);
-        ++charPoint;
-    }
-
-    return nextStart;
-}
-
-//===========================================================================
-// private
-
-unsigned int FileOfLinesCore::getNextOffsetUcs4
-(
-    unsigned int        endOfLastIndex  // I - index of end-of-last-string
-)
-{
-    enforce(isFileOpen(), "The file must have been opened by now.");
-    enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
-
-    unsigned int nextStart = endOfLastIndex + sizeof(char32_t);
-    char32_t* charPoint = reinterpret_cast<char32_t*>(m_buffer + nextStart);
-
-    while (nextStart < bufferSize && isEndOfLine(*charPoint))
-    {
-        nextStart += sizeof(char32_t);
+        nextStart += sizeof(C);
         ++charPoint;
     }
 

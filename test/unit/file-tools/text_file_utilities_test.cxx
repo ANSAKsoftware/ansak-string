@@ -294,12 +294,11 @@ TEST_F(FileIsTextFixture, readThrows)
 TEST_F(FileIsTextFixture, textIsTested)
 {
     setFileIsGood();
-    char testText[] = "This is twenty chars";
-    auto allButNull = sizeof(testText) - 1;
-    EXPECT_CALL(PathMock(), size(_)).WillOnce(Return(allButNull));
+    string testText("This is twenty chars");
+    EXPECT_CALL(PathMock(), size(_)).WillOnce(Return(testText.size()));
     EXPECT_CALL(HandleMock(), mockRead(_,_,_)).
-        WillOnce(DoAll(SetArrayArgument<1>(begin(testText), begin(testText) + allButNull),
-                       Return(allButNull)));
+        WillOnce(DoAll(SetArrayArgument<1>(testText.begin(), testText.end()),
+                       Return(testText.size())));
 
     EXPECT_TRUE(looksLikeText(validFile));
 }

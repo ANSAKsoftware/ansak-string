@@ -53,13 +53,18 @@ public:
     FileHandleMock()   { m_currentMock = this; }
     ~FileHandleMock()  { m_currentMock = nullptr; }
 
+    MOCK_METHOD1(mockSize, uint64_t(FileHandle*));
     MOCK_METHOD3(mockRead, size_t(FileHandle*, char*, size_t));
     MOCK_METHOD1(mockClose, void(FileHandle*));
     MOCK_METHOD2(mockSeek, void(FileHandle*, off_t));
 
+    bool shouldFailNextOpen();
+    void setFailNextOpen() { m_failNextOpen = true; };
+
 private:
 
     static FileHandleMock* m_currentMock;
+    bool m_failNextOpen = false;
 };
 
 }
