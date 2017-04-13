@@ -182,8 +182,7 @@ private:
 
     std::string getLine
     (
-        unsigned long long  start,              // I - start of this string
-        unsigned long long  finish = nowhere    // I - start of next string
+        unsigned long long  start       // I - offset in file for start of this string
     );
 
     //=======================================================================
@@ -231,9 +230,9 @@ private:
     );
 
     //=======================================================================
-    // isRangeUnicodeUtf8, isRangeUnicodeUtf16, isRangeUnicodeUcs4 -- From a
-    // range of non-control characters, determine if a whole line is valid
-    // Unicode and determine its length.
+    // isRangeUnicodeUtf8, isRangeUnicode -- From a range of non-control
+    // characters, determine if a whole line is valid Unicode and determine its
+    // length.
     //
     // Returns true if a line (non-control chars followed by a CR, LF or FF) of
     // text is Unicode; false otherwise.
@@ -254,8 +253,8 @@ private:
     );
 
     //=======================================================================
-    // toStringUtf8, toStringUtf16, toStringUcs4 -- converts a range of
-    // character-buffer data to a std::string of UTF-8.
+    // toStringUtf8, toStringFromWide -- converts a range of character-buffer
+    // data to a std::string of UTF-8.
     //
     // Returns the string
 
@@ -273,9 +272,8 @@ private:
     );
 
     //=======================================================================
-    // getNextOffsetUtf8, getNextOffsetUtf16, getNextOffsetUcs4 -- starting from
-    // the end of the last string, find the (probable) beginnning of the next
-    // string.
+    // getNextOffset -- starting from the end of the last string, find the
+    // (probable) beginnning of the next string.
     //
     // In CR-LF files where the string happens to end one "character" before the
     // end of buffer, these routines' approach may result in detection of
@@ -285,21 +283,6 @@ private:
 
     template<typename C>
     unsigned int getNextOffset
-    (
-        unsigned int        endOfLastIndex  // I - index of end-of-last-string
-    );
-
-    unsigned int getNextOffsetUtf8
-    (
-        unsigned int        endOfLastIndex  // I - index of end-of-last-string
-    );
-
-    unsigned int getNextOffsetUtf16
-    (
-        unsigned int        endOfLastIndex  // I - index of end-of-last-string
-    );
-
-    unsigned int getNextOffsetUcs4
     (
         unsigned int        endOfLastIndex  // I - index of end-of-last-string
     );

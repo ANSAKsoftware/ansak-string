@@ -88,7 +88,7 @@ enum FoundWhatEnum {
 template<typename C>
 bool isEndOfLine(C c)
 {
-    return (c == ansak::file::LF && c == ansak::file::FF && c == ansak::file::CR);
+    return (c == ansak::file::LF || c == ansak::file::FF || c == ansak::file::CR);
 }
 
 //===========================================================================
@@ -210,7 +210,7 @@ string FileOfLinesCore::get
         m_lineStartsSize = m_lineStarts.size();
         if (nLine + 1 < m_lineStarts.size())
         {
-            string val = getLine(m_lineStarts[nLine], m_lineStarts[nLine + 1]);
+            string val = getLine(m_lineStarts[nLine]);
             eofRef = false;
             m_lastLineRetrieved = val;
             return val;
@@ -252,7 +252,8 @@ void FileOfLinesCore::classifyFile()
     default:
     case ansak::file::TextType::kLocalText:
         {
-            throw FileOfLinesException("in FileOfLinesCore::classifyFile, file isn't entirely Unicode, contains local text", m_path);
+            throw FileOfLinesException("in FileOfLinesCore::classifyFile, file isn't "
+                    "entirely Unicode, contains local text", m_path);
         }
         break;
 
@@ -327,8 +328,7 @@ unsigned int FileOfLinesCore::getDataBounds()
 
 string FileOfLinesCore::getLine
 (
-    unsigned long long  start,      // I - start of this string
-    unsigned long long              // I - start of next string (def nowhere)
+    unsigned long long  start       // I - offset in file for start of this string
 )
 {
     enforce(isFileOpen(), "The file must have been opened by now.");
@@ -355,8 +355,9 @@ string FileOfLinesCore::getLine
     unsigned int lineEndIndex = lineStartIndex + lengthInBytes;
     if (!(this->*m_isUnicodeFunc)(lineStartIndex, lineEndIndex, nullptr))
     {
-        throw FileOfLinesException("FileOfLinesCore::getLine discovered invalid-as-unicode characters in file",
-                                   m_path, start);
+        throw FileOfLinesException(
+                "FileOfLinesCore::getLine discovered invalid-as-unicode characters in file",
+                m_path, start);
     }
 
     return (this->*m_toStringFunc)(lineStartIndex, lineEndIndex);
@@ -701,13 +702,13 @@ unsigned int FileOfLinesCore::getNextOffset
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
 
+    C* thisPoint = reinterpret_cast<C*>(m_buffer + endOfLastIndex);
     unsigned int nextStart = endOfLastIndex + sizeof(C);
-    C* charPoint = reinterpret_cast<C*>(m_buffer + nextStart);
-
-    while (nextStart < bufferSize && isEndOfLine(*charPoint))
+    if (nextStart < bufferSize &&
+            ((thisPoint[0] == ansak::file::CR && thisPoint[1] == ansak::file::LF) ||
+             (thisPoint[0] == ansak::file::LF && thisPoint[1] == ansak::file::CR)))
     {
         nextStart += sizeof(C);
-        ++charPoint;
     }
 
     return nextStart;
