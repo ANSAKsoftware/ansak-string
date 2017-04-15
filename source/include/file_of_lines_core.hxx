@@ -61,6 +61,9 @@ class FileOfLinesCore {
 
     static const int maximumLineLength = 1024;
     static const unsigned int bufferSize = 7168u;   // must exceed 1K regardless of encoding
+    static const unsigned int scanLengthForTwoCharEOL =
+                              bufferSize - 512;     // parsing two-char EOL close to end of
+                                                    // buffer is tricky; this is cheaper
     static const unsigned long long nowhere = ~0ULL;
 
 public:
@@ -114,7 +117,7 @@ public:
     );
 
     //=======================================================================
-    // Has teh end of file been reached?
+    // Has the end of file been reached?
     //
     // Returns true if it has, false otherwise.
 
@@ -131,26 +134,27 @@ private:
 
     // type used for scan-for-line, is-range-unicode and to-string functions --
     // 3 strategies for 3 character widths
-    typedef unsigned int (FileOfLinesCore::*GetLineLengthFunc)
+    using GetLineLengthFunc = unsigned int (FileOfLinesCore::*)
     (
         unsigned long long startOffset,
         bool* atEof
     );
-    typedef bool (FileOfLinesCore::*IsRangeUnicodeFunc)
+    using IsRangeUnicodeFunc = bool (FileOfLinesCore::*)
     (
         unsigned int startIndex,
         unsigned int endIndex,
         unsigned int* length
     );
-    typedef std::string (FileOfLinesCore::*ToStringFunc)
+    using ToStringFunc = std::string (FileOfLinesCore::*)
     (
         unsigned int startIndex,
         unsigned int endIndex
     );
-    typedef unsigned int (FileOfLinesCore::*GetNextOffsetFunc)
+    using GetNextOffsetFunc = unsigned int (FileOfLinesCore::*)
     (
         unsigned int endIndex
     );
+    using EOLChecker = bool (FileOfLinesCore::*)();
 
     //=======================================================================
     // classifyFile -- Utility function called from within open()
@@ -200,7 +204,7 @@ private:
 
     void moveBuffer
     (
-        unsigned long long  newPosition // I - the offset to move the buffer to
+        unsigned long long  newPosition     // I - the offset to move the buffer to
     );
 
     //=======================================================================
@@ -288,6 +292,16 @@ private:
     );
 
     //=======================================================================
+    // usingTwoCharEOL -- scans the beginning of the file to see if end-of-lines
+    // are marked as single chars (CR or LF) or as pairs (CR-LF or LF-CR); takes
+    // note of the first element in the first pair found.
+    //
+    // Returns true if two-char EOL is found; false otherwise
+
+    template<typename C>
+    bool usingTwoCharEOL();
+
+    //=======================================================================
     // coerceEndianness -- For UTF-16 and UCS-4, when the endian-ness of the
     // file is different than the endian-ness of the platform, reverse byte
     // order to match. (Does not handle BE-bytes / LE-words)
@@ -310,11 +324,13 @@ private:
     IsRangeUnicodeFunc          m_isUnicodeFunc;    // encoding-isUnicode
     ToStringFunc                m_toStringFunc;     // encoding-toString
     GetNextOffsetFunc           m_getNextOffsetFunc;// encoding-jump-line-breaks
+    EOLChecker                  m_classifyEOLFunc;  // encoding-specific 2-char check
     std::mutex                  m_oneUser;          // single-user access here.
     
     std::deque<unsigned long long>
                                 m_lineStarts;       // stored start-of-line positions
     unsigned long long          m_nextScanStart;    // where to scan from next
+    bool                        m_fileUses2CharEOL; // handle DOS/Amiga encoding
     bool                        m_foundEndOfFile;   // has the end been found
 
     unsigned long long          m_bufferFilePos;    // position of snapshot

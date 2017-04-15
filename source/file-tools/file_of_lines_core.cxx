@@ -92,6 +92,18 @@ bool isEndOfLine(C c)
 }
 
 //===========================================================================
+// isCRorLF -- regardless of width, identify character as a potential two-part
+// end-of-line component.
+//
+// Returns true for LF, CR; false otherwise
+
+template<typename C>
+bool isCRorLF(C c)
+{
+    return (c == ansak::file::LF || c == ansak::file::CR);
+}
+
+//===========================================================================
 // scanInputBuffer -- regardless of width, identify character content in a
 // previously unknown part of the file.
 //
@@ -136,9 +148,11 @@ FileOfLinesCore::FileOfLinesCore
     m_isUnicodeFunc(nullptr),
     m_toStringFunc(nullptr),
     m_getNextOffsetFunc(nullptr),
+    m_classifyEOLFunc(nullptr),
     m_oneUser(),
     m_lineStarts(),
     m_nextScanStart(FileOfLinesCore::nowhere),
+    m_fileUses2CharEOL(false),
     m_foundEndOfFile(false),
     m_bufferFilePos(FileOfLinesCore::nowhere),
     m_bufferContentLength(0)
@@ -182,6 +196,7 @@ void FileOfLinesCore::open()
 
         m_nextScanStart = getDataBounds();
         moveBuffer(m_nextScanStart);
+        m_fileUses2CharEOL = (this->*m_classifyEOLFunc)();
     }
 }
 
@@ -262,6 +277,7 @@ void FileOfLinesCore::classifyFile()
         m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicodeUtf8;
         m_toStringFunc = &FileOfLinesCore::toStringUtf8;
         m_getNextOffsetFunc = &FileOfLinesCore::getNextOffset<char>;
+        m_classifyEOLFunc = &FileOfLinesCore::usingTwoCharEOL<char>;
         break;
 
     case ansak::file::TextType::kUtf16LE:
@@ -270,6 +286,7 @@ void FileOfLinesCore::classifyFile()
         m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicode<char16_t>;
         m_toStringFunc = &FileOfLinesCore::toStringFromWide<char16_t>;
         m_getNextOffsetFunc = &FileOfLinesCore::getNextOffset<char16_t>;
+        m_classifyEOLFunc = &FileOfLinesCore::usingTwoCharEOL<char16_t>;
         break;
 
     case ansak::file::TextType::kUcs4LE:
@@ -278,6 +295,7 @@ void FileOfLinesCore::classifyFile()
         m_isUnicodeFunc = &FileOfLinesCore::isRangeUnicode<char32_t>;
         m_toStringFunc = &FileOfLinesCore::toStringFromWide<char32_t>;
         m_getNextOffsetFunc = &FileOfLinesCore::getNextOffset<char32_t>;
+        m_classifyEOLFunc = &FileOfLinesCore::usingTwoCharEOL<char32_t>;
         break;
     }
 }
@@ -370,10 +388,6 @@ bool FileOfLinesCore::findNextLine()
 {
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(!m_foundEndOfFile, "End of file has been found, no further findNextLine is needed.");
-    if (m_foundEndOfFile)
-    {
-        return false;
-    }
 
     lock_guard<mutex> guard(m_oneUser);
 
@@ -413,13 +427,12 @@ bool FileOfLinesCore::findNextLine()
 
 void FileOfLinesCore::moveBuffer
 (
-    unsigned long long  newPosition // I - the offset to move the buffer to
+    unsigned long long  newPosition     // I - the offset to move the buffer to
 )
 {
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(newPosition != nowhere, "moveBuffer should be going somewhere, not nowhere.");
-    enforce(newPosition != m_bufferFilePos,
-            "The new position should be different.");
+    enforce(newPosition != m_bufferFilePos, "The new position should be different.");
     enforce(m_bufferFilePos == nowhere || m_fileSize > bufferSize,
             "moveBuffer should only be called once when the file is smaller than the "
             "buffer.");
@@ -480,7 +493,7 @@ void FileOfLinesCore::moveBuffer
 }
 
 //===========================================================================
-// algorithm for getLineLength* template:
+// algorithm for getLineLength template:
 //
 // search from here... (a)find control characters? give up; throw exception (file isn't text)
 //                 ... (b)find more than bufferSize character data? give up;
@@ -501,10 +514,12 @@ unsigned int FileOfLinesCore::getLineLength
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
 
-    bool eolDummy;
-    bool& eolRef = atEndOfFile == nullptr ? eolDummy : *atEndOfFile;
+    bool eofDummy;
+    bool& eofRef = atEndOfFile == nullptr ? eofDummy : *atEndOfFile;
 
-    if (startOfLine < m_bufferFilePos)
+    if (startOfLine < m_bufferFilePos ||
+        (m_fileUses2CharEOL && startOfLine < getMaximumBufferFilePos() &&
+                               startOfLine > m_bufferFilePos + scanLengthForTwoCharEOL))
     {
         moveBuffer(startOfLine);
     }
@@ -530,7 +545,7 @@ unsigned int FileOfLinesCore::getLineLength
         if (found == kEndOfLine)
         {
             // (c)
-            eolRef = false;
+            eofRef = false;
             // cast always okay -- see buffer size (passim)
             return static_cast<unsigned int>(endP - startP + 1) * sizeof(C);
         }
@@ -539,7 +554,7 @@ unsigned int FileOfLinesCore::getLineLength
             if (m_bufferFilePos >= getMaximumBufferFilePos())
             {
                 // (d)
-                eolRef = true;
+                eofRef = true;
                 return static_cast<unsigned int>(endP - startP) * sizeof(C);
             }
             else if (startOfLineInBuffer != 0)
@@ -553,14 +568,16 @@ unsigned int FileOfLinesCore::getLineLength
             else
             {
                 // (b)
-                throw FileOfLinesException("line too long", m_path, startOfLine);
+                throw FileOfLinesException("in FileOfLinesCore::getLineLength, line too long",
+                                        m_path, startOfLine);
             }
         }
         else // if (found == kControlCharacters)
         {
             // (a)
-            throw FileOfLinesException("in FileOfLinesCore::getLineLengthUtf8, scanning UTF-8 found control characters",
-                                       m_path, startOfLine);
+            throw FileOfLinesException(
+                    "in FileOfLinesCore::getLineLength, scanning text found control characters",
+                    m_path, startOfLine);
         }
     }
 }
@@ -619,8 +636,8 @@ bool FileOfLinesCore::isRangeUnicode
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
 
-    enforce((startIndex & (sizeof(C) - 1)) == 0, "isRange: multi-byte strings must start on even-value boundaries.");
-    enforce((endIndex & (sizeof(C) - 1)) == 0, "isRange: multi-byte strings must end on even-value boundaries.");
+    enforce((startIndex & (sizeof(C) - 1)) == 0, "isRangeUnicode: multi-byte strings must start on even value-boundaries.");
+    enforce((endIndex & (sizeof(C) - 1)) == 0, "isRangeUnicode: multi-byte strings must end on even value-boundaries.");
 
     unsigned int dummyLength = 0;
     unsigned int& lengthRef = length == nullptr ? dummyLength : *length;
@@ -677,8 +694,8 @@ string FileOfLinesCore::toStringFromWide
     enforce(isFileOpen(), "The file must have been opened by now.");
     enforce(m_bufferFilePos != nowhere, "Seeking must have happened by now.");
 
-    enforce((startIndex & (sizeof(C) - 1)) == 0, "toString: multi-byte strings must start on even-value boundaries.");
-    enforce((endIndex & (sizeof(C) - 1)) == 0, "toString: multi-byte strings must end on even-value boundaries.");
+    enforce((startIndex & (sizeof(C) - 1)) == 0, "toStringFromWide: multi-byte strings must start on even-value boundaries.");
+    enforce((endIndex & (sizeof(C) - 1)) == 0, "toStringFromWide: multi-byte strings must end on even-value boundaries.");
 
     C* startPoint = reinterpret_cast<C*>(m_buffer + startIndex);
     C* endPoint = reinterpret_cast<C*>(m_buffer + endIndex);
@@ -712,6 +729,29 @@ unsigned int FileOfLinesCore::getNextOffset
     }
 
     return nextStart;
+}
+
+//===========================================================================
+// private
+
+template<typename C>
+bool FileOfLinesCore::usingTwoCharEOL()
+{
+    const C* pStart = reinterpret_cast<const C*>(&m_buffer[0]);
+    const C* pEnd = reinterpret_cast<const C*>(&m_buffer[m_bufferContentLength]);
+
+    for (auto c = pStart; c < pEnd; ++c)
+    {
+        if (isEndOfLine(*c))
+        {
+            if (c + 1 < pEnd && ((c[0] == ansak::file::CR && c[1] == ansak::file::LF) ||
+                                 (c[0] == ansak::file::LF && c[1] == ansak::file::CR)))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 //===========================================================================
