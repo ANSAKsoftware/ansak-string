@@ -39,7 +39,8 @@ set( _target ansakFileTools )
 set( _interface ../../interface )
 set( _privIncludes ../include )
 
-set( _targetSrc file_of_lines_core.cxx
+set( _targetSrc file_of_lines.cxx
+                file_of_lines_core.cxx
                 file_of_lines_exception.cxx
                 temp_directory.cxx
                 text_file_utilities.cxx

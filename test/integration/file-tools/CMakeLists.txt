@@ -38,8 +38,9 @@ cmake_minimum_required(VERSION 3.1)
 set( _target integrate-ansakFileTools )
 set( _targetAsTest ansakFileToolsIntegrationTest )
 set( _targetPrivateLibs ansakFileTools ansakFile ansakPrimitives ansakString ansakOSLayer )
-set( _targetSource itext_file_utilities.cxx
+set( _targetSource ifile_of_lines.cxx
                    ifile_of_lines_core.cxx
+                   itext_file_utilities.cxx
    )
 
 add_executable( ${_target} ${_targetSource} )
