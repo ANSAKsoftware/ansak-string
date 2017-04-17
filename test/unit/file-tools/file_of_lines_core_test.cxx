@@ -35,7 +35,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// file_of_lines_exception_test.cxx -- unit test for file-of-lines exceptions
+// file_of_lines_core_test.cxx -- unit test for file-of-lines core
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -104,7 +104,7 @@ TEST_F(FileOfLinesCoreFixture, openZeroLength)
     auto path = FileSystemPath(problemFile);
     FileOfLinesCore f(path);
     f.open();
-    EXPECT_FALSE(FileOfLinesCore(path).isFileOpen());
+    EXPECT_FALSE(f.isFileOpen());
 }
 
 TEST_F(FileOfLinesCoreFixture, openCantClassify)
@@ -413,6 +413,7 @@ TEST_F(FileOfLinesCoreFixture, lastLineBlank)
     EXPECT_STREQ("There certainly must be one.", f.get(3).c_str());
     EXPECT_TRUE(f.get(4).empty());
 }
+
 TEST_F(FileOfLinesCoreFixture, innerLineBlank)
 {
     string poem("I've never met a purple cow\n"
@@ -443,4 +444,101 @@ TEST_F(FileOfLinesCoreFixture, innerLineBlank)
     EXPECT_STREQ("But judging from the milk we get", f.get(2).c_str());
     EXPECT_TRUE(f.get(3).empty());
     EXPECT_STREQ("There certainly must be one.", f.get(4).c_str());
+}
+
+TEST_F(FileOfLinesCoreFixture, fetchBackward)
+{
+    string poem("I've never met a purple cow\x0a"
+        "I never hope to meet one\x0a"
+        "But judging from the milk we get\x0a"
+        "There certainly must be one.");
+    EXPECT_CALL(PathMock(), size(_)).WillRepeatedly(Return(poem.size()));
+    EXPECT_CALL(PathMock(), exists(_)).WillOnce(Return(true));
+    EXPECT_CALL(PathMock(), isFile(_)).WillOnce(Return(true));
+    EXPECT_CALL(HandleMock(), mockRead(_, _, _)).WillOnce(DoAll(
+        SetArrayArgument<1>(poem.begin(), poem.end()),
+        Return(poem.size()))).
+        WillOnce(DoAll(
+            SetArrayArgument<1>(poem.begin(), poem.begin() + 3),
+            Return(3))).
+        WillOnce(DoAll(
+            SetArrayArgument<1>(poem.begin(), poem.end()),
+            Return(poem.size())));
+    EXPECT_CALL(HandleMock(), mockSeek(_, _)).WillOnce(Return());
+    EXPECT_CALL(HandleMock(), mockClose(_)).WillOnce(Return());
+
+    auto path = FileSystemPath(problemFile);
+    FileOfLinesCore f(path);
+    f.open();
+
+    EXPECT_STREQ("There certainly must be one.", f.get(3).c_str());
+    EXPECT_STREQ("But judging from the milk we get", f.get(2).c_str());
+    EXPECT_STREQ("I never hope to meet one", f.get(1).c_str());
+    EXPECT_STREQ("I've never met a purple cow", f.get(0).c_str());
+}
+
+TEST_F(FileOfLinesCoreFixture, fourLinesUtf16)
+{
+    char poem[] = { '\xff', '\xfe',
+    'I', 0, '\'', 0, 'v', 0, 'e', 0, ' ', 0, 'n', 0, 'e', 0, 'v', 0, 'e', 0, 'r', 0, ' ', 0, 'm', 0, 'e', 0, 't', 0, ' ', 0,
+    'a', 0, ' ', 0, 'p', 0, 'u', 0, 'r', 0, 'p', 0, 'l', 0, 'e', 0, ' ', 0, 'c', 0, 'o', 0, 'w', 0, '\x0a', 0, 'I', 0,
+    ' ', 0, 'n', 0, 'e', 0, 'v', 0, 'e', 0, 'r', 0, ' ', 0, 'h', 0, 'o', 0, 'p', 0, 'e', 0, ' ', 0, 't', 0, 'o', 0, ' ', 0,
+    'm', 0, 'e', 0, 'e', 0, 't', 0, ' ', 0, 'o', 0, 'n', 0, 'e', 0, '\x0a', 0, 'B', 0, 'u', 0, 't', 0, ' ', 0, 'j', 0,
+    'u', 0, 'd', 0, 'g', 0, 'i', 0, 'n', 0, 'g', 0, ' ', 0, 'f', 0, 'r', 0, 'o', 0, 'm', 0, ' ', 0, 't', 0, 'h', 0, 'e', 0,
+    ' ', 0, 'm', 0, 'i', 0, 'l', 0, 'k', 0, ' ', 0, 'w', 0, 'e', 0, ' ', 0, 'g', 0, 'e', 0, 't', 0, '\x0a', 0, 'T', 0,
+    'h', 0, 'e', 0, 'r', 0, 'e', 0, ' ', 0, 'c', 0, 'e', 0, 'r', 0, 't', 0, 'a', 0, 'i', 0, 'n', 0, 'l', 0, 'y', 0, ' ', 0,
+    'm', 0, 'u', 0, 's', 0, 't', 0, ' ', 0, 'b', 0, 'e', 0, ' ', 0, 'o', 0, 'n', 0, 'e', 0, '.', 0 };
+    EXPECT_CALL(PathMock(), size(_)).WillRepeatedly(Return(sizeof(poem)));
+    EXPECT_CALL(PathMock(), exists(_)).WillOnce(Return(true));
+    EXPECT_CALL(PathMock(), isFile(_)).WillOnce(Return(true));
+    EXPECT_CALL(HandleMock(), mockRead(_, _, _)).WillOnce(DoAll(
+        SetArrayArgument<1>(begin(poem), end(poem)),
+        Return(sizeof(poem)))).
+        WillRepeatedly(DoAll(
+            SetArrayArgument<1>(begin(poem), end(poem)),
+            Return(sizeof(poem))));
+    EXPECT_CALL(HandleMock(), mockSeek(_, _)).WillOnce(Return());
+    EXPECT_CALL(HandleMock(), mockClose(_)).WillOnce(Return());
+
+    auto path = FileSystemPath(problemFile);
+    FileOfLinesCore f(path);
+    f.open();
+
+    EXPECT_STREQ("I've never met a purple cow", f.get(0).c_str());
+    EXPECT_STREQ("I never hope to meet one", f.get(1).c_str());
+    EXPECT_STREQ("But judging from the milk we get", f.get(2).c_str());
+    EXPECT_STREQ("There certainly must be one.", f.get(3).c_str());
+}
+
+TEST_F(FileOfLinesCoreFixture, fourLinesUcs4)
+{
+    char poem[] = { '\xff', '\xfe', 0, 0,
+    'I', 0,0,0, '\'', 0,0,0, 'v', 0,0,0, 'e', 0,0,0, ' ', 0,0,0, 'n', 0,0,0, 'e', 0,0,0, 'v', 0,0,0, 'e', 0,0,0, 'r', 0,0,0, ' ', 0,0,0, 'm', 0,0,0, 'e', 0,0,0, 't', 0,0,0, ' ', 0,0,0,
+    'a', 0,0,0, ' ', 0,0,0, 'p', 0,0,0, 'u', 0,0,0, 'r', 0,0,0, 'p', 0,0,0, 'l', 0,0,0, 'e', 0,0,0, ' ', 0,0,0, 'c', 0,0,0, 'o', 0,0,0, 'w', 0,0,0, '\x0a', 0,0,0, 'I', 0,0,0,
+    ' ', 0,0,0, 'n', 0,0,0, 'e', 0,0,0, 'v', 0,0,0, 'e', 0,0,0, 'r', 0,0,0, ' ', 0,0,0, 'h', 0,0,0, 'o', 0,0,0, 'p', 0,0,0, 'e', 0,0,0, ' ', 0,0,0, 't', 0,0,0, 'o', 0,0,0, ' ', 0,0,0,
+    'm', 0,0,0, 'e', 0,0,0, 'e', 0,0,0, 't', 0,0,0, ' ', 0,0,0, 'o', 0,0,0, 'n', 0,0,0, 'e', 0,0,0, '\x0a', 0,0,0, 'B', 0,0,0, 'u', 0,0,0, 't', 0,0,0, ' ', 0,0,0, 'j', 0,0,0,
+    'u', 0,0,0, 'd', 0,0,0, 'g', 0,0,0, 'i', 0,0,0, 'n', 0,0,0, 'g', 0,0,0, ' ', 0,0,0, 'f', 0,0,0, 'r', 0,0,0, 'o', 0,0,0, 'm', 0,0,0, ' ', 0,0,0, 't', 0,0,0, 'h', 0,0,0, 'e', 0,0,0,
+    ' ', 0,0,0, 'm', 0,0,0, 'i', 0,0,0, 'l', 0,0,0, 'k', 0,0,0, ' ', 0,0,0, 'w', 0,0,0, 'e', 0,0,0, ' ', 0,0,0, 'g', 0,0,0, 'e', 0,0,0, 't', 0,0,0, '\x0a', 0,0,0, 'T', 0,0,0,
+    'h', 0,0,0, 'e', 0,0,0, 'r', 0,0,0, 'e', 0,0,0, ' ', 0,0,0, 'c', 0,0,0, 'e', 0,0,0, 'r', 0,0,0, 't', 0,0,0, 'a', 0,0,0, 'i', 0,0,0, 'n', 0,0,0, 'l', 0,0,0, 'y', 0,0,0, ' ', 0,0,0,
+    'm', 0,0,0, 'u', 0,0,0, 's', 0,0,0, 't', 0,0,0, ' ', 0,0,0, 'b', 0,0,0, 'e', 0,0,0, ' ', 0,0,0, 'o', 0,0,0, 'n', 0,0,0, 'e', 0,0,0, '.', 0,0,0 };
+    EXPECT_CALL(PathMock(), size(_)).WillRepeatedly(Return(sizeof(poem)));
+    EXPECT_CALL(PathMock(), exists(_)).WillOnce(Return(true));
+    EXPECT_CALL(PathMock(), isFile(_)).WillOnce(Return(true));
+    EXPECT_CALL(HandleMock(), mockRead(_, _, _)).WillOnce(DoAll(
+        SetArrayArgument<1>(begin(poem), end(poem)),
+        Return(sizeof(poem)))).
+        WillRepeatedly(DoAll(
+            SetArrayArgument<1>(begin(poem), end(poem)),
+            Return(sizeof(poem))));
+    EXPECT_CALL(HandleMock(), mockSeek(_, _)).WillOnce(Return());
+    EXPECT_CALL(HandleMock(), mockClose(_)).WillOnce(Return());
+
+    auto path = FileSystemPath(problemFile);
+    FileOfLinesCore f(path);
+    f.open();
+
+    EXPECT_STREQ("I've never met a purple cow", f.get(0).c_str());
+    EXPECT_STREQ("I never hope to meet one", f.get(1).c_str());
+    EXPECT_STREQ("But judging from the milk we get", f.get(2).c_str());
+    EXPECT_STREQ("There certainly must be one.", f.get(3).c_str());
 }

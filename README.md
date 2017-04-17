@@ -1,13 +1,19 @@
-ansak-string
-============
+ansak-lib
+=========
 
-Copyright 2015, Arthur N. Klassen; see LICENSE for usage guidelines (BSD 2-clause)
+Copyright 2017, Arthur N. Klassen; see LICENSE for usage guidelines (BSD 2-clause)
 
-This library started as the first piece of a larger project that has been stalled. It's a simple string library. With the release of version 2.0, I am returning to work on the larger project now, and the results will be available under the **ansak-tools** branch of this repository. String changes will be merged into the master branch and pushed down to **ansak-tools**.
+This library is the second piece of a larger project that was stalled. It started as a simple string library. With the release of version 2.0, I am returning to work on the larger project now, and the results will be available under the **ansak-lib** branch of this repository. String changes will be merged into the master branch and pushed down to **ansak-lib**.
 
-**ansak-string** is mostly about purifying input and performing conversions more simply than other available APIs. If your string (whether it's 7-bit ASCII, UTF-8, UTF-16, UCS-2 or UTF-32/UCS-4) makes it through my APIs (into 7-bit ASCII, UTF-8 etc.), then that's what it is. No more, no less. This includes filtering for publicly assigned Unicode values, currently following Unicode 8.0.
+**ansak-lib** includes **ansak-string** but expands on it, using C++11 concepts and built with a *Python-like* mentality, i.e. just make simple things straightforward and hide the details from most users. It includes:
 
-A simple pair of split and join templates, based on character types and using basic\_string for their processing are also present.
+* A simple **TimeStamp** class used to receive platform-specific time stamp data and provide it in a unified fashion using ordinary years; months 1..12; days 1..28,29,30 or 31; hours 0..23; minutes and seconds 0..59. It just stores these values can compare them. It makes no effort (yet) to do calculations with them.
+* A **ParseArgs** class that takes in an argc/argv pair and organizes them as flags (known only if present -- no associated value), settings (known only if present, include a string value) and inputs (other parameters that aren't flags or settings). The values present can be changed, added to, deleted from and a new argc/argv pair can be generated for consumption, for instance by graphical libraries that want to consume an argc/argv.
+* A **RuntimeException** class and an associated **enforce** method that throws a **RuntimeException** if some condition is not satisfied. (Also a **NullPtrException** for when a method *must* receive a pointer and did not.)
+* A **FilePath** to handle file names and file-name processing without reference to a file system. Regardless of platform, this class will handle both Windows and non-Windows paths.
+* A **FileSystemPath** for when a **FilePath** needs to refer to a real file in the system. Closely related is **FileHandle** that provides platform independent file I/O. Errors can be optionally reported through **FileHandleException** being thrown. Except as regards the file paths being manipulated, **FileSystemPath** and **FileHandle** are as platform independent as they can be.
+* A **TempDirectory** object which will create a uniquely-named directory in the platform-appropriate temporary storage area, hand out paths to locations within that directory, and then clean up and destroy the whole directory and sub tree when the object drops out of scope -- this can be prevented for testing and other purposes by using the **TempDirectory::asFileSystemPath** method with **TempDirectory::detachIt** as a parameter.
+* **FileOfLines** which will present (just as independently of platform as **FileSystemPath**) the contents of any file of unformatted text, whether UTF-8, UTF-16/UCS-2 BE or LE, UCS-4 BE or LE through const\_iterator objects that behave in most ways as though they pointed into an STL **std::vector&lt;std::string&gt;**.
 
 Commercial Support:
 -------------------
@@ -24,6 +30,8 @@ The ultimate goal of these libraries is to support a simple household expense tr
 Additional stuff:
 -----------------
 
+Regarding **ansak-string**:
+
 * unicodeLength gives number of UCS-4 codes (regardless of composite/composable points) in a string
 * split and join, like python's string and array methods
 * all-Unicode-sensitive "tolower". It can operate in "Turkic" mode if you pass in an (optional) constant C-string for a Turkic language's ISO-639 two or three character code. In this mode, I-dot and dotless-i are handled correctly for those languages.
@@ -35,3 +43,5 @@ ISO-639 codes for Turkic languages:
 * Tatar: "tt", "tat"
 * Turkish "tr", "tur"
 
+Regarding **ansak-lib**:
+* With **FileHandle**, call **FileHandle::throwErrors** early on to report all file I/O errors through throwing **FileHandleException**. This is a one-shot and cannot be reversed.

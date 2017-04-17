@@ -156,6 +156,19 @@ const string& FileOfLines::const_iterator::operator*() const
 //===========================================================================
 // public
 
+const string* FileOfLines::const_iterator::operator->() const
+{
+    auto pCore = m_iterCore.lock();
+    if (pCore.get() != nullptr)
+    {
+        dereference();
+    }
+    return &m_currentLine;
+}
+
+//===========================================================================
+// public
+
 FileOfLines::const_iterator& FileOfLines::const_iterator::operator++()
 {
     enforce(*this != const_iterator(), "Only pre-increment a non-end iterator.");
@@ -253,7 +266,7 @@ FileOfLines::const_iterator& FileOfLines::const_iterator::operator-=(int increme
     {
         m_iterCore.reset();
         m_currentLineX = 0;
-        m_currentLine.erase();
+        m_currentLine.clear();
     }
     else
     {
@@ -346,6 +359,7 @@ void FileOfLines::const_iterator::dereference() const
         if (m_currentLine.empty() && isEOF)
         {
             m_iterCore.reset();
+            m_currentLine.clear();
         }
     }
     catch (RuntimeException&)
@@ -383,7 +397,7 @@ FileOfLines::const_iterator FileOfLines::const_iterator::offsetBy(int increment)
             enforce(!moveBeforeBegin, "Once you know the file bounds, don't move back too far.");
             enforce(!moveAfterEnd, "Once you know the file bounds, don't move forward too far.");
         }
-        else if (moveBeforeBegin)
+        if (moveBeforeBegin)
         {
             other.m_iterCore.reset();
             other.m_currentLineX = 0;

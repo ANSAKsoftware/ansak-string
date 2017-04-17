@@ -146,6 +146,7 @@ public:
         const_iterator& operator=(const const_iterator& src) = default;
 
         const std::string& operator*() const;
+        const std::string* operator->() const;
 
         const_iterator& operator++();
         const_iterator& operator--();
