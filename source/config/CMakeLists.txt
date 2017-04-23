@@ -35,9 +35,15 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( string )
-add_subdirectory( primitives )
-add_subdirectory( os )
-add_subdirectory( file )
-add_subdirectory( file-tools )
-add_subdirectory( config )
+set( _target ansakConfig )
+set( _interface ../../interface )
+set( _privIncludes ../include )
+
+set( _targetSrc config_atom.cxx
+   )
+
+add_library( ${_target} STATIC ${_targetSrc} )
+if (UNIX)
+    target_compile_options( ${_target} PRIVATE -Weffc++ )
+endif()
+target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )

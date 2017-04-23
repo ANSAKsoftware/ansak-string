@@ -35,9 +35,18 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( string )
-add_subdirectory( primitives )
-add_subdirectory( os )
-add_subdirectory( file )
-add_subdirectory( file-tools )
-add_subdirectory( config )
+set( _target test-ansakConfig )
+set( _targetTest ansakConfigTest )
+set( _privIncludes ../../../source/include )
+
+set( _privLibraries ansakConfig ansakString ansakPrimitives gtest_main )
+
+set( _targetSrc config_atom_test.cxx
+   )
+
+add_executable( ${_target} ${_targetSrc} )
+target_link_libraries( ${_target} PRIVATE ${_privLibraries} )
+target_include_directories( ${_target} PRIVATE ${_privIncludes} )
+SETUP_TO_EXECUTE_GTEST( ${_target} )
+
+add_test( NAME ${_targetTest} COMMAND ${_target} )

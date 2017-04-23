@@ -193,11 +193,11 @@ TEST_F(FileOfLinesCoreFixture, isMarkedUtf8Text)
 
 TEST_F(FileOfLinesCoreFixture, isUtf16Text)
 {
-    array<char, 64> testText {'\xff', '\xfe',
+    array<char, 64> testText { {'\xff', '\xfe',
                 'H', 0, 'o', 0, 'w', 0, ' ', 0, 'l', 0, 'a',    0, 'r', 0, 'g', 0,
                 'e', 0, ' ', 0, 'i', 0, 's', 0, ' ', 0, 't',    0, 'h', 0, 'a', 0,
                 't', 0, ' ', 0, 'i', 0, 'n', 0, ' ', 0, '\xc5', 0, 'n', 0, 'g', 0,
-                's', 0, 't', 0, 'r', 0, 'o', 0, 'm', 0, 's',    0, '?', 0 };
+                's', 0, 't', 0, 'r', 0, 'o', 0, 'm', 0, 's',    0, '?', 0 } };
     EXPECT_CALL(PathMock(), size(_)).WillRepeatedly(Return(testText.size()));
     EXPECT_CALL(PathMock(), exists(_)).WillOnce(Return(true));
     EXPECT_CALL(PathMock(), isFile(_)).WillOnce(Return(true));
@@ -217,11 +217,11 @@ TEST_F(FileOfLinesCoreFixture, isUtf16Text)
 
 TEST_F(FileOfLinesCoreFixture, isUtf16RevText)
 {
-    array<char, 64> testText {'\xfe', '\xff',
+    array<char, 64> testText { {'\xfe', '\xff',
                  0, 'H', 0, 'o', 0, 'w', 0, ' ', 0, 'l', 0, 'a',    0, 'r', 0, 'g',
                  0, 'e', 0, ' ', 0, 'i', 0, 's', 0, ' ', 0, 't',    0, 'h', 0, 'a',
                  0, 't', 0, ' ', 0, 'i', 0, 'n', 0, ' ', 0, '\xc5', 0, 'n', 0, 'g',
-                 0, 's', 0, 't', 0, 'r', 0, 'o', 0, 'm', 0, 's',    0, '?' };
+                 0, 's', 0, 't', 0, 'r', 0, 'o', 0, 'm', 0, 's',    0, '?' } };
     EXPECT_CALL(PathMock(), size(_)).WillRepeatedly(Return(testText.size()));
     EXPECT_CALL(PathMock(), exists(_)).WillOnce(Return(true));
     EXPECT_CALL(PathMock(), isFile(_)).WillOnce(Return(true));
@@ -241,12 +241,12 @@ TEST_F(FileOfLinesCoreFixture, isUtf16RevText)
 
 TEST_F(FileOfLinesCoreFixture, isUcs4Text)
 {
-    array<char, 128> testText { '\xff', '\xfe', 0, 0,
+    array<char, 128> testText { { '\xff', '\xfe', 0, 0,
                 'H',    0, 0, 0, 'o', 0, 0, 0, 'w', 0, 0, 0, ' ', 0, 0, 0, 'l', 0, 0, 0, 'a', 0, 0, 0, 'r', 0, 0, 0,
                 'g',    0, 0, 0, 'e', 0, 0, 0, ' ', 0, 0, 0, 'i', 0, 0, 0, 's', 0, 0, 0, ' ', 0, 0, 0, 't', 0, 0, 0,
                 'h',    0, 0, 0, 'a', 0, 0, 0, 't', 0, 0, 0, ' ', 0, 0, 0, 'i', 0, 0, 0, 'n', 0, 0, 0, ' ', 0, 0, 0,
                 '\xc5', 0, 0, 0, 'n', 0, 0, 0, 'g', 0, 0, 0, 's', 0, 0, 0, 't', 0, 0, 0, 'r', 0, 0, 0, 'o', 0, 0, 0,
-                'm',    0, 0, 0, 's', 0, 0, 0, '?', 0, 0, 0 };
+                'm',    0, 0, 0, 's', 0, 0, 0, '?', 0, 0, 0 } };
     EXPECT_CALL(PathMock(), size(_)).WillRepeatedly(Return(testText.size()));
     EXPECT_CALL(PathMock(), exists(_)).WillOnce(Return(true));
     EXPECT_CALL(PathMock(), isFile(_)).WillOnce(Return(true));
@@ -266,12 +266,12 @@ TEST_F(FileOfLinesCoreFixture, isUcs4Text)
 
 TEST_F(FileOfLinesCoreFixture, isUcsRev4Text)
 {
-    array<char, 128> testText { 0, 0, '\xfe', '\xff',
+    array<char, 128> testText { { 0, 0, '\xfe', '\xff',
                 0, 0, 0, 'H',    0, 0, 0, 'o', 0, 0, 0, 'w', 0, 0, 0, ' ', 0, 0, 0, 'l', 0, 0, 0, 'a', 0, 0, 0, 'r',
                 0, 0, 0, 'g',    0, 0, 0, 'e', 0, 0, 0, ' ', 0, 0, 0, 'i', 0, 0, 0, 's', 0, 0, 0, ' ', 0, 0, 0, 't',
                 0, 0, 0, 'h',    0, 0, 0, 'a', 0, 0, 0, 't', 0, 0, 0, ' ', 0, 0, 0, 'i', 0, 0, 0, 'n', 0, 0, 0, ' ',
                 0, 0, 0, '\xc5', 0, 0, 0, 'n', 0, 0, 0, 'g', 0, 0, 0, 's', 0, 0, 0, 't', 0, 0, 0, 'r', 0, 0, 0, 'o',
-                0, 0, 0, 'm',    0, 0, 0, 's', 0, 0, 0, '?' };
+                0, 0, 0, 'm',    0, 0, 0, 's', 0, 0, 0, '?' } };
     EXPECT_CALL(PathMock(), size(_)).WillRepeatedly(Return(testText.size()));
     EXPECT_CALL(PathMock(), exists(_)).WillOnce(Return(true));
     EXPECT_CALL(PathMock(), isFile(_)).WillOnce(Return(true));
