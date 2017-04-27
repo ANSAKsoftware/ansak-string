@@ -39,11 +39,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "config_atom.hxx"
+#include <config_atom.hxx>
 
-#include "runtime_exception.hxx"
-#include "string.hxx"
-#include "string_splitjoin.hxx"
+#include <runtime_exception.hxx>
+#include <string.hxx>
+#include <string_splitjoin.hxx>
 
 #include <ctype.h>
 #include <math.h>

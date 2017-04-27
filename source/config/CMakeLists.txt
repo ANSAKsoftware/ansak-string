@@ -40,6 +40,7 @@ set( _interface ../../interface )
 set( _privIncludes ../include )
 
 set( _targetSrc config_atom.cxx
+                config.cxx
    )
 
 add_library( ${_target} STATIC ${_targetSrc} )

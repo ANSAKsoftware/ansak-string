@@ -42,6 +42,7 @@ set( _privIncludes ../../../source/include )
 set( _privLibraries ansakConfig ansakString ansakPrimitives gtest_main )
 
 set( _targetSrc config_atom_test.cxx
+                config_test.cxx
    )
 
 add_executable( ${_target} ${_targetSrc} )

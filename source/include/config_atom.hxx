@@ -42,7 +42,8 @@
 #pragma once
 
 #include <string>
-#include "config_types.hxx"
+#include <tuple>
+#include <config_types.hxx>
 
 namespace ansak
 {
@@ -161,6 +162,12 @@ private:
     bool                    m_isChanged;            // has the setting been changed?
     AtomType                m_properType;           // what is the setting's proper type?
     int                     m_availableType;        // what can it be shown as?
+};
+
+struct ConfigAtomPair : public std::pair<std::string, ConfigAtom>
+{
+    ConfigAtomPair(const std::string& name, const ConfigAtom& atom) :
+        std::pair<std::string, ConfigAtom>(std::make_pair(name, atom)) {}
 };
 
 }
