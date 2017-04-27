@@ -40,8 +40,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "file_of_lines.hxx"
-#include "file_of_lines_core.hxx"
+#include <file_of_lines.hxx>
+#include <file_of_lines_core.hxx>
 
 #include <string>
 #include <sstream>

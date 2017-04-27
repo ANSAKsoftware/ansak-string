@@ -39,13 +39,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "text_file_utilities.hxx"
+#include <text_file_utilities.hxx>
 
-#include "file_handle.hxx"
-#include "file_handle_exception.hxx"
-#include "endianness.hxx"
-#include "file_of_lines_exception.hxx"
-#include "nullptr_exception.hxx"
+#include <file_handle.hxx>
+#include <file_handle_exception.hxx>
+#include <endianness.hxx>
+#include <file_of_lines_exception.hxx>
+#include <nullptr_exception.hxx>
 
 #include <memory>
 #include <memory.h>

@@ -40,9 +40,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "file_of_lines_core.hxx"
-#include "file_of_lines_exception.hxx"
-#include "text_file_utilities.hxx"
+#include <file_of_lines_core.hxx>
+#include <file_of_lines_exception.hxx>
+#include <text_file_utilities.hxx>
 
 #include <string>
 #include <algorithm>
@@ -50,12 +50,12 @@
 #include <sstream>
 #include <limits.h>
 
-#include "file_path.hxx"
+#include <file_path.hxx>
 #include <file_handle_exception.hxx>
-#include "endianness.hxx"
-#include "string.hxx"
-#include "string_decode_utf8.hxx"
-#include "runtime_exception.hxx"
+#include <endianness.hxx>
+#include <string.hxx>
+#include <string_decode_utf8.hxx>
+#include <runtime_exception.hxx>
 
 using namespace ansak;
 using namespace ansak::file;
