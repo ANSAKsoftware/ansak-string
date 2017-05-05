@@ -35,5 +35,6 @@
 
 cmake_minimum_required(VERSION 3.1)
 
+add_subdirectory( config )
 add_subdirectory( file )
 add_subdirectory( file-tools )

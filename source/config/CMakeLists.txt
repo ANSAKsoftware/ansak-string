@@ -40,8 +40,12 @@ set( _interface ../../interface )
 set( _privIncludes ../include )
 
 set( _targetSrc config_atom.cxx
+                config_io_file.cxx
                 config.cxx
    )
+if( WIN32 )
+    list( _targetSrc APPEND config_io_registry.cxx )
+endif()
 
 add_library( ${_target} STATIC ${_targetSrc} )
 if (UNIX)

@@ -35,20 +35,27 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-set( _target test-ansakConfig )
-set( _targetTest ansakConfigTest )
+set( _target integrate-ansakConfig )
+set( _targetAsTest ansakConfigIntegrationTest )
 set( _privIncludes ../../../source/include )
 
-set( _privLibraries ansakConfig ansakFileTools ansakFile ansakOSLayer ansakString ansakPrimitives gtest_main )
+set( _privLibraries ansakConfig
+                    ansakString
+                    ansakFile
+                    ansakFileTools
+                    ansakPrimitives
+                    ansakOSLayer
+                    gtest_main )
 
-set( _targetSrc config_atom_test.cxx
-                config_test.cxx
-                config_path_test.cxx
-   )
+set( _targetSrc config_io_file_test.cxx )
+if( WIN32 )
+    list( _targetSrc APPEND config_io_registry_test.cxx )
+endif()
 
 add_executable( ${_target} ${_targetSrc} )
 target_link_libraries( ${_target} PRIVATE ${_privLibraries} )
 target_include_directories( ${_target} PRIVATE ${_privIncludes} )
 SETUP_TO_EXECUTE_GTEST( ${_target} )
 
-add_test( NAME ${_targetTest} COMMAND ${_target} )
+add_test( NAME ${_targetAsTest} COMMAND ${_target} )
+
