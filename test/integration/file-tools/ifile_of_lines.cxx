@@ -47,10 +47,6 @@
 #include "file_handle.hxx"
 #include "temp_file_wrapper.hxx"
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <string>
 
 using namespace std;

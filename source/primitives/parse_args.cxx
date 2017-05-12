@@ -432,7 +432,7 @@ void ParseArgs::operator()
             line << '\0';
             auto lineOut = line.str();
             m_rewriteArgs.assign(lineOut.begin(), lineOut.end());
-            m_shippingArgc = 1 + nullsHere.size() + 1;
+            m_shippingArgc = 1 + static_cast<int>(nullsHere.size()) + 1;
         }
         const char* argv0 = m_shippingArgv[0];
         m_rewriteArgPs.reserve(m_shippingArgc);

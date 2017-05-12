@@ -331,7 +331,7 @@ unsigned int FileOfLinesCore::getDataBounds()
     else if (m_textType == ansak::file::TextType::kUtf8)
     {
         char bom[3];
-        int n = m_fHandle.read(bom, 3);
+        auto n = static_cast<int>(m_fHandle.read(bom, 3));
         if (n == 3 && bom[0] == '\xef' && bom[1] == '\xbb' && bom[2] == '\xbf')
         {
             // it's a BOM, return 3
@@ -454,7 +454,7 @@ void FileOfLinesCore::moveBuffer
     {
         // seek the file pointer, read the data
         m_fHandle.seek(static_cast<off_t>(newPosition));
-        doneRead = m_fHandle.read(&m_buffer[0], toReadAsInt);
+        doneRead = static_cast<int>(m_fHandle.read(&m_buffer[0], toReadAsInt));
         if (doneRead == 0 && newPosition != 0)
         {
             ostringstream os;

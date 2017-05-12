@@ -116,18 +116,18 @@ TEST(FileHandleTest, testReadWrite)
         FileHandle hIn;
 
         hIn = FileHandle::create(watto);
-        int x = hIn.write(test2, 0);
+        auto x = static_cast<int>(hIn.write(test2, 0));
         EXPECT_EQ(0, x);
-        x = hIn.write(test2, sizeof(test2) - 1);
+        x = static_cast<int>(hIn.write(test2, sizeof(test2) - 1));
         EXPECT_EQ(static_cast<int>(sizeof(test2) - 1), x);
     }
 
     char readIn[20];
     {
         FileHandle hOut(FileHandle::open(watto));
-        int x = hOut.read(readIn, 0);
+        auto x = static_cast<int>(hOut.read(readIn, 0));
         EXPECT_EQ(0, x);
-        x = hOut.read(readIn, sizeof(readIn));
+        x = static_cast<int>(hOut.read(readIn, sizeof(readIn)));
         EXPECT_EQ(20, x);
     }
     EXPECT_EQ('3', readIn[ 0]);
@@ -167,7 +167,7 @@ TEST(FileHandleTest, testSeek)
     {
         FileHandle hOut(FileHandle::open(watto));
         hOut.seek(10);
-        int x = hOut.read(readIn, sizeof(readIn));
+        auto x = static_cast<int>(hOut.read(readIn, sizeof(readIn)));
         EXPECT_EQ(5, x);
     }
     EXPECT_EQ('3', readIn[0]);

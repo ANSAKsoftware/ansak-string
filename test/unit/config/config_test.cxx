@@ -119,16 +119,7 @@ TEST(ConfigTest, testUnchangeableInitValues)
     EXPECT_EQ(50, width(r));
     EXPECT_EQ(30, height(r));
 
-    bool threw = false;
-    try
-    {
-        un.put("b", false);
-    }
-    catch (RuntimeException& e)
-    {
-        threw = true;
-    }
-    EXPECT_TRUE(threw);
+    EXPECT_THROW(un.put("b", false), RuntimeException);
 }
 
 //===========================================================================
@@ -173,18 +164,7 @@ TEST(ConfigTest, testChangeableInitValues)
     EXPECT_EQ(50, width(r));
     EXPECT_EQ(30, height(r));
 
-    bool threw = false;
-    try
-    {
-        ch.put("b", false);
-        threw = false;
-    }
-    catch (RuntimeException& e)
-    {
-        threw = true;
-    }
-    EXPECT_FALSE(threw);
-
+    ch.put("b", false);
     ch.put("i", 32);
     ch.put("f", 2.7182818301f);
     ch.put("d", 5.6677788889999900000111111);
@@ -415,20 +395,9 @@ TEST(ConfigTest, testPutForceTypeValues)
     ch.initValue("pt", toPoint(3, 4));
     ch.initValue("r", toRect(100, 60, 50, 30));
 
-    bool threw = false;
-
     ch.put("b", 34, Config::forceTypeChange);
     ch.put("i", 2.71828301, Config::forceTypeChange);
-    try
-    {
-        ch.put("pi", 3.14, Config::forceTypeChange);
-        threw = false;
-    }
-    catch (RuntimeException& e)
-    {
-        threw = true;
-    }
-    EXPECT_TRUE(threw);
+    EXPECT_THROW(ch.put("pi", 3.14, Config::forceTypeChange), RuntimeException);
     ch.put("d", "Sorry, Murphy, no real constants are variable.", Config::forceTypeChange);
     ch.put("s", toPoint(16,22), Config::forceTypeChange);
     ch.put("pt", toRect(1,4,9,16), Config::forceTypeChange);

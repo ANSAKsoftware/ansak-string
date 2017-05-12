@@ -153,7 +153,7 @@ bool looksLikeText
             {
                 throw OpenFailed(file);
             }
-            rd = fileH.read(work.get(), allocateSize);
+            rd = static_cast<int>(fileH.read(work.get(), allocateSize));
         }
 
         if (rd == 0)
