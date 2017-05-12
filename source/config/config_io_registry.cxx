@@ -43,166 +43,25 @@
 #if defined(WIN32)
 
 #include "config_io.hxx"
-#include "config_internals.hxx"
 #include "runtime_exception.hxx"
 #include <memory>
 #include <vector>
+#include <sstream>
 
-#include "string_split.hxx"
+#include "string_splitjoin.hxx"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 namespace ansak
 {
 
 using namespace std;
-using namespace ansak::config;
 
 namespace config
 {
 
 extern string vendorContext;
 extern string productContext;
-
-class RegKey {
-public:
-    RegKey(const utf8String& path);
-
-    ~RegKey();
-
-    using ValueNamesType = std::vector<utf8String>;
-
-    ValueNamesType getValueNames() const;
-
-    bool getValue(const utf8String& valueName, DWORD& value);
-    bool getValue(const utf8String& valueName, utf8String& value);
-
-    bool setValue(const utf8String& valueName, DWORD value);
-    bool setValue(const utf8String& valueName, const utf8String& value);
-
-    DWORD getValueType(const utf8String& valueName);
-
-private:
-
-    RegKey(HKEY newKey, const RegKey* parent, bool detached);
-    bool detach() { m_closeOnDestruct = false; }
-
-    static HKEY getRootKey(const utf8String& root);
-
-    bool                m_closeOnDestruct;
-    HKEY                m_theKey;
-    unique_ptr<RegKey>  m_parentKey;
-};
-
-RegKey::RegKey(const utf8String& path)
-{
-    auto components(split(path, '\\'));
-    int currentComponent = 0;
-    HKEY lastKey = nullptr;
-    unique_ptr<RegKey> lastRegKeyObject;
-    while (!components.empty())
-    {
-        auto currentKey = components.front();
-
-        HKEY currentHKey = 0;
-        if (currentComponent == 0)
-        {
-            currentHKey = getRootKey(currentKey);
-        }
-        else
-        {
-            auto wideKeyName(toUtf16(currentKey));
-            auto rv = RegOpenKeyExW(
-                    lastRegKeyObject->m_theKey, reinterpret_cast<LPCWSTR>(wideKeyName.c_str()), 0,
-                    KEY_READ, &currentHKey);
-
-            if (rv != ERROR_SUCCESS)
-            {
-                auto err = GetLastError();
-                // throw something
-            }
-        }
-        // never RegCloseKey the root key
-        lastRegKeyObject.reset(new RegKey(currentHKey, lastRegKeyObject, currentComponent == 0));
-
-        components.erase(components.begin(), components.begin() + 1);
-        ++currentComponent;
-    }
-}
-
-RegKey::~RegKey()
-{
-    if (m_closeOnDestruct)
-    {
-        RegCloseKey(m_theKey);
-    }
-    m_parentKey.reset(nullptr);
-}
-
-RegKey::ValueNamesType RegKey::getValueNames() const
-{
-    bool stillWorking = true;
-    DWORD valueIndex = 0;
-    wchar_t valueName[120];
-    ValueNamesType result;
-    for (; stillWorking; ++valueIndex)
-    {
-        DWORD valueSize = 120;
-        auto rv = RegEnumValueW(m_theKey, valueIndex, valueName, &valueSize, 0, 0, 0);
-        if (rv == ERROR_NO_MORE_ITEMS)
-        {
-            break;
-        }
-        else if ((rv == ERROR_SUCCESS) && (valueSlze < 120))
-        {
-            valueName[119] = L'\0';
-            result.push_back(toUtf8(wstring(valueName)));
-        }
-        else if (rv != ERROR_SUCCESS)
-        {
-            auto err = GetLastError();
-            // throw something
-        }
-    }
-
-    return result;
-}
-
-bool RegKey::getValue(const utf8String& valueName, DWORD& value);
-bool RegKey::getValue(const utf8String& valueName, utf8String& value);
-
-bool RegKey::setValue(const utf8String& valueName, DWORD value);
-bool RegKey::setValue(const utf8String& valueName, const utf8String& value);
-
-DWORD RegKey::getValueType(const utf8String& valueName)
-{
-    utf16String nameIn16bit(toUtf16(valueName));
-    DWORD regType;
-    auto rv = RegQueryValueExW(m_theKey, reinterpret_cast<LPCWSTR>(nameIn16Bit.c_str()), NULL,
-                               &regType, nullptr, nullptr);
-    if (rv == ERROR_SUCCESS)
-    {
-        return regType;
-    }
-    else
-    {
-        return REG_NONE;
-    }
-}
-
-HKEY RegKey::getRootKey(const utf8String& root)
-{
-    if (root == "HKCR" || root == "HKEY_CLASSES_ROOT") return HKEY_CLASSES_ROOT;
-    if (root == "HKCU" || root == "HKEY_CURRENT_USER") return HKEY_CURRENT_USER;
-    if (root == "HKLM" || root == "HKEY_LOCAL_MACHINE") return HKEY_LOCAL_MACHINE;
-    if (root == "HKEY_USERS") return HKEY_USERS;
-    if (root == "HKEY_PERFORMANCE_DATA") return HKEY_PERFORMANCE_DATA;
-    if (root == "HKEY_PERFORMANCE_TEXT") return HKEY_PERFORMANCE_TEXT;
-    if (root == "HKEY_PERFORMANCE_NLSTEXT") return HKEY_PERFORMANCE_NLSTEXT;
-    if (root == "HKCC" || root == "HKEY_CURRENT_CONFIG") return HKEY_CURRENT_CONFIG;
-    if (root == "HKEY_DYN_DATA") return HKEY_DYN_DATA;
-
-    ansak::assert(false, "Root key was unrecognized.");
-    return reinterpret_cast<HKEY>(0);
-}
 
 //===========================================================================
 // getUserRegistryPath -- in light of a "vendor name" and "product name",
@@ -228,11 +87,14 @@ string getSystemRegistryPath()
 
 }
 
+using namespace ansak::config;
+
 //===========================================================================
 // getUserConfig -- Retrieve the user config from the registry
 
 Config getUserConfig()
 {
+    return Config(); /*
     enforce(!vendorContext.empty() && !productContext.empty(),
             "UserConfig: Provide a vendor and product context, please.");
 
@@ -241,7 +103,7 @@ Config getUserConfig()
     {
         return Config();
     }
-    return Config(getAtomsFromRegLocation(where));
+    return Config(getAtomsFromRegLocation(where)); */
 }
 
 //===========================================================================
@@ -249,6 +111,7 @@ Config getUserConfig()
 
 Config getSystemConfig()
 {
+    return Config(); /*
     enforce(!vendorContext.empty() && !productContext.empty(),
             "UserConfig: Provide a vendor and product context, please.");
 
@@ -258,6 +121,7 @@ Config getSystemConfig()
         return Config();
     }
     return Config(getAtomsFromRegLocation(where));
+    */
 }
 
 //===========================================================================
@@ -265,20 +129,23 @@ Config getSystemConfig()
 
 bool saveUserConfig(const Config& config)
 {
+    return false; /*
     auto where(getUserRegistryPath());
     if (where.empty() || !regPathExist(where))
     {
         return false;
     }
-    return writeConfigToRegLocation(where, config);
+    return writeConfigToRegLocation(where, config); */
 }
 
 Config getConfig(const string& otherReg)
 {
+    return Config();
 }
 
 bool writeConfig(const string& dest, const Config& src)
 {
+    return false;
 }
 
 }

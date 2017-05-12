@@ -41,6 +41,9 @@ set( _targetTest ansakOSLayerTest )
 set( _privLibraries ansakOSLayer ansakFile ansakPrimitives ansakString gtest_main )
 
 set( _targetSrc test_os_layer.cxx )
+if( WIN32 )
+    list( APPEND _targetSrc test_win32_registry.cxx )
+endif()
 set( _targetIncludes ../../../source/include )
 
 add_executable( ${_target} ${_targetSrc} )

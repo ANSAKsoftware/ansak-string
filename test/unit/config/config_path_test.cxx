@@ -72,8 +72,8 @@ TEST(ConfigFileIOTest, getPaths)
 {
     setContext("paiste", "cymbals");
 
-    EXPECT_EQ("HKCU\\Software\\paiste\\cymblas", getUserConfigFilePath());
-    EXPECT_EQ("HKLM\\Software\\paiste\\cymblas", getSystemConfigFilePath());
+    EXPECT_EQ("HKCU\\Software\\paiste\\cymbals", getUserRegistryPath());
+    EXPECT_EQ("HKLM\\Software\\paiste\\cymbals", getSystemRegistryPath());
 }
 
 #else

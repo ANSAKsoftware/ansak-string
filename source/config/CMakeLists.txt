@@ -44,7 +44,7 @@ set( _targetSrc config_atom.cxx
                 config.cxx
    )
 if( WIN32 )
-    list( _targetSrc APPEND config_io_registry.cxx )
+    list( APPEND _targetSrc config_io_registry.cxx )
 endif()
 
 add_library( ${_target} STATIC ${_targetSrc} )
