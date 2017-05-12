@@ -88,7 +88,7 @@ bool isAnInt
     bool isIt = true;
     for_each(b, src.end(), [&](char c)
     {
-        isIt &= isdigit(c);
+        isIt &= isdigit(c) != 0;
     });
 
     // if it's close to overflowing, let the stream validate it
@@ -215,7 +215,7 @@ ConfigAtom::ConfigAtom
     bool        isChangeable        // I - R/W? (default false)
 ) : m_asString(),
     m_asInt(intValue),
-    m_asFloat(intValue),
+    m_asFloat(static_cast<float>(intValue)),
     m_asPoint(),
     m_asRect(),
     m_asBool(intValue != 0),
@@ -610,8 +610,8 @@ void ConfigAtom::set(int i)
     {
         m_asInt = i;
         m_asBool = i != 0;
-        m_asFloat = i;
-        
+        m_asFloat = static_cast<float>(i);
+
         ostringstream o;
         o << i;
         m_asString = o.str();
