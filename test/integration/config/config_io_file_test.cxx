@@ -47,6 +47,10 @@
 #include <file_path.hxx>
 #include <file_system_path.hxx>
 #include <iostream>
+#if defined(WIN32)
+#include <temp_directory.hxx>
+#include <runtime_exception.hxx>
+#endif
 
 using namespace std;
 using namespace testing;
@@ -55,43 +59,56 @@ using namespace ansak::config;
 
 namespace {
 
+TempDirectoryPtr settingsParent;
+
 class OneShotContext {
 public:
-    bool directoryExists();
-    void placeSettings();
-    void removeSettings();
+    bool directoriesExists();
+    static void placeSettings(const FilePath& whichPath);
+    static void removeSettings(const FilePath& whichPath);
+
+    FilePath arbitrarySettingsPath() const { return m_arbitrarySettingsPath; }
 
 private:
     bool m_contextSet = false;
     bool m_checked = false;
     bool m_exists = false;
-#if defined(WIN32)
-#else
-    FileSystemPath m_testSettingsPath;
-#endif
+
+    FilePath m_arbitrarySettingsPath;
 };
 
-bool OneShotContext::directoryExists()
+bool OneShotContext::directoriesExists()
 {
+    if (!settingsParent)
+    {
+        settingsParent = createTempDirectory();
+        m_arbitrarySettingsPath =
+            settingsParent->asFileSystemPath(TempDirectory::detachIt).asFilePath();
+        enforce(m_arbitrarySettingsPath != FilePath::invalidPath(), "What's wrong with the temp directory today? (invalid)");
+        FileSystemPath testTheTemp(m_arbitrarySettingsPath);
+        enforce(testTheTemp.exists(), "What's wrong with the temp directory today? (non-existent)");
+        enforce(testTheTemp.isDir(), "What's wrong with the temp directory today? (non-dir)");
+        m_arbitrarySettingsPath = m_arbitrarySettingsPath.child("testSettings_rc");
+    }
+
     if (!m_contextSet)
     {
+#if !defined(WIN32)
         setContext("ansak", "integrationTest");
+#endif
         m_contextSet = true;
     }
 
     if (!m_checked)
     {
-        m_checked = true;
 #if defined(WIN32)
+        m_checked = true;
+        m_exists = true;
 #else
         auto userSettingsPath = getUserConfigFilePath();
         auto userSettingsDir = FileSystemPath(userSettingsPath.parent());
         m_exists = userSettingsDir.exists() && userSettingsDir.isDir();
-        if (m_exists)
-        {
-            m_testSettingsPath = userSettingsPath;
-        }
-        else
+        if (!m_exists)
         {
             cout << "Config file tests will not be run because the $HOME/.ansak "
                  << "directory does not exist." << endl;
@@ -101,13 +118,13 @@ bool OneShotContext::directoryExists()
     return m_exists;
 }
 
-void OneShotContext::placeSettings()
+OneShotContext oneShot;
+
+void OneShotContext::placeSettings(const FilePath& whichPath)
 {
-    if (directoryExists())
+    if (oneShot.directoriesExists())
     {
-#if defined(WIN32)
-#else
-        auto handle = FileHandle::create(m_testSettingsPath, FileHandle::kOpenIfThere);
+        auto handle = FileHandle::create(whichPath, FileHandle::kOpenIfThere);
         const char settingsText[] = "pi=3.1428571429\n"
                                     "thePoint=56,78\n"
                                     "theBigBox=(20,30),(800,600)\n"
@@ -115,32 +132,21 @@ void OneShotContext::placeSettings()
                                     "theTruth=true\n"
                                     "theLie=This statement might not be true.\n";
         handle.write(settingsText, sizeof(settingsText) - 1);
-#endif
     }
 }
 
-void OneShotContext::removeSettings()
+void OneShotContext::removeSettings(const FilePath& whichPath)
 {
-    if (directoryExists())
+    if (oneShot.directoriesExists())
     {
-#if defined(WIN32)
-#else
-        m_testSettingsPath.remove();
-#endif
+        FileSystemPath(whichPath).remove();
     }
 }
 
 
-OneShotContext oneShot;
-
 }
 
-#if defined(WIN32)
-
-
-
-#else
-
+#if !defined(WIN32)
 TEST(ConfigIOFileTest, testTheLinuxSettingsFiles)
 {
     Config userSettings;
@@ -148,7 +154,7 @@ TEST(ConfigIOFileTest, testTheLinuxSettingsFiles)
     {
         try
         {
-            oneShot.placeSettings();
+            OneShotContext::placeSettings(getUserConfigFilePath());
             userSettings = getUserConfig();
 
             double pi;
@@ -174,7 +180,7 @@ TEST(ConfigIOFileTest, testTheLinuxSettingsFiles)
         catch( ... )
         {
         }
-        oneShot.removeSettings();
+        OneShotContext::removeSettings(getUserConfigFilePath());
         EXPECT_EQ(Config(), getUserConfig());
     }
     else
@@ -183,22 +189,58 @@ TEST(ConfigIOFileTest, testTheLinuxSettingsFiles)
     }
     EXPECT_EQ(Config(), getSystemConfig());
 }
-
 #endif
+
+TEST(ConfigIOFileTest, testArbitrarySettingsFile)
+{
+    Config userSettings;
+    if (oneShot.directoriesExists())
+    {
+        FilePath arbitraryPath = oneShot.arbitrarySettingsPath();
+        try
+        {
+            OneShotContext::placeSettings(arbitraryPath);
+            userSettings = getConfig(arbitraryPath);
+
+            double pi;
+            Point thePoint;
+            Rect theBig, theSmall;
+            bool theTruth;
+            string theLie;
+            userSettings.get("pi", pi);
+            userSettings.get("thePoint", thePoint);
+            userSettings.get("theBigBox", theBig);
+            userSettings.get("theSmallBox", theSmall);
+            userSettings.get("theTruth", theTruth);
+            userSettings.get("theLie", theLie);
+
+            userSettings.put("theTruth", false);
+            EXPECT_TRUE(writeConfig(arbitraryPath, userSettings));
+            userSettings.put("theTruth", true);
+            Config otherSettings(getConfig(arbitraryPath));
+            EXPECT_NE(userSettings, otherSettings);
+            otherSettings.put("theTruth", true);
+            EXPECT_EQ(userSettings, otherSettings);
+
+
+        }
+        catch( ... )
+        {
+        }
+        OneShotContext::removeSettings(arbitraryPath);
+        EXPECT_EQ(Config(), getUserConfig());
+    }
+    else
+    {
+        EXPECT_FALSE(saveUserConfig(userSettings));
+    }
+}
 
 TEST(ConfigIOFileTest, testFileNotThere)
 {
     FilePath thisDir(FilePath(__FILE__).parent());
     FilePath notThere(thisDir.child("peek-a-boo.rc"));
-    try
-    {
-        getFileIfThere(notThere);
-        ASSERT_FALSE(true);
-    }
-    catch (ConfigFileNotThere& e)
-    {
-        cout << "Caught exception: " << e.what() << endl;
-    }
+    EXPECT_THROW(getFileIfThere(notThere), ConfigFileNotThere);
     EXPECT_EQ(Config(), getConfig(notThere));
 }
 
