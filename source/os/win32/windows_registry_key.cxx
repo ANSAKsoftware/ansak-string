@@ -135,23 +135,39 @@ WindowsRegKey::ValueNamesType WindowsRegKey::getValueNames() const
     enforce(*this != WindowsRegKey(), "Must have open key to get value names");
     bool stillWorking = true;
     DWORD valueIndex = 0;
-    wchar_t valueName[120];
+    size_t bufferSize = 66;
+    size_t wcharSize = bufferSize / sizeof(wchar_t);
+    unique_ptr<wchar_t> valueName;
+    wchar_t defaultBuffer[33];
+    wchar_t* bufferP = &defaultBuffer[0];
     ValueNamesType result;
     for (; stillWorking; ++valueIndex)
     {
-        DWORD valueSize = 120;
-        auto rv = RegEnumValueW(m_theKey, valueIndex, valueName, &valueSize,
+        DWORD valueSize = static_cast<DWORD>(wcharSize - 1);
+        auto rv = RegEnumValueW(m_theKey, valueIndex, bufferP, &valueSize,
                                 nullptr, nullptr, nullptr, nullptr);
-        if (rv == ERROR_NO_MORE_ITEMS)
+        if (rv == ERROR_MORE_DATA)
+        {
+            if (wcharSize > 8193)
+            {
+                throw RegistryAccessException(rv);
+            }
+            bufferSize = (bufferSize - 2) * 2 + 2;
+            wcharSize = bufferSize / sizeof(wchar_t);
+            valueName.reset(new wchar_t[wcharSize]);
+            bufferP = valueName.get();
+            --valueIndex;
+        }
+        else if (rv == ERROR_NO_MORE_ITEMS)
         {
             break;
         }
-        else if ((rv == ERROR_SUCCESS) && (valueSize < 120))
+        else if (rv == ERROR_SUCCESS)
         {
-            valueName[119] = L'\0';
-            result.push_back(toUtf8(reinterpret_cast<const char16_t*>(&valueName[0])));
+            bufferP[wcharSize - 1] = L'\0';
+            result.push_back(toUtf8(reinterpret_cast<const char16_t*>(bufferP)));
         }
-        else if (rv != ERROR_SUCCESS)
+        else
         {
             throw RegistryAccessException(rv);
         }
@@ -214,11 +230,12 @@ bool WindowsRegKey::getValue
         DWORD fetchSize = 0u;
         RegQueryValueExW(m_theKey, reinterpret_cast<LPCWSTR>(nameIn16bit.c_str()), nullptr,
                          nullptr, nullptr, &fetchSize);
-        unique_ptr<wchar_t> wideValue(new wchar_t[fetchSize / 2]);
+        auto wcharSize = fetchSize / sizeof(wchar_t);
+        unique_ptr<wchar_t> wideValue(new wchar_t[wcharSize]);
         auto rv = RegQueryValueExW(m_theKey, reinterpret_cast<LPCWSTR>(nameIn16bit.c_str()),
                                    nullptr, nullptr, reinterpret_cast<LPBYTE>(wideValue.get()),
                                    &fetchSize);
-        wideValue.get()[fetchSize - 1] = L'\0';
+        wideValue.get()[wcharSize - 1] = L'\0';
         auto narrowValue = toUtf8(reinterpret_cast<const char16_t*>(wideValue.get()));
         if (!narrowValue.empty())
         {

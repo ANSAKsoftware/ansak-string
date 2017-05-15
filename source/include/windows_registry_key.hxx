@@ -90,6 +90,7 @@ class WindowsRegKey {
 public:
 
     using ValueNamesType = std::vector<utf8String>;     // a convenience type
+    static const bool createIt = true;
 
     //=======================================================================
     // exists -- returns true if a Registry path exists, false otherwise

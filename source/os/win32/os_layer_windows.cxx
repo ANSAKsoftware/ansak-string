@@ -515,7 +515,9 @@ utf8String WindowsPrimitives::errorAsString
     {
         return utf8String();
     }
-    while (pMessageBuffer[messageLength - 1] == L' ')
+    while (pMessageBuffer[messageLength - 1] == L' ' ||
+           pMessageBuffer[messageLength - 1] == L'\x0d' ||
+           pMessageBuffer[messageLength - 1] == L'\x0a')
     {
         pMessageBuffer[--messageLength] = L'\0';
     }

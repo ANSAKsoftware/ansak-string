@@ -71,8 +71,16 @@ public:
 
     ~TestRegistryValue()
     {
-        m_theKey.deleteKey();
-        WindowsRegKey::open(vendorPath).deleteKey();
+        try
+        {
+            m_theKey.deleteKey();
+            WindowsRegKey::open(vendorPath).deleteKey();
+        }
+        catch (RegistryAccessException& e)
+        {
+            cout << "Caught RegistryAccessException during destruction: "
+                 << e.what() << endl;
+        }
     }
 
     WindowsRegKey& uut() { return m_theKey; }
@@ -234,6 +242,13 @@ TEST_F(TestRegistryValue, getOtherKind)
 
     EXPECT_EQ(~0u, notThis);
     EXPECT_EQ("squeamish ossifrage", notThat);
+}
+
+TEST_F(TestRegistryValue, longName)
+{
+    uut().setValue("ThisIsAVeryLongValueNameTooLongFor10Chars", 3255u);
+    auto names = uut().getValueNames();
+    EXPECT_EQ(names[0], "ThisIsAVeryLongValueNameTooLongFor10Chars");
 }
 
 #endif

@@ -228,11 +228,7 @@ TEST(ConfigIOFileTest, testArbitrarySettingsFile)
         {
         }
         OneShotContext::removeSettings(arbitraryPath);
-        EXPECT_EQ(Config(), getUserConfig());
-    }
-    else
-    {
-        EXPECT_FALSE(saveUserConfig(userSettings));
+        EXPECT_EQ(Config(), getConfig(arbitraryPath));
     }
 }
 

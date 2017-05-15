@@ -49,7 +49,7 @@ set( _privLibraries ansakConfig
 
 set( _targetSrc config_io_file_test.cxx )
 if( WIN32 )
-    list( _targetSrc APPEND config_io_registry_test.cxx )
+    list( APPEND _targetSrc config_io_registry_test.cxx )
 endif()
 
 add_executable( ${_target} ${_targetSrc} )
