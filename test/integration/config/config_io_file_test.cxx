@@ -59,7 +59,9 @@ using namespace ansak::config;
 
 namespace {
 
+#if defined(WIN32)
 TempDirectoryPtr settingsParent;
+#endif
 
 class OneShotContext {
 public:
@@ -67,18 +69,23 @@ public:
     static void placeSettings(const FilePath& whichPath);
     static void removeSettings(const FilePath& whichPath);
 
+#if defined(WIN32)
     FilePath arbitrarySettingsPath() const { return m_arbitrarySettingsPath; }
+#endif
 
 private:
     bool m_contextSet = false;
     bool m_checked = false;
     bool m_exists = false;
 
+#if defined(WIN32)
     FilePath m_arbitrarySettingsPath;
+#endif
 };
 
 bool OneShotContext::directoriesExists()
 {
+#if defined(WIN32)
     if (!settingsParent)
     {
         settingsParent = createTempDirectory();
@@ -90,6 +97,7 @@ bool OneShotContext::directoriesExists()
         enforce(testTheTemp.isDir(), "What's wrong with the temp directory today? (non-dir)");
         m_arbitrarySettingsPath = m_arbitrarySettingsPath.child("testSettings_rc");
     }
+#endif
 
     if (!m_contextSet)
     {
@@ -146,50 +154,7 @@ void OneShotContext::removeSettings(const FilePath& whichPath)
 
 }
 
-#if !defined(WIN32)
-TEST(ConfigIOFileTest, testTheLinuxSettingsFiles)
-{
-    Config userSettings;
-    if (oneShot.directoryExists())
-    {
-        try
-        {
-            OneShotContext::placeSettings(getUserConfigFilePath());
-            userSettings = getUserConfig();
-
-            double pi;
-            Point thePoint;
-            Rect theBig, theSmall;
-            bool theTruth;
-            string theLie;
-            userSettings.get("pi", pi);
-            userSettings.get("thePoint", thePoint);
-            userSettings.get("theBigBox", theBig);
-            userSettings.get("theSmallBox", theSmall);
-            userSettings.get("theTruth", theTruth);
-            userSettings.get("theLie", theLie);
-
-            userSettings.put("theTruth", false);
-            EXPECT_TRUE(saveUserConfig(userSettings));
-            userSettings.put("theTruth", true);
-            Config otherSettings(getUserConfig());
-            EXPECT_NE(userSettings, otherSettings);
-            otherSettings.put("theTruth", true);
-            EXPECT_EQ(userSettings, otherSettings);
-        }
-        catch( ... )
-        {
-        }
-        OneShotContext::removeSettings(getUserConfigFilePath());
-        EXPECT_EQ(Config(), getUserConfig());
-    }
-    else
-    {
-        EXPECT_FALSE(saveUserConfig(userSettings));
-    }
-    EXPECT_EQ(Config(), getSystemConfig());
-}
-#endif
+#if defined(WIN32)
 
 TEST(ConfigIOFileTest, testArbitrarySettingsFile)
 {
@@ -231,6 +196,53 @@ TEST(ConfigIOFileTest, testArbitrarySettingsFile)
         EXPECT_EQ(Config(), getConfig(arbitraryPath));
     }
 }
+
+#else
+
+TEST(ConfigIOFileTest, testTheLinuxSettingsFiles)
+{
+    Config userSettings;
+    if (oneShot.directoriesExists())
+    {
+        try
+        {
+            OneShotContext::placeSettings(getUserConfigFilePath());
+            userSettings = getUserConfig();
+
+            double pi;
+            Point thePoint;
+            Rect theBig, theSmall;
+            bool theTruth;
+            string theLie;
+            userSettings.get("pi", pi);
+            userSettings.get("thePoint", thePoint);
+            userSettings.get("theBigBox", theBig);
+            userSettings.get("theSmallBox", theSmall);
+            userSettings.get("theTruth", theTruth);
+            userSettings.get("theLie", theLie);
+
+            userSettings.put("theTruth", false);
+            EXPECT_TRUE(saveUserConfig(userSettings));
+            userSettings.put("theTruth", true);
+            Config otherSettings(getUserConfig());
+            EXPECT_NE(userSettings, otherSettings);
+            otherSettings.put("theTruth", true);
+            EXPECT_EQ(userSettings, otherSettings);
+        }
+        catch( ... )
+        {
+        }
+        OneShotContext::removeSettings(getUserConfigFilePath());
+        EXPECT_EQ(Config(), getUserConfig());
+    }
+    else
+    {
+        EXPECT_FALSE(saveUserConfig(userSettings));
+    }
+    EXPECT_EQ(Config(), getSystemConfig());
+}
+
+#endif
 
 TEST(ConfigIOFileTest, testFileNotThere)
 {
