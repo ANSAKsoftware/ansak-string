@@ -56,13 +56,19 @@ NullPtrException::NullPtrException
     unsigned int    line            // I - __LINE__ if desired, def 0
 ) noexcept
 {
-    ostringstream os;
+    try
+    {
+        ostringstream os;
 
-    os << "Unexpected Nullptr";
-    if (function != nullptr) os << " in function, " << function;
-    if (line != 0) os << ", at line #" << line;
-    os << '.';
-    m_what = os.str();
+        os << "Unexpected Nullptr";
+        if (function != nullptr) os << " in function, " << function;
+        if (line != 0) os << ", at line #" << line;
+        os << '.';
+        m_what = os.str();
+    }
+    catch (...)
+    {
+    }
 }
 
 //============================================================================
@@ -75,7 +81,21 @@ NullPtrException::~NullPtrException() noexcept { }
 
 const char* NullPtrException::what() const noexcept
 {
-    return m_what.c_str();
+    try
+    {
+        if (!m_what.empty())
+        {
+            return m_what.c_str();
+        }
+    }
+    catch (...)
+    {
+        static const char exceptedWhat[] = "NullPtrException - throw on what()";
+        return exceptedWhat;
+    }
+
+    static const char emptyWhat[] = "NullPtrException - no info available.";
+    return emptyWhat;
 }
 
 }

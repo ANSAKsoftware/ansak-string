@@ -63,15 +63,21 @@ FileHandleException::FileHandleException
 ) noexcept :
     m_code(errorCode)
 {
-    ostringstream os;
-    os << "FileHandleException: " << message <<
-          "; file = \"" << problem.asUtf8String() << "\"; ";
-    if (errorCode != 0)
+    try
     {
-        os << " code = " << errorCode <<
-              "; code explanation: " << getOperatingSystemPrimitives()->errorAsString(errorCode) << "; ";
+        ostringstream os;
+        os << "FileHandleException: " << message <<
+              "; file = \"" << problem.asUtf8String() << "\"; ";
+        if (errorCode != 0)
+        {
+            os << " code = " << errorCode <<
+                  "; code explanation: " << getOperatingSystemPrimitives()->errorAsString(errorCode) << "; ";
+        }
+        m_what = os.str();
     }
-    m_what = os.str();
+    catch (...)
+    {
+    }
 }
 
 //============================================================================
@@ -82,13 +88,19 @@ FileHandleException::FileHandleException
     const FileHandleException&  src,            // I - a source FileHandleException
     size_t                      inProgress      // I - a progress report around something that failed
 ) noexcept :
-    m_what(src.m_what),
+    m_what(),
     m_code(src.m_code),
     m_inProgress(inProgress)
 {
-    ostringstream os;
-    os << " (progress: " << inProgress << ')';
-    m_what += os.str();
+    try
+    {
+        ostringstream os;
+        os << src.m_what << " (progress: " << inProgress << ')';
+        m_what = os.str();
+    }
+    catch (...)
+    {
+    }
 }
 
 //============================================================================
@@ -103,7 +115,20 @@ FileHandleException::~FileHandleException() noexcept
 
 const char* FileHandleException::what() const noexcept
 {
-    return m_what.c_str();
+    try
+    {
+        if (!m_what.empty())
+        {
+            return m_what.c_str();
+        }
+    }
+    catch (...)
+    {
+        static const char exceptedWhat[] = "FileHandleException - throw on what()";
+        return exceptedWhat;
+    }
+    static const char emptyWhat[] = "FileHandleExcpetion: no details are available.";
+    return emptyWhat;
 }
 
 }

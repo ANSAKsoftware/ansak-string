@@ -738,9 +738,15 @@ bool ParseArgs::areBad
 
 BadArgsException::BadArgsException(const string& description) noexcept
 {
-    ostringstream os;
-    os << "BadArgsException: " << description;
-    m_what = os.str();
+    try
+    {
+        ostringstream os;
+        os << "BadArgsException: " << description;
+        m_what = os.str();
+    }
+    catch (...)
+    {
+    }
 }
 
 //===========================================================================
@@ -755,7 +761,21 @@ BadArgsException::~BadArgsException() noexcept
 
 const char* BadArgsException::what() const noexcept
 {
-    return m_what.c_str();
+    try
+    {
+        if (!m_what.empty())
+        {
+            return m_what.c_str();
+        }
+    }
+    catch (...)
+    {
+        static const char exceptedWhat[] = "BadArgsException - throw on what()";
+        return exceptedWhat;
+    }
+
+    static const char emptyWhat[] = "BadArgsException - no info available.";
+    return emptyWhat;
 }
 
 }

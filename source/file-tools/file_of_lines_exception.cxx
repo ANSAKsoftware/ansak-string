@@ -145,10 +145,12 @@ const char* FileOfLinesException::what() const noexcept
     }
     catch (...)
     {
+        static const char exceptedWhat[] = "FileOfLinesException - throw on what()";
+        return exceptedWhat;
     }
 
-    static const char exceptedWhat[] = "FileOfLinesException - no info available.";
-    return exceptedWhat;
+    static const char emptyWhat[] = "FileOfLinesException - no info available.";
+    return emptyWhat;
 }
 
 }

@@ -534,7 +534,13 @@ RegistryAccessException::RegistryAccessException
   : exception(),
     m_code(errorCode)
 {
-    m_what = getOperatingSystemPrimitives()->errorAsString(errorCode);
+    try
+    {
+        m_what = getOperatingSystemPrimitives()->errorAsString(errorCode);
+    }
+    catch (...)
+    {
+    }
 }
 
 //===========================================================================
@@ -549,8 +555,20 @@ RegistryAccessException::~RegistryAccessException() noexcept
 
 const char* RegistryAccessException::what() const noexcept
 {
-    static const char* noMessage = "No error string could be loaded.";
-    return m_what.empty() ? noMessage : m_what.c_str();
+    try
+    {
+        if (!m_what.empty())
+        {
+            return m_what.c_str();
+        }
+    }
+    catch (...)
+    {
+        static const char exceptedWhat[] = "RegistryAccessException - throw on what()";
+        return exceptedWhat;
+    }
+    static const char* emptyWhat = "RegistryAccessException - no info available.";
+    return emptyWhat;
 }
 
 }

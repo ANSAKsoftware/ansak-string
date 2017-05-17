@@ -60,31 +60,37 @@ RuntimeException::RuntimeException
     unsigned int        lineNumber      // I - __LINE__ if you will
 ) noexcept
 {
-    const char* realComplaint = (complaint == nullptr || *complaint == '\0') ?
-                    "<No complaint message specified>" : complaint;
-    ostringstream os;
-    os << "Runtime Exception: " << realComplaint;
-    if (fileName != nullptr && *fileName != '\0')
+    try
     {
-        m_fileName = fileName;
-        os << " in file, " << fileName;
-        if (lineNumber != 0)
+        const char* realComplaint = (complaint == nullptr || *complaint == '\0') ?
+                        "<No complaint message specified>" : complaint;
+        ostringstream os;
+        os << "Runtime Exception: " << realComplaint;
+        if (fileName != nullptr && *fileName != '\0')
         {
-            m_lineNumber = lineNumber;
-            os << " at line number#" << lineNumber;
+            m_fileName = fileName;
+            os << " in file, " << fileName;
+            if (lineNumber != 0)
+            {
+                m_lineNumber = lineNumber;
+                os << " at line number#" << lineNumber;
+            }
+            else
+            {
+                m_lineNumber = 0u;
+            }
         }
         else
         {
+            m_fileName = fileName == nullptr ? "<no filename given>" : "<empty-string filename given>";
             m_lineNumber = 0u;
         }
+        os << '.';
+        m_what = os.str();
     }
-    else
+    catch (...)
     {
-        m_fileName = fileName == nullptr ? "<no filename given>" : "<empty-string filename given>";
-        m_lineNumber = 0u;
     }
-    os << '.';
-    m_what = os.str();
 }
 
 //============================================================================
@@ -92,7 +98,21 @@ RuntimeException::RuntimeException
 
 const char* RuntimeException::what() const noexcept
 {
-    return m_what.c_str();
+    try
+    {
+        if (!m_what.empty())
+        {
+            return m_what.c_str();
+        }
+    }
+    catch (...)
+    {
+        static const char exceptedWhat[] = "RuntimeException - throw on what()";
+        return exceptedWhat;
+    }
+
+    static const char emptyWhat[] = "RuntimeException - no info available.";
+    return emptyWhat;
 }
 
 }
