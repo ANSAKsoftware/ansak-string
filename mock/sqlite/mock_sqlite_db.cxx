@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2017.03.27 - First Version
+// 2017.05.21 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,75 +35,64 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_file_system_path.cxx -- implementation of a mock to FileSystemPath
+// mock_sqlite_db.cxx -- implementation of a mock to sqlite for err msgs
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "mock_file_system_path.hxx"
-#include <runtime_exception.hxx>
+#include "mock_sqlite_db.hxx"
+#include <sqlite3.h>
 
-using namespace testing;
+using namespace ansak;
+
+extern "C"
+{
+
+int sqlite3_libversion_number()
+{
+    return 99;
+}
+
+const char* sqlite3_sourceid()
+{
+    return "Vacuuous Vole";
+}
+
+const char* sqlite3_libversion()
+{
+    return "Illiberal Version";
+}
+
+int sqlite3_open_v2(const char* filePath, sqlite3** ppDB, int flags, const char* zvfs)
+{
+    return SqliteDBMock::getMock()->open_v2(filePath, ppDB, flags, zvfs);
+}
+
+int sqlite3_close(sqlite3* db)
+{
+    return SqliteDBMock::getMock()->close(db);
+}
+
+int sqlite3_prepare_v2(sqlite3* db, const char* sql, int flags, sqlite3_stmt** ppStmt, const char** ppzTail)
+{
+    return SqliteDBMock::getMock()->prepare_v2(db, sql, flags, ppStmt, ppzTail);
+}
+
+}
 
 namespace ansak
 {
 
-FileSystemPath::FileSystemPath(const FilePath& path)
-  : m_path(path),
-    m_isValid(path.isReal())
-{
-}
+SqliteDBMock* SqliteDBMock::m_currentMock = nullptr;
 
-FileSystemPath::~FileSystemPath()
+SqliteDBMock::SqliteDBMock()
 {
-}
-
-bool FileSystemPath::createDirectory(bool)
-{
-    return FileSystemPathMock::getMock()->createDirectory(this);
-}
-
-bool FileSystemPath::remove(bool recursive)
-{
-    return FileSystemPathMock::getMock()->remove(this, recursive);
-}
-
-bool FileSystemPath::exists() const
-{
-    return FileSystemPathMock::getMock()->exists(this);
-}
-
-bool FileSystemPath::isFile() const
-{
-    return FileSystemPathMock::getMock()->isFile(this);
-}
-
-uint64_t FileSystemPath::size() const
-{
-    return FileSystemPathMock::getMock()->size(this);
-}
-
-bool FileSystemPath::isDir() const
-{
-    return FileSystemPathMock::getMock()->isDir(this);
-}
-
-FileSystemPath FileSystemPath::parent() const
-{
-    return FileSystemPathMock::getMock()->parent(this);
-}
-
-FileSystemPathMock* FileSystemPathMock::m_currentMock = nullptr;
-
-FileSystemPathMock::FileSystemPathMock()
-{
-    enforce(nullptr == m_currentMock, "Can only have one mock active at a time.");
     m_currentMock = this;
 }
 
-FileSystemPathMock::~FileSystemPathMock()
+SqliteDBMock::~SqliteDBMock()
 {
-    enforce(this == m_currentMock, "Can only have one mock active at a time (destructor).");
     m_currentMock = nullptr;
+
 }
 
 }

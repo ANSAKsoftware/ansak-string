@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2017.03.27 - First Version
+// 2017.05.22 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,75 +35,48 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_file_system_path.cxx -- implementation of a mock to FileSystemPath
+// mock_sqlite_statement.hxx -- declaration of a mock to sqlite for statemnets
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "mock_file_system_path.hxx"
-#include <runtime_exception.hxx>
+#pragma once
 
-using namespace testing;
+#include <sqlite3.h>
+#include <gmock/gmock.h>
 
 namespace ansak
 {
 
-FileSystemPath::FileSystemPath(const FilePath& path)
-  : m_path(path),
-    m_isValid(path.isReal())
+class SqliteStatementMock
 {
-}
+public:
+    static SqliteStatementMock* getMock() { return m_currentMock; }
 
-FileSystemPath::~FileSystemPath()
-{
-}
+    SqliteStatementMock();
+    ~SqliteStatementMock();
 
-bool FileSystemPath::createDirectory(bool)
-{
-    return FileSystemPathMock::getMock()->createDirectory(this);
-}
+    MOCK_METHOD1(clear_bindings, int(sqlite3_stmt*));
+    MOCK_METHOD3(bind_double, int(sqlite3_stmt*, int, double));
+    MOCK_METHOD3(bind_int, int(sqlite3_stmt*, int, int));
+    MOCK_METHOD3(bind_int64, int(sqlite3_stmt*, int, sqlite3_int64));
+    MOCK_METHOD5(bind_text, int(sqlite3_stmt*, int, const char*, int, void(*)(void*)));
+    MOCK_METHOD5(bind_blob, int(sqlite3_stmt*, int, const void*, int, void(*)(void*)));
+    MOCK_METHOD1(step, int(sqlite3_stmt*));
+    MOCK_METHOD1(column_count, int(sqlite3_stmt*));
+    MOCK_METHOD1(finalize, int(sqlite3_stmt*));
+    MOCK_METHOD1(reset, int(sqlite3_stmt*));
+    MOCK_METHOD1(sql, const char*(sqlite3_stmt*));
+    MOCK_METHOD2(column_type, int(sqlite3_stmt*, int));
+    MOCK_METHOD2(column_int, int(sqlite3_stmt*, int));
+    MOCK_METHOD2(column_int64, sqlite3_int64(sqlite3_stmt*, int));
+    MOCK_METHOD2(column_text, const unsigned char*(sqlite3_stmt*, int));
+    MOCK_METHOD2(column_double, double(sqlite3_stmt*, int));
+    MOCK_METHOD2(column_bytes, int(sqlite3_stmt*, int));
+    MOCK_METHOD2(column_blob, const void*(sqlite3_stmt*, int));
 
-bool FileSystemPath::remove(bool recursive)
-{
-    return FileSystemPathMock::getMock()->remove(this, recursive);
-}
+private:
 
-bool FileSystemPath::exists() const
-{
-    return FileSystemPathMock::getMock()->exists(this);
-}
-
-bool FileSystemPath::isFile() const
-{
-    return FileSystemPathMock::getMock()->isFile(this);
-}
-
-uint64_t FileSystemPath::size() const
-{
-    return FileSystemPathMock::getMock()->size(this);
-}
-
-bool FileSystemPath::isDir() const
-{
-    return FileSystemPathMock::getMock()->isDir(this);
-}
-
-FileSystemPath FileSystemPath::parent() const
-{
-    return FileSystemPathMock::getMock()->parent(this);
-}
-
-FileSystemPathMock* FileSystemPathMock::m_currentMock = nullptr;
-
-FileSystemPathMock::FileSystemPathMock()
-{
-    enforce(nullptr == m_currentMock, "Can only have one mock active at a time.");
-    m_currentMock = this;
-}
-
-FileSystemPathMock::~FileSystemPathMock()
-{
-    enforce(this == m_currentMock, "Can only have one mock active at a time (destructor).");
-    m_currentMock = nullptr;
-}
+    static SqliteStatementMock* m_currentMock;
+};
 
 }

@@ -57,7 +57,9 @@ public:
     MOCK_METHOD2(remove, bool(FileSystemPath*, bool));
     MOCK_METHOD1(exists, bool(const FileSystemPath*));
     MOCK_METHOD1(isFile, bool(const FileSystemPath*));
+    MOCK_METHOD1(isDir, bool(const FileSystemPath*));
     MOCK_METHOD1(size, uint64_t(const FileSystemPath*));
+    MOCK_METHOD1(parent, FileSystemPath(const FileSystemPath*));
 
 private:
 

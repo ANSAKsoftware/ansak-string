@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2017.03.27 - First Version
+// 2017.05.21 - First Version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,75 +35,37 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_file_system_path.cxx -- implementation of a mock to FileSystemPath
+// mock_sqlite_errmsg.cxx -- implementation of a mock to sqlite for err msgs
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "mock_file_system_path.hxx"
-#include <runtime_exception.hxx>
+#include "mock_sqlite_errmsg.hxx"
 
-using namespace testing;
+using namespace ansak;
 
-namespace ansak
+const char* sqlite3_errmsg(sqlite3* db)
 {
-
-FileSystemPath::FileSystemPath(const FilePath& path)
-  : m_path(path),
-    m_isValid(path.isReal())
-{
+    return SqliteErrmsgMock::getMock()->errmsg(db);
 }
 
-FileSystemPath::~FileSystemPath()
+const char* sqlite3_errstr(int n)
 {
+    return SqliteErrmsgMock::getMock()->errstr(n);
 }
 
-bool FileSystemPath::createDirectory(bool)
-{
-    return FileSystemPathMock::getMock()->createDirectory(this);
-}
+namespace ansak {
 
-bool FileSystemPath::remove(bool recursive)
-{
-    return FileSystemPathMock::getMock()->remove(this, recursive);
-}
+SqliteErrmsgMock* SqliteErrmsgMock::m_currentMock = nullptr;
 
-bool FileSystemPath::exists() const
+SqliteErrmsgMock::SqliteErrmsgMock()
 {
-    return FileSystemPathMock::getMock()->exists(this);
-}
-
-bool FileSystemPath::isFile() const
-{
-    return FileSystemPathMock::getMock()->isFile(this);
-}
-
-uint64_t FileSystemPath::size() const
-{
-    return FileSystemPathMock::getMock()->size(this);
-}
-
-bool FileSystemPath::isDir() const
-{
-    return FileSystemPathMock::getMock()->isDir(this);
-}
-
-FileSystemPath FileSystemPath::parent() const
-{
-    return FileSystemPathMock::getMock()->parent(this);
-}
-
-FileSystemPathMock* FileSystemPathMock::m_currentMock = nullptr;
-
-FileSystemPathMock::FileSystemPathMock()
-{
-    enforce(nullptr == m_currentMock, "Can only have one mock active at a time.");
     m_currentMock = this;
 }
 
-FileSystemPathMock::~FileSystemPathMock()
+SqliteErrmsgMock::~SqliteErrmsgMock()
 {
-    enforce(this == m_currentMock, "Can only have one mock active at a time (destructor).");
     m_currentMock = nullptr;
+
 }
 
 }

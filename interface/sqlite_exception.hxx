@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2017.03.27 - First Version
+// 2017.05.16 - First version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,75 +35,53 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// mock_file_system_path.cxx -- implementation of a mock to FileSystemPath
+// sqlite_db_exception.hxx -- An exception class for SQLite problems
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include "mock_file_system_path.hxx"
-#include <runtime_exception.hxx>
+#pragma once
 
-using namespace testing;
+#include <string>
+#include <vector>
+#include <sqlite3.h>
+#include <file_path.hxx>
 
 namespace ansak
 {
 
-FileSystemPath::FileSystemPath(const FilePath& path)
-  : m_path(path),
-    m_isValid(path.isReal())
+class SqliteException : public std::exception
 {
-}
+public:
 
-FileSystemPath::~FileSystemPath()
-{
-}
+    SqliteException
+    (
+        const FilePath&     dbFile,
+        const char*         context
+    ) noexcept;
 
-bool FileSystemPath::createDirectory(bool)
-{
-    return FileSystemPathMock::getMock()->createDirectory(this);
-}
+    SqliteException
+    (
+        const FilePath&     dbFile,
+        int                 sqliteCode,
+        const char*         context
+    ) noexcept;
 
-bool FileSystemPath::remove(bool recursive)
-{
-    return FileSystemPathMock::getMock()->remove(this, recursive);
-}
+    SqliteException
+    (
+        const FilePath&     dbFile,
+        sqlite3*            db,
+        const char*         context
+    ) noexcept;
 
-bool FileSystemPath::exists() const
-{
-    return FileSystemPathMock::getMock()->exists(this);
-}
+    virtual ~SqliteException() noexcept override;
 
-bool FileSystemPath::isFile() const
-{
-    return FileSystemPathMock::getMock()->isFile(this);
-}
+    virtual const char* what() const noexcept override;
 
-uint64_t FileSystemPath::size() const
-{
-    return FileSystemPathMock::getMock()->size(this);
-}
+    FilePath filePath() const { return m_filePath; }
 
-bool FileSystemPath::isDir() const
-{
-    return FileSystemPathMock::getMock()->isDir(this);
-}
-
-FileSystemPath FileSystemPath::parent() const
-{
-    return FileSystemPathMock::getMock()->parent(this);
-}
-
-FileSystemPathMock* FileSystemPathMock::m_currentMock = nullptr;
-
-FileSystemPathMock::FileSystemPathMock()
-{
-    enforce(nullptr == m_currentMock, "Can only have one mock active at a time.");
-    m_currentMock = this;
-}
-
-FileSystemPathMock::~FileSystemPathMock()
-{
-    enforce(this == m_currentMock, "Can only have one mock active at a time (destructor).");
-    m_currentMock = nullptr;
-}
+private:
+    std::string         m_what = std::string();
+    FilePath            m_filePath;
+};
 
 }

@@ -35,6 +35,20 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( os )
-add_subdirectory( file )
-add_subdirectory( sqlite )
+set( _target test-ansakSqlite )
+set( _targetTest ansakSqliteTest )
+set( _privLibraries ansakSqlite ansakFileTools mock-file mock-os ansakPrimitives ansakString )
+set( _mockLibraries mock-sqlite gmock_main )
+
+set( _targetSrc test_sqlite_exception.cxx
+                test_sqlite_db.cxx
+                test_sqlite_statement.cxx
+                )
+
+add_executable( ${_target} ${_targetSrc} )
+target_link_libraries( ${_target} PRIVATE ${_privLibraries} ${_mockLibraries} )
+SETUP_TO_EXECUTE_GTEST( ${_target} )
+
+add_test( NAME ${_targetTest} COMMAND ${_target} )
+
+

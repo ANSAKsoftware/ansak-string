@@ -35,6 +35,15 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory( os )
-add_subdirectory( file )
-add_subdirectory( sqlite )
+set( _target ansakSqlite )
+set( _interface ../../interface )
+
+set( _targetSrc sqlite_db.cxx
+                sqlite_db_pragmas.cxx
+                sqlite_statement.cxx
+                sqlite_exception.cxx
+   )
+
+add_library( ${_target} STATIC ${_targetSrc} )
+target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )
+
