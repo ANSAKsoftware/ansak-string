@@ -32,21 +32,21 @@ namespace ansak {
 
 class SqliteDB;
 
-class SqliteStatement;
-typedef std::shared_ptr<SqliteStatement> SqliteStatementPointer;
+class SqliteStatementImpl;
+typedef std::shared_ptr<SqliteStatementImpl> SqliteStatementPointer;
 
 ///////////////////////////////////////////////////////////////////////////
 // class sqliteStatement -- wrapper for a SQLITE3 statement, including
 //                          binding-in, retrieving out, executing, resetting
 
-class SqliteStatement {
+class SqliteStatementImpl {
 
     friend class SqliteDB;
 
     //=======================================================================
     // Constructor, private -- called only by SqliteDB::prepare
 
-    SqliteStatement
+    SqliteStatementImpl
     (
         SqliteDB*           db,         // I - a pointer to the SqliteDB object
         sqlite3_stmt*       stmt        // I - the SQLite3-prepared statement
@@ -59,13 +59,13 @@ public:
     //=======================================================================
     // Copy Constructor, assignment deleted private -- called only by SqliteDB::prepare
 
-    SqliteStatement(const SqliteStatement& src) = delete;
-    SqliteStatement& operator=(const SqliteStatement& src) const = delete;
+    SqliteStatementImpl(const SqliteStatementImpl& src) = delete;
+    SqliteStatementImpl& operator=(const SqliteStatementImpl& src) const = delete;
 
     //=======================================================================
     // Destructor
 
-    ~SqliteStatement();
+    ~SqliteStatementImpl();
 
     //=======================================================================
     // setBeginTransaction
@@ -192,7 +192,7 @@ private:
 
         RetrievalVarException
         (
-            const SqliteStatement::RetrievalVar& var,
+            const SqliteStatementImpl::RetrievalVar& var,
             int columnIndex,
             int sqliteType
         ) noexcept;

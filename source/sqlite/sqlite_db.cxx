@@ -274,7 +274,7 @@ SqliteStatementPointer SqliteDB::prepareStatement(const string& stmt)
         description += sqlite3_errmsg(m_pDB);
         throw SqliteException(m_path, rc, description.c_str());
     }
-    auto stmtP = SqliteStatementPointer(new SqliteStatement(this, theStatement));
+    auto stmtP = SqliteStatementPointer(new SqliteStatementImpl(this, theStatement));
 
     {
         lock_guard<mutex> l(m_statementsLock);
@@ -295,7 +295,7 @@ SqliteDB::Statement SqliteDB::prepare(const std::string& stmt)
 //===========================================================================
 // public
 
-void SqliteDB::finalizeStatement(SqliteStatement* stmt)
+void SqliteDB::finalizeStatement(SqliteStatementImpl* stmt)
 {
     enforce(m_pDB != 0, "SqliteDB::finalizeStatement called on closed database");
 

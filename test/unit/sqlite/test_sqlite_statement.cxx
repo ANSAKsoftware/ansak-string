@@ -145,7 +145,7 @@ TEST_F(SqliteStmtFixture, prepareSuccess)
 
     auto s = uut().prepareStatement("Do Something");
     EXPECT_TRUE(s);
-    EXPECT_NE(nullptr, dynamic_cast<SqliteStatement*>(s.get()));
+    EXPECT_NE(nullptr, dynamic_cast<SqliteStatementImpl*>(s.get()));
 }
 
 TEST_F(SqliteStmtFixture, bindABunch)

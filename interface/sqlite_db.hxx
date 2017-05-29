@@ -126,7 +126,7 @@ public:
     ///////////////////////////////////////////////////////////////////////
     // finalizeStatement -- finalize a statement explicitly, either by pointer
     //                      or by smart pointer
-    void finalizeStatement(SqliteStatement* stmt);
+    void finalizeStatement(SqliteStatementImpl* stmt);
     void finalizeStatement(SqliteStatementPointer& stmt);
 
     ///////////////////////////////////////////////////////////////////////
@@ -149,9 +149,9 @@ public:
         ///////////////////////////////////////////////////////////////////
         // Make this class function as much like a smart pointer as possible
 
-        SqliteStatement* get() const noexcept { return m_p.get(); }
-        SqliteStatement* operator->() const noexcept { return m_p.get(); }
-        SqliteStatement& operator*() const noexcept { return *m_p.get(); }
+        SqliteStatementImpl* get() const noexcept { return m_p.get(); }
+        SqliteStatementImpl* operator->() const noexcept { return m_p.get(); }
+        SqliteStatementImpl& operator*() const noexcept { return *m_p.get(); }
         void operator()(bool* done = 0) { (m_p.get())->operator()(done); }
 
     private:

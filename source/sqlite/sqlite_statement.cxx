@@ -65,18 +65,18 @@ namespace
     };
 
     const unordered_map<int, string> typesToFunctions {
-        { kDoubleType, "SqliteStatement::setupRetrieval(int, double&, bool*)" },
-        { kIntType,    "SqliteStatement::setupRetrieval(int, int&, bool*) " },
-        { kInt64Type,  "SqliteStatement::setupRetrieval(int, long long&, bool*) " },
-        { kTextType,   "SqliteStatement::setupRetrieval(int, string&, bool*)" },
-        { kBlobType,   "SqliteStatement::setupRetrieval(int, vector<char>&, bool*)" }
+        { kDoubleType, "SqliteStatementImpl::setupRetrieval(int, double&, bool*)" },
+        { kIntType,    "SqliteStatementImpl::setupRetrieval(int, int&, bool*) " },
+        { kInt64Type,  "SqliteStatementImpl::setupRetrieval(int, long long&, bool*) " },
+        { kTextType,   "SqliteStatementImpl::setupRetrieval(int, string&, bool*)" },
+        { kBlobType,   "SqliteStatementImpl::setupRetrieval(int, vector<char>&, bool*)" }
     };
 }
 
 //===========================================================================
 // private, Constructor
 
-SqliteStatement::SqliteStatement
+SqliteStatementImpl::SqliteStatementImpl
 (
     SqliteDB*           db,         // I - a pointer to the sqliteDB object
     sqlite3_stmt*       stmt        // I - the SQLite3-prepared statement
@@ -96,7 +96,7 @@ SqliteStatement::SqliteStatement
 //===========================================================================
 // public, Destructor
 
-SqliteStatement::~SqliteStatement()
+SqliteStatementImpl::~SqliteStatementImpl()
 {
     enforce(m_stmt == 0, "Wrapping database finalizes before disposing statements.");
 }
@@ -104,7 +104,7 @@ SqliteStatement::~SqliteStatement()
 //===========================================================================
 // public
 
-void SqliteStatement::bind
+void SqliteStatementImpl::bind
 (
     int         n,          // I - a 0-based index into the statement
     double      d           // I - a value to bind into the statement
@@ -115,7 +115,7 @@ void SqliteStatement::bind
     int rc = sqlite3_bind_double(m_stmt, n + 1, d);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatement::bind(int, double)");
+        auto e = m_db->makeException("SqliteStatementImpl::bind(int, double)");
         m_db->rollback();
         throw e;
     }
@@ -126,7 +126,7 @@ void SqliteStatement::bind
 //===========================================================================
 // public
 
-void SqliteStatement::bind
+void SqliteStatementImpl::bind
 (
     int         n,          // I - a 0-based index into the statement
     int         i           // I - a value to bind into the statement
@@ -137,7 +137,7 @@ void SqliteStatement::bind
     int rc = sqlite3_bind_int(m_stmt, n + 1, i);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatement::bind(int, int)");
+        auto e = m_db->makeException("SqliteStatementImpl::bind(int, int)");
         m_db->rollback();
         throw e;
     }
@@ -148,7 +148,7 @@ void SqliteStatement::bind
 //===========================================================================
 // public
 
-void SqliteStatement::bind
+void SqliteStatementImpl::bind
 (
     int         n,          // I - a 0-based index into the statement
     long long   i64         // I - a value to bind into the statement
@@ -159,7 +159,7 @@ void SqliteStatement::bind
     int rc = sqlite3_bind_int64(m_stmt, n + 1, i64);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatement::bind(int, long long)");
+        auto e = m_db->makeException("SqliteStatementImpl::bind(int, long long)");
         m_db->rollback();
         throw e;
     }
@@ -170,7 +170,7 @@ void SqliteStatement::bind
 //===========================================================================
 // public
 
-void SqliteStatement::bind
+void SqliteStatementImpl::bind
 (
     int             n,          // I - a 0-based index into the statement
     const string&   text        // I - a value to bind into the statement
@@ -181,7 +181,7 @@ void SqliteStatement::bind
     int rc = sqlite3_bind_text(m_stmt, n + 1, text.c_str(), text.size(), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatement::bind(int, const string&)");
+        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const string&)");
         m_db->rollback();
         throw e;
     }
@@ -192,7 +192,7 @@ void SqliteStatement::bind
 //===========================================================================
 // public
 
-void SqliteStatement::bind
+void SqliteStatementImpl::bind
 (
     int         n,          // I - a 0-based index into the statement
     const char* text        // I - a value to bind into the statement
@@ -203,7 +203,7 @@ void SqliteStatement::bind
     int rc = sqlite3_bind_text(m_stmt, n + 1, text, strlen(text), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatement::bind(int, const char*)");
+        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const char*)");
         m_db->rollback();
         throw e;
     }
@@ -214,7 +214,7 @@ void SqliteStatement::bind
 //===========================================================================
 // public
 
-void SqliteStatement::bind
+void SqliteStatementImpl::bind
 (
     int             n,          // I - a 0-based index into the statement
     vector<char>&   data        // I - a value to bind into the statement
@@ -225,7 +225,7 @@ void SqliteStatement::bind
     int rc = sqlite3_bind_blob(m_stmt, n + 1, &data[0], data.size(), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatement::bind(int, const vector<char>&)");
+        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const vector<char>&)");
         m_db->rollback();
         throw e;
     }
@@ -236,7 +236,7 @@ void SqliteStatement::bind
 //===========================================================================
 // public
 
-void SqliteStatement::bind
+void SqliteStatementImpl::bind
 (
     int             n,              // I - a 0-based index into the statement
     const char*     data,           // I - a lenght-terminated value to bind
@@ -248,7 +248,7 @@ void SqliteStatement::bind
     int rc = sqlite3_bind_blob(m_stmt, n + 1, data, dataLength, SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatement::bind(int, const char*, int)");
+        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const char*, int)");
         m_db->rollback();
         throw e;
     }
@@ -259,7 +259,7 @@ void SqliteStatement::bind
 //===========================================================================
 // public
 
-void SqliteStatement::setupRetrieval
+void SqliteStatementImpl::setupRetrieval
 (
     int             n,          // I - a 0-based index into the columns
     double&         d,          // O - (via operator()) where to store the value
@@ -268,7 +268,7 @@ void SqliteStatement::setupRetrieval
 {
     lock_guard<mutex> l(m_statementLock);
     enforce(m_stmt != 0, "No active statement being wrapped.");
-    enforce(n >= 0, "SqliteStatement::setupRetrieval(int, double&, bool*) requires a "
+    enforce(n >= 0, "SqliteStatementImpl::setupRetrieval(int, double&, bool*) requires a "
                     "whole-number index");
 
     RetrievalVar v = { kDoubleType, &d, pIsNull };
@@ -278,7 +278,7 @@ void SqliteStatement::setupRetrieval
 //===========================================================================
 // public
 
-void SqliteStatement::setupRetrieval
+void SqliteStatementImpl::setupRetrieval
 (
     int             n,          // I - a 0-based index into the columns
     int&            i,          // O - (via operator()) where to store the value
@@ -287,7 +287,7 @@ void SqliteStatement::setupRetrieval
 {
     lock_guard<mutex> l(m_statementLock);
     enforce(m_stmt != 0, "No active statement being wrapped.");
-    enforce(n >= 0, "SqliteStatement::setupRetrieval(int, int&, bool*) requires a "
+    enforce(n >= 0, "SqliteStatementImpl::setupRetrieval(int, int&, bool*) requires a "
                     "whole-number index");
 
     RetrievalVar v = { kIntType, &i, pIsNull };
@@ -297,7 +297,7 @@ void SqliteStatement::setupRetrieval
 //===========================================================================
 // public
 
-void SqliteStatement::setupRetrieval
+void SqliteStatementImpl::setupRetrieval
 (
     int             n,          // I - a 0-based index into the columns
     long long&      i64,        // O - (via operator()) where to store the value
@@ -306,7 +306,7 @@ void SqliteStatement::setupRetrieval
 {
     lock_guard<mutex> l(m_statementLock);
     enforce(m_stmt != 0, "No active statement being wrapped.");
-    enforce(n >= 0, "SqliteStatement::setupRetrieval(int, long long&, bool*) requires a "
+    enforce(n >= 0, "SqliteStatementImpl::setupRetrieval(int, long long&, bool*) requires a "
                     "whole-number index");
 
     RetrievalVar v = { kInt64Type, &i64, pIsNull };
@@ -316,7 +316,7 @@ void SqliteStatement::setupRetrieval
 //===========================================================================
 // public
 
-void SqliteStatement::setupRetrieval
+void SqliteStatementImpl::setupRetrieval
 (
     int             n,          // I - a 0-based index into the columns
     string&         text,       // O - (via operator()) where to store the value
@@ -325,7 +325,7 @@ void SqliteStatement::setupRetrieval
 {
     lock_guard<mutex> l(m_statementLock);
     enforce(m_stmt != 0, "No active statement being wrapped.");
-    enforce(n >= 0, "SqliteStatement::setupRetrieval(int, string&, bool*) requires a "
+    enforce(n >= 0, "SqliteStatementImpl::setupRetrieval(int, string&, bool*) requires a "
                     "whole-number index");
 
     RetrievalVar v = { kTextType, &text, pIsNull };
@@ -335,7 +335,7 @@ void SqliteStatement::setupRetrieval
 //===========================================================================
 // public
 
-void SqliteStatement::setupRetrieval
+void SqliteStatementImpl::setupRetrieval
 (
     int             n,          // I - a 0-based index into the columns
     vector<char>&   data,       // O - (via operator()) where to store the value
@@ -344,7 +344,7 @@ void SqliteStatement::setupRetrieval
 {
     lock_guard<mutex> l(m_statementLock);
     enforce(m_stmt != 0, "No active statement being wrapped.");
-    enforce(n >= 0, "SqliteStatement::setupRetrieval(int, vector<cahr>&, bool*) requires a "
+    enforce(n >= 0, "SqliteStatementImpl::setupRetrieval(int, vector<cahr>&, bool*) requires a "
                     "whole-number index");
 
     RetrievalVar v = { kBlobType, &data, pIsNull };
@@ -354,7 +354,7 @@ void SqliteStatement::setupRetrieval
 //===========================================================================
 // public
 
-void SqliteStatement::operator()
+void SqliteStatementImpl::operator()
 (
     bool*           done    // O - sets the value true if the query has completed, def 0
 )
@@ -413,7 +413,7 @@ void SqliteStatement::operator()
     }
     else
     {
-        auto e = m_db->makeException("SqliteStatement::operator()(bool*)");
+        auto e = m_db->makeException("SqliteStatementImpl::operator()(bool*)");
         m_db->rollback();
         throw e;
     }
@@ -422,7 +422,7 @@ void SqliteStatement::operator()
 //===========================================================================
 // public
 
-void SqliteStatement::reset
+void SqliteStatementImpl::reset
 (
     bool minimalReset       // I - reset only the statement, not retrieves, binds, def false
 )
@@ -447,7 +447,7 @@ void SqliteStatement::reset
 //===========================================================================
 // public
 
-string SqliteStatement::sql()
+string SqliteStatementImpl::sql()
 {
     lock_guard<mutex> l(m_statementLock);
     enforce(m_stmt != 0, "No active statement being wrapped.");
@@ -464,7 +464,7 @@ string SqliteStatement::sql()
 //===========================================================================
 // private
 
-void SqliteStatement::finalize()
+void SqliteStatementImpl::finalize()
 {
     lock_guard<mutex> l(m_statementLock);
     if (m_stmt != 0)
@@ -478,7 +478,7 @@ void SqliteStatement::finalize()
 //===========================================================================
 // public to private inner class
 
-void SqliteStatement::RetrievalVar::operator()
+void SqliteStatementImpl::RetrievalVar::operator()
 (
     sqlite3_stmt*   stmt,       // I - the statement being selected from
     int             n           // I - 0-based index into the columns
@@ -549,13 +549,13 @@ void SqliteStatement::RetrievalVar::operator()
     }
     else
     {
-        throw SqliteStatement::RetrievalVarException(*this, n, t);
+        throw SqliteStatementImpl::RetrievalVarException(*this, n, t);
     }
 }
 
-SqliteStatement::RetrievalVarException::RetrievalVarException
+SqliteStatementImpl::RetrievalVarException::RetrievalVarException
 (
-    const SqliteStatement::RetrievalVar& var,
+    const SqliteStatementImpl::RetrievalVar& var,
     int columnIndex,
     int sqliteType
 ) noexcept
@@ -565,7 +565,7 @@ SqliteStatement::RetrievalVarException::RetrievalVarException
         auto iFunction = typesToFunctions.find(var.typeID);
         if (iFunction == typesToFunctions.end())
         {
-            m_what = "SqliteStatement retrieve variable data has been corrupted.";
+            m_what = "SqliteStatementImpl retrieve variable data has been corrupted.";
         }
         else
         {
@@ -590,9 +590,9 @@ SqliteStatement::RetrievalVarException::RetrievalVarException
     {}
 }
 
-SqliteStatement::RetrievalVarException::~RetrievalVarException() noexcept {}
+SqliteStatementImpl::RetrievalVarException::~RetrievalVarException() noexcept {}
 
-const char* SqliteStatement::RetrievalVarException::what() const noexcept
+const char* SqliteStatementImpl::RetrievalVarException::what() const noexcept
 {
     try
     {
