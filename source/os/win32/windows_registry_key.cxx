@@ -37,7 +37,7 @@
 //
 // windows_registry_key.cxx -- implementation of a class that wraps Windows
 //                             Registry access
-// 
+//
 ///////////////////////////////////////////////////////////////////////////
 
 #if defined(WIN32)
@@ -104,7 +104,7 @@ WindowsRegKey WindowsRegKey::open
         recomponents.resize(2);
         auto subRootPath = join(recomponents, '\\');
         auto subRootKey = open(subRootPath);
-        // 
+
         theKey = create(subRootPath, subRootKey.m_theKey, path);
         if (theKey == 0)
         {

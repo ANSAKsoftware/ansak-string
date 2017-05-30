@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -491,7 +491,7 @@ bool FilePath::componentsHaveNoInvalidWindowsCharacters() const
         return firstValid &&
             find_if(m_components.begin() + 1, m_components.end(), [](const utf8String& c)
                 { return c.find_first_of(charsInvalidForWindowsPath) !=
-                            utf8String::npos; } ) 
+                            utf8String::npos; } )
                     == m_components.end();
 
     }

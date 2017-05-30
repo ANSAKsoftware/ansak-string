@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -223,7 +223,7 @@ private:
     // CR, LF, FF or end-of-file) of non-control characters was found. Returns 0
     // for end-of-file with no text. Sets EOF flag true or false on successful
     // exit.
-    // 
+    //
     // Throws FileIsntText or LineIsTooLong on error.
 
     template<typename C>
@@ -326,7 +326,7 @@ private:
     GetNextOffsetFunc           m_getNextOffsetFunc;// encoding-jump-line-breaks
     EOLChecker                  m_classifyEOLFunc;  // encoding-specific 2-char check
     std::mutex                  m_oneUser;          // single-user access here.
-    
+
     std::deque<unsigned long long>
                                 m_lineStarts;       // stored start-of-line positions
     unsigned long long          m_nextScanStart;    // where to scan from next

@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -182,7 +182,7 @@ public:
         // to its state since, depending on what the OS does/does not allow (for local vs.
         // network files for instance), the underlying file may have changed or appeared to
         // change. Hence the core and current line contents are mutable to allow the class to
-        // handle those possibilities. 
+        // handle those possibilities.
         //
         // In practice this means that even for const methods, m_iterCore may continue to
         // point to the same FileOfLinesCore, or it may point to nothing (become an end()

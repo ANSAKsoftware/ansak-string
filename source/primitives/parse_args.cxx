@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -134,7 +134,7 @@ void throwBadArgs
 )
 {
     ostringstream line;
-    line << "argc/argv were not reasonable. argc = " << argc << 
+    line << "argc/argv were not reasonable. argc = " << argc <<
             "; argv = " << std::hex << reinterpret_cast<unsigned long long>(argv);
     if (totalSize == -1)
     {

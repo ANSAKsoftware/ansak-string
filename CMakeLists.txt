@@ -125,7 +125,7 @@ if( ${_ansakBuildType} STREQUAL "Coverage" )
 endif()
 
 if( _useTests )
-    if( ${_ansakRoot} ) 
+    if( ${_ansakRoot} )
         include( CTest )
         if( _ansakBuildType STREQUAL "Coverage" )
             if( NOT UNIX )

@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -72,7 +72,7 @@ char16_t toLower0100(char16_t c)
     {
         return 0x69;
     }
-    if ((c < 0x138) || 
+    if ((c < 0x138) ||
         (c >= 0x14A && c <= 0x177) ||
         (c >= 0x1A0 && c <= 0x1A5) ||
         (c >= 0x1DE && c <= 0x1EF) ||

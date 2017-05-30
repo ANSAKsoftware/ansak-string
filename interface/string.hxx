@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -332,7 +332,7 @@ inline bool isUcs4(const char32_t* test,
 // incompatibility between the resulting bytes and the target encoding type
 // emerges. Otherwise, they return the re-encoded string in the appropriate
 // basic_string<C> type. Incomplete but potentially valid encoding sequences
-// at end-of-string are ignored. 
+// at end-of-string are ignored.
 
 utf8String toUtf8
 (

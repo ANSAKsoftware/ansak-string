@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -179,7 +179,7 @@ public:
     // before sending to other libraries -- e.g. force-feeding Qt a window size.
     // This routine generates a new argc/argv pair, or returns the last (either
     // original or prepared) values.
-    // 
+    //
     // Return: none
 
     void operator()
