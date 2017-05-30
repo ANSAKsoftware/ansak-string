@@ -20,11 +20,13 @@
 
 #include <sqlite_db.hxx>
 #include <sqlite_exception.hxx>
+#include <sqlite_statement_impl.hxx>
 #include <file_system_path.hxx>
 #include <runtime_exception.hxx>
 #include <sstream>
 
 using namespace std;
+using namespace ansak::internal;
 
 namespace ansak {
 
@@ -204,7 +206,10 @@ void SqliteDB::close()
         }
         for (auto s : m_statementMap)
         {
-            s.second->finalize();
+            auto stmtImpl = dynamic_cast<SqliteStatementImpl*>(s.second.get());
+            enforce(stmtImpl != nullptr, "SqliteDB::close noticed improperly typed "
+                                         "SqliteStatement*");
+            stmtImpl->finalize();
         }
 
         sqlite3* pClosing = m_pDB;
@@ -295,11 +300,14 @@ SqliteDB::Statement SqliteDB::prepare(const std::string& stmt)
 //===========================================================================
 // public
 
-void SqliteDB::finalizeStatement(SqliteStatementImpl* stmt)
+void SqliteDB::finalizeStatement(SqliteStatement* stmt)
 {
     enforce(m_pDB != 0, "SqliteDB::finalizeStatement called on closed database");
+    auto stmtImpl = dynamic_cast<SqliteStatementImpl*>(stmt);
+    enforce(stmtImpl != nullptr, "SqliteDB::finalizeStatement called on other sub-class "
+                                 "than SqliteStatementImpl*");
 
-    stmt->finalize();
+    stmtImpl->finalize();
     lock_guard<mutex> l(m_statementsLock);
     m_statementMap.erase(stmt->id());
 }
@@ -391,12 +399,16 @@ void SqliteDB::commit()
 
 int SqliteDB::transactionExecute(SqliteStatementPointer& transactionQuery)
 {
-    auto rc = sqlite3_step(transactionQuery->m_stmt);
+    auto stmtImpl = dynamic_cast<SqliteStatementImpl*>(transactionQuery.get());
+    enforce(stmtImpl != nullptr, "SqliteDB::transactionExecute called on other sub-class "
+                                 "than SqliteStatementImpl*");
+
+    auto rc = sqlite3_step(stmtImpl->m_stmt);
     if (rc != SQLITE_DONE && rc != SQLITE_OK)
     {
         return rc;
     }
-    return sqlite3_reset(transactionQuery->m_stmt);
+    return sqlite3_reset(stmtImpl->m_stmt);
 }
 
 }

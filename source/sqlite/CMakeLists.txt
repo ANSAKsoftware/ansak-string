@@ -37,10 +37,12 @@ cmake_minimum_required(VERSION 3.1)
 
 set( _target ansakSqlite )
 set( _interface ../../interface )
+set( _privIncludes ../include )
 
 set( _targetSrc sqlite_db.cxx
                 sqlite_db_pragmas.cxx
                 sqlite_statement.cxx
+                sqlite_statement_impl.cxx
                 sqlite_exception.cxx
    )
 

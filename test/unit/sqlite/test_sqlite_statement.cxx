@@ -40,6 +40,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include <sqlite_db.hxx>
+#include <sqlite_statement_impl.hxx>
 #include <mock_sqlite_db.hxx>
 #include <mock_sqlite_errmsg.hxx>
 #include <mock_sqlite_statement.hxx>
@@ -51,6 +52,7 @@
 #include <gmock/gmock.h>
 
 using namespace ansak;
+using namespace ansak::internal;
 using namespace testing;
 using namespace std;
 
@@ -163,6 +165,7 @@ TEST_F(SqliteStmtFixture, bindABunch)
     start(false);
 
     auto s = uut().prepareStatement("Do Something");
+    auto si = dynamic_cast<SqliteStatementImpl*>(s.get());
     s->bind(0, 3.2910);
     s->bind(1, 2);
     s->bind(2, 19208098509128ll);
@@ -174,11 +177,11 @@ TEST_F(SqliteStmtFixture, bindABunch)
     s->bind(5, data);
     static const char* doto = "That is the way to this.";
     s->bind(6, doto, 30);
-    EXPECT_TRUE(s->hasBindings());
+    EXPECT_TRUE(si->hasBindings());
     s->reset(true);
-    EXPECT_TRUE(s->hasBindings());
+    EXPECT_TRUE(si->hasBindings());
     s->reset();
-    EXPECT_FALSE(s->hasBindings());
+    EXPECT_FALSE(si->hasBindings());
 }
 
 TEST_F(SqliteStmtFixture, throwOnBindD)
@@ -281,8 +284,9 @@ TEST_F(SqliteStmtFixture, noRetrieval)
     start();
 
     auto s = uut().prepareStatement("Do something");
-    EXPECT_FALSE(s->hasRetrievals());
-    EXPECT_EQ(0ul, s->numRetrievals());
+    auto si = dynamic_cast<SqliteStatementImpl*>(s.get());
+    EXPECT_FALSE(si->hasRetrievals());
+    EXPECT_EQ(0ul, si->numRetrievals());
 }
 
 TEST_F(SqliteStmtFixture, getSql)
@@ -309,6 +313,7 @@ TEST_F(SqliteStmtFixture, retrievalSetups)
     start();
 
     auto stmt = uut().prepareStatement("select * from everything;");
+    auto stmti = dynamic_cast<SqliteStatementImpl*>(stmt.get());
     double d = 0.0;
     int n = 0;
     long long n64 = 0ll;
@@ -328,8 +333,8 @@ TEST_F(SqliteStmtFixture, retrievalSetups)
     stmt->setupRetrieval(3, s, &textIsNull);
     stmt->setupRetrieval(4, data, &blobIsNull);
 
-    EXPECT_TRUE(stmt->hasRetrievals());
-    EXPECT_EQ(5ul, stmt->numRetrievals());
+    EXPECT_TRUE(stmti->hasRetrievals());
+    EXPECT_EQ(5ul, stmti->numRetrievals());
 
     EXPECT_THAT(d, DoubleEq(0.0));
     EXPECT_EQ(0, n);
@@ -347,12 +352,12 @@ TEST_F(SqliteStmtFixture, retrievalSetups)
     EXPECT_FALSE(blobIsNull);
 
     stmt->reset(true);
-    EXPECT_TRUE(stmt->hasRetrievals());
-    EXPECT_EQ(5ul, stmt->numRetrievals());
+    EXPECT_TRUE(stmti->hasRetrievals());
+    EXPECT_EQ(5ul, stmti->numRetrievals());
 
     stmt->reset();
-    EXPECT_FALSE(stmt->hasRetrievals());
-    EXPECT_EQ(0ul, stmt->numRetrievals());
+    EXPECT_FALSE(stmti->hasRetrievals());
+    EXPECT_EQ(0ul, stmti->numRetrievals());
 }
 
 TEST_F(SqliteStmtFixture, retrievalsOneDone)
