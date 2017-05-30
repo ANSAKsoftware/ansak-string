@@ -44,6 +44,8 @@ set( _targetSrc sqlite_db.cxx
                 sqlite_statement.cxx
                 sqlite_statement_impl.cxx
                 sqlite_exception.cxx
+                sqlite_retrieval_var.cxx
+                sqlite_retrieval_exception.cxx
    )
 
 add_library( ${_target} STATIC ${_targetSrc} )

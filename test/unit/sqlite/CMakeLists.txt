@@ -44,6 +44,7 @@ set( _mockLibraries mock-sqlite gmock_main )
 set( _targetSrc test_sqlite_exception.cxx
                 test_sqlite_db.cxx
                 test_sqlite_statement.cxx
+                test_sqlite_retrieval_exception.cxx
                 )
 
 add_executable( ${_target} ${_targetSrc} )

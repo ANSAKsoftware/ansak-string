@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2017, Arthur N. Klassen
+// Copyright (c) 2014, Arthur N. Klassen
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,8 @@
 #pragma once
 
 #include <sqlite_statement.hxx>
+#include <sqlite_retrieval_var.hxx>
+#include <sqlite_retrieval_exception.hxx>
 
 #include <unordered_map>
 #include <mutex>
@@ -186,50 +188,6 @@ public:
     // Returns the originally prepared SQL statement.
 
     std::string sql() override;
-
-    class RetrievalVar;
-    class RetrievalVarException : public std::exception
-    {
-    public:
-
-        RetrievalVarException
-        (
-            const SqliteStatementImpl::RetrievalVar& var,
-            int columnIndex,
-            int sqliteType
-        ) noexcept;
-
-        virtual ~RetrievalVarException() noexcept override;
-        virtual const char* what() const noexcept override;
-    private:
-        std::string         m_what = std::string();
-    };
-
-    //=======================================================================
-    // RetrievalVar
-    //
-    // A place that records one column's value for the current row.
-
-    struct RetrievalVar {
-        int     typeID;         // What kind of type is being noted
-        void*   data;           // Where to store the result (!= 0)
-        bool*   pIsNull;        // Where to store a column's null-ness (may be 0)
-
-        //===================================================================
-        // operator()
-        //
-        // Executes the fetch of a single column's value into the associated
-        // data location
-
-        void operator()
-        (
-            sqlite3_stmt*   stmt,       // I - the statement being retrieved from
-            int             n           // I - 0-based index into the columns
-        );
-
-        RetrievalVarException typeMismatchException(int columnIndex, int sqliteType);
-    };
-    using RetrievalMap = std::unordered_map<int, RetrievalVar>;
 
 private:
 
