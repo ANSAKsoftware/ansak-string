@@ -294,7 +294,7 @@ SqliteStatementPointer SqliteDB::prepareStatement(const string& stmt)
 
     sqlite3_stmt* theStatement = 0;
     auto rc = sqlite3_prepare_v2(m_pDB, stmt.c_str(), -1, &theStatement, 0);
-    if (rc != SQLITE_OK)
+    if (rc != SQLITE_OK || theStatement == nullptr)
     {
         string description("Failure to prepare statement: \"");
         description += stmt;

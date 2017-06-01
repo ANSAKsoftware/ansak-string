@@ -35,24 +35,20 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-set( _target test-ansakSqlite )
-set( _targetTest ansakSqliteTest )
-set( _targetIncludes ../../../source/include )
-set( _privLibraries ansakSqlite ansakFileTools mock-file mock-os ansakPrimitives ansakString )
-set( _mockLibraries mock-sqlite gmock_main )
+set( _target integrate-ansakSqlite )
+set( _targetAsTest ansakSqliteIntegrationTest )
+set( _targetPrivateLibs ansakFileTools ansakFile ansakPrimitives ansakString ansakOSLayer )
+set( _targetSource sqliteDBTest.cxx
+                   # sqlitePragmaTest.cxx
+                   # sqliteStmtTest.cxx
+   )
 
-set( _targetSrc test_sqlite_exception.cxx
-                test_sqlite_db.cxx
-                test_sqlite_statement.cxx
-                test_sqlite_retrieval_exception.cxx
-                test_sqlite_pragmas.cxx
-                )
+add_executable( ${_target} ${_targetSource} )
+target_link_libraries( ${_target}
+               PRIVATE ${_targetPrivateLibs} gtest_main )
+target_include_directories( ${_target} PRIVATE ../../../source/include )
 
-add_executable( ${_target} ${_targetSrc} )
-target_include_directories( ${_target} PRIVATE ${_targetIncludes} )
-target_link_libraries( ${_target} PRIVATE ${_privLibraries} ${_mockLibraries} )
 SETUP_TO_EXECUTE_GTEST( ${_target} )
 
-add_test( NAME ${_targetTest} COMMAND ${_target} )
-
+add_test( NAME ${_targetAsTest} COMMAND ${_target} )
 

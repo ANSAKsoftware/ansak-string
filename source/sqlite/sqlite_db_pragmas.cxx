@@ -63,7 +63,7 @@ namespace {
 //===========================================================================
 // free function
 
-static void vacuumPragma(ansak::SqliteDB& db, int value)
+void vacuumPragma(ansak::SqliteDB& db, int value)
 {
     enforce(db.isOpen(), "vacuumPragma: called with a closed database");
 
@@ -283,9 +283,11 @@ bool checkIntegrity(ansak::SqliteDB& db, vector<string>* result)
         result->clear();
     }
 
-    return checkIntegrity(db, false, result) && checkIntegrity(db, true, result);
+    volatile bool minimal = checkIntegrity(db, false, result);
+    volatile bool full = checkIntegrity(db, true, result);
+    return minimal && full;
 }
 
-    }
+}
 
 }

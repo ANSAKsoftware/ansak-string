@@ -56,28 +56,14 @@ using namespace ansak::internal;
 using namespace testing;
 using namespace std;
 
-namespace {
-
-SqliteDBMock* theDBMock = nullptr;
-SqliteErrmsgMock* theMsgMock = nullptr;
-
-}
-
 class SqliteStmtFixture : public Test {
 public:
     SqliteStmtFixture()
     {
-        theDBMock = &m_dbMock;
-        theMsgMock = &m_msgMock;
         m_nextPreparedStmt = 1000000u;
     }
-    ~SqliteStmtFixture()
-    {
-        theDBMock = nullptr;
-        theMsgMock = nullptr;
-    }
 
-    void start(bool mockPrepare = true) // add param to select between endless successful prepares and not?
+    void start(bool mockPrepare = true)
     {
         EXPECT_CALL(m_dbMock, open_v2(_,_,_,_)).
                 WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
@@ -142,7 +128,9 @@ TEST_F(SqliteStmtFixture, prepareFailure)
 
 TEST_F(SqliteStmtFixture, prepareSuccess)
 {
-    EXPECT_CALL(DBMock(), prepare_v2(_, _, _, _, _)).WillOnce(Return(0));
+    EXPECT_CALL(DBMock(), prepare_v2(_, _, _, _, _)).WillOnce(DoAll(
+            SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(111)),
+            Return(0)));
     start(false);
 
     auto s = uut().prepareStatement("Do Something");
