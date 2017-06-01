@@ -119,6 +119,15 @@ public:
     (
         const utf8String& srcPath = utf8String()        // I - string form
     );
+
+    ///////////////////////////////////////////////////////////////////////
+    // Constructor -- syntactic sugar to link const char* to FilePath
+
+    FilePath
+    (
+        const char* path
+    );
+
     FilePath(const FilePath& src) = default;
     FilePath& operator=(const FilePath& src) = default;
 
@@ -170,6 +179,12 @@ public:
 private:
 
     using PathComponentsType = std::vector<utf8String>;
+
+    ///////////////////////////////////////////////////////////////////////
+    // The body of the constructor so that a not-quite-delegating constructor
+    // can get the same result.
+
+    void populate();
 
     ///////////////////////////////////////////////////////////////////////
     // Return a FilePath of this' parent using '..' with the right file separator

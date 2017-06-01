@@ -35,6 +35,11 @@
 
 cmake_minimum_required(VERSION 3.1)
 
+find_package(sqlite3)
+if( NOT SQLITE3_FOUND )
+    message( SEND_ERROR "ansakSqlite library: could not find SQLite3 on this computer." )
+endif()
+
 set( _target ansakSqlite )
 set( _interface ../../interface )
 set( _privIncludes ../include )
@@ -49,5 +54,7 @@ set( _targetSrc sqlite_db.cxx
    )
 
 add_library( ${_target} STATIC ${_targetSrc} )
-target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )
+target_include_directories( ${_target}
+                    PRIVATE ${_privIncludes} ${SQLITE3_INCLUDE_DIR}
+                     PUBLIC ${_interface} )
 

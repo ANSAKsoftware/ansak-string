@@ -90,18 +90,6 @@ public:
     );
 
     ///////////////////////////////////////////////////////////////////////
-    // Constructor -- stores it, based on a file path built from a string.
-    //
-    // If path is valid, tries to realize it (by derelativizing it if
-    // necessary). If the path cannot be realized, the FileSystemPath will be
-    // marked invalid.
-
-    FileSystemPath
-    (
-        const std::string&  pathString          // I - string-form of a file path to wrap
-    );
-
-    ///////////////////////////////////////////////////////////////////////
     // Copy, Assign -- default implementations are good.
 
     FileSystemPath(const FileSystemPath& src) = default;

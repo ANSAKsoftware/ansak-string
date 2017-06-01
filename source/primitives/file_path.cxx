@@ -130,78 +130,24 @@ FilePath::FilePath
 ) : m_path(srcPath),
     m_components(split(srcPath, pathSep))
 {
-    if (m_path.empty())
+    populate();
+}
+
+//==========================================================================
+// public, constructor
+
+FilePath::FilePath
+(
+    const char*       srcPath        // I - string form, def empty
+) : m_path(),
+    m_components()
+{
+    if (srcPath && *srcPath)
     {
-        m_path = ".";
-        m_components.push_back(m_path);
+        m_path = srcPath;
+        m_components = split(m_path, pathSep);
     }
-    if (isWindowsUNCRoot(m_path))
-    {
-        m_isUNC = true;
-#if !defined(WIN32)
-        auto otherComponents = split(m_path, foreignPathSep);
-        m_components.swap(otherComponents);
-        m_isNative = false;
-#endif
-        // collapse first few elements into UNC root
-        m_components.erase(m_components.begin(), m_components.begin() + 2);
-        m_isValid = componentsHaveNoInvalidWindowsCharacters();
-        m_isRoot = m_components.size() == 2;
-    }
-    else
-    {
-        // if we have the wrong kind of path separators
-        if (m_components.size() <= 1)
-        {
-            auto otherComponents = split(m_path, foreignPathSep);
-            if (otherComponents.size() > 1)
-            {
-                m_components.swap(otherComponents);
-                m_isNative = false;
-            }
-        }
-        // if we have a native type of path
-        if (m_isNative)
-        {
-            // get rid of trailing empty component
-            if (!m_components.empty() && m_components.rbegin()->empty() && !m_path.empty())
-            {
-                // for multi-part paths, get rid of last empty component
-                m_components.resize(m_components.size() - 1);
-            }
-#if defined(WIN32) // && !defined(CYGWIN) ??
-            m_hasDriveColon = hasDriveColon(m_path);
-            auto hasDriveColon = isWindowsDriveRoot(m_path);
-            m_isRelative = m_path.empty() || (!hasDriveColon && !isWindowsUNCRoot(m_path));
-            m_isValid = componentsHaveNoInvalidWindowsCharacters();
-            m_isRoot = m_path.size() == 3 && !m_isRelative;
-#else // if defined(WIN32)
-            m_isRelative = m_path.empty() || !m_components.begin()->empty();
-            m_isRoot = (m_path.size() == 1) && !m_isRelative;
-            // If this is a root path, the zero-length first element is no longer needed
-            if (!m_isRelative)
-            {
-                m_components.erase(m_components.begin());
-            }
-            m_isValid = true;
-#endif // if defined(WIN32) else
-        }
-#if defined(WIN32)
-        else
-        {
-            // for forward-slash delineated paths that may be valid (as for VIM and CMake)
-            const auto& firstComponent = *(m_components.begin());
-            if (firstComponent.size() == 2 && firstComponent[1] == ':' &&
-                    ((firstComponent[0] >= 'A' && firstComponent[0] <= 'Z') ||
-                     (firstComponent[0] >= 'a' && firstComponent[0] <= 'z')))
-            {
-                m_isNative = true;
-                m_path = join(m_components, pathSep);
-                m_isValid = componentsHaveNoInvalidWindowsCharacters();
-            }
-        }
-#endif // if defined(WIN32)
-    }
+    populate();
 }
 
 //==========================================================================
@@ -440,6 +386,85 @@ utf8String FilePath::basename() const
         return *(m_components.rbegin());
     }
 
+}
+
+//==========================================================================
+// private
+
+void FilePath::populate()
+{
+    if (m_path.empty())
+    {
+        m_path = ".";
+        m_components.push_back(m_path);
+    }
+    if (isWindowsUNCRoot(m_path))
+    {
+        m_isUNC = true;
+#if !defined(WIN32)
+        auto otherComponents = split(m_path, foreignPathSep);
+        m_components.swap(otherComponents);
+        m_isNative = false;
+#endif
+        // collapse first few elements into UNC root
+        m_components.erase(m_components.begin(), m_components.begin() + 2);
+        m_isValid = componentsHaveNoInvalidWindowsCharacters();
+        m_isRoot = m_components.size() == 2;
+    }
+    else
+    {
+        // if we have the wrong kind of path separators
+        if (m_components.size() <= 1)
+        {
+            auto otherComponents = split(m_path, foreignPathSep);
+            if (otherComponents.size() > 1)
+            {
+                m_components.swap(otherComponents);
+                m_isNative = false;
+            }
+        }
+        // if we have a native type of path
+        if (m_isNative)
+        {
+            // get rid of trailing empty component
+            if (!m_components.empty() && m_components.rbegin()->empty() && !m_path.empty())
+            {
+                // for multi-part paths, get rid of last empty component
+                m_components.resize(m_components.size() - 1);
+            }
+#if defined(WIN32) // && !defined(CYGWIN) ??
+            m_hasDriveColon = hasDriveColon(m_path);
+            auto hasDriveColon = isWindowsDriveRoot(m_path);
+            m_isRelative = m_path.empty() || (!hasDriveColon && !isWindowsUNCRoot(m_path));
+            m_isValid = componentsHaveNoInvalidWindowsCharacters();
+            m_isRoot = m_path.size() == 3 && !m_isRelative;
+#else // if defined(WIN32)
+            m_isRelative = m_path.empty() || !m_components.begin()->empty();
+            m_isRoot = (m_path.size() == 1) && !m_isRelative;
+            // If this is a root path, the zero-length first element is no longer needed
+            if (!m_isRelative)
+            {
+                m_components.erase(m_components.begin());
+            }
+            m_isValid = true;
+#endif // if defined(WIN32) else
+        }
+#if defined(WIN32)
+        else
+        {
+            // for forward-slash delineated paths that may be valid (as for VIM and CMake)
+            const auto& firstComponent = *(m_components.begin());
+            if (firstComponent.size() == 2 && firstComponent[1] == ':' &&
+                    ((firstComponent[0] >= 'A' && firstComponent[0] <= 'Z') ||
+                     (firstComponent[0] >= 'a' && firstComponent[0] <= 'z')))
+            {
+                m_isNative = true;
+                m_path = join(m_components, pathSep);
+                m_isValid = componentsHaveNoInvalidWindowsCharacters();
+            }
+        }
+#endif // if defined(WIN32)
+    }
 }
 
 //==========================================================================

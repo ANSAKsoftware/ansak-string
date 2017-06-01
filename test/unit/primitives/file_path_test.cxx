@@ -54,6 +54,31 @@ using namespace ansak;
 using namespace std;
 using namespace testing;
 
+namespace {
+
+const char* someUNCSharePath = "\\\\someserver\\somevolume\\one\\short\\boondoggle";
+
+#if defined(WIN32)
+const char rootPathString[] = "C:\\";
+const utf8String someReasonableDir = { "C:\\Windows\\System32" };
+const utf8String someForeignDir = { "/home/luser/some/directory" };
+const utf8String boondogglePath = { "C:\\one\\long\\boondoggle\\to\\nowhere" };
+const string shortBoondoggle = { "C:\\one\\short\\boondoggle" };
+const string shortBoondoggleParent = { "C:\\one\\short" };
+const char* someCwdString = "c:\\path\\to\\some\\cwd";
+#else
+const char rootPathString[] = "/";
+const utf8String someReasonableDir = { "/home/luser/some/directory" };
+const utf8String someForeignDir = { "C:\\Windows\\System32" };
+const utf8String foreignShareDir = { "\\\\someserver\\someshare\\path\\to\\interesting\\file.txt" };
+const utf8String boondogglePath = { "/one/long/boondoggle/to/nowhere" };
+const string shortBoondoggle = { "/one/short/boondoggle" };
+const string shortBoondoggleParent = { "/one/short" };
+const char* someCwdString = "/path/to/some/cwd";
+#endif
+
+}
+
 string asString(const vector<string>& src)
 {
     ostringstream os;
@@ -94,11 +119,7 @@ TEST(FilePathTest, testConstructor)
     EXPECT_FALSE(empty < otherEmpty);
     EXPECT_FALSE(empty > otherEmpty);
 
-#if defined(WIN32)
-    FilePath root("C:\\");
-#else
-    FilePath root("/");
-#endif
+    FilePath root(rootPathString);
     EXPECT_FALSE(root.asUtf8String().empty());
     EXPECT_FALSE(root.asUtf16String().empty());
     EXPECT_TRUE(root.isValid());
@@ -117,26 +138,17 @@ TEST(FilePathTest, testConstructor)
 
 TEST(FilePathTest, testForeignConstructor)
 {
-#if defined(WIN32)
-    FilePath someUsersDirectory("/home/luser/some/directory");
-    EXPECT_FALSE(someUsersDirectory.asUtf8String().empty());
-    EXPECT_FALSE(someUsersDirectory.asUtf16String().empty());
-    EXPECT_FALSE(someUsersDirectory.isValid());
-    EXPECT_FALSE(someUsersDirectory.isReal());
-    EXPECT_FALSE(someUsersDirectory.isRelative());
-    EXPECT_FALSE(someUsersDirectory.isRoot());
-    EXPECT_FALSE(someUsersDirectory.isUNCPath());
-#else
-    FilePath windowsSystem("C:\\Windows\\System32");
-    EXPECT_FALSE(windowsSystem.asUtf8String().empty());
-    EXPECT_FALSE(windowsSystem.asUtf16String().empty());
-    EXPECT_FALSE(windowsSystem.isValid());
-    EXPECT_FALSE(windowsSystem.isReal());
-    EXPECT_FALSE(windowsSystem.isRelative());
-    EXPECT_FALSE(windowsSystem.isRoot());
-    EXPECT_FALSE(windowsSystem.isUNCPath());
+    FilePath foreignDirectory(someForeignDir);
+    EXPECT_FALSE(foreignDirectory.asUtf8String().empty());
+    EXPECT_FALSE(foreignDirectory.asUtf16String().empty());
+    EXPECT_FALSE(foreignDirectory.isValid());
+    EXPECT_FALSE(foreignDirectory.isReal());
+    EXPECT_FALSE(foreignDirectory.isRelative());
+    EXPECT_FALSE(foreignDirectory.isRoot());
+    EXPECT_FALSE(foreignDirectory.isUNCPath());
 
-    FilePath windowsShare("\\\\someserver\\someshare\\path\\to\\interesting\\file.txt");
+#if !defined(WIN32)
+    FilePath windowsShare(foreignShareDir);
     EXPECT_FALSE(windowsShare.asUtf8String().empty());
     EXPECT_FALSE(windowsShare.asUtf16String().empty());
     EXPECT_TRUE(windowsShare.isValid());
@@ -149,11 +161,7 @@ TEST(FilePathTest, testForeignConstructor)
 
 TEST(FilePathTest, testInvalidBaseName)
 {
-#if defined(WIN32)
-    FilePath anInvalidDirectory("/home/luser/some/directory");
-#else
-    FilePath anInvalidDirectory("C:\\Windows\\System32");
-#endif
+    FilePath anInvalidDirectory(someForeignDir);
     EXPECT_FALSE(anInvalidDirectory.isValid());
     EXPECT_TRUE(anInvalidDirectory.basename().empty());
 }
@@ -224,14 +232,7 @@ TEST(FilePathTest, testParentOfRelative)
 
 TEST(FilePathTest, testParentOfNonRelative)
 {
-    string fullPathString =
-#if defined(WIN32)
-                      "C:\\one\\long\\boondoggle\\to\\nowhere"
-#else // if defined(WIN32)
-                      "/one/long/boondoggle/to/nowhere"
-#endif // if defined(WIN32) else
-                      ;
-    auto components = split(fullPathString, FilePath::pathSep);
+    auto components = split(boondogglePath, FilePath::pathSep);
     components.pop_back();
     string parent1Path = join(components, FilePath::pathSep);
     components.pop_back();
@@ -248,7 +249,7 @@ TEST(FilePathTest, testParentOfNonRelative)
 #endif // if defined(WIN32) else
                   ;
 
-    FilePath fullPath(fullPathString);
+    FilePath fullPath(boondogglePath);
     EXPECT_TRUE(fullPath.isValid());
     EXPECT_TRUE(fullPath.isReal());
     EXPECT_FALSE(fullPath.isRelative());
@@ -293,7 +294,7 @@ TEST(FilePathTest, testParentOfNonRelative)
 
 TEST(FilePathTest, testParentOfUNC)
 {
-    const string fullPathString = "\\\\someserver\\somevolume\\one\\short\\boondoggle";
+    const string fullPathString = someUNCSharePath;
     auto fullPathComponents(split(fullPathString, FilePath::windowsPathSep));
     fullPathComponents.pop_back();
     auto parent1PathString(join(fullPathComponents, FilePath::windowsPathSep));
@@ -302,7 +303,7 @@ TEST(FilePathTest, testParentOfUNC)
     fullPathComponents.pop_back();
     auto rootPathString(join(fullPathComponents, FilePath::windowsPathSep));
 
-    FilePath full(fullPathString);
+    FilePath full(someUNCSharePath);
     FilePath parent1(full.parent());
     EXPECT_EQ(parent1PathString, parent1.asUtf8String());
     FilePath parent2(parent1.parent());
@@ -355,27 +356,11 @@ TEST(FilePathTest, testParentCorners)
 
 TEST(FilePathTest, testChildOf)
 {
-    const string fullPathString =
-#if defined(WIN32)
-                      "C:\\one\\short\\boondoggle"
-#else // if defined(WIN32)
-                      "/one/short/boondoggle"
-#endif // if defined(WIN32) else
-                      ;
-
-    const string childOfDotDot =
-#if defined(WIN32)
-                      "C:\\one\\short"
-#else // if defined(WIN32)
-                      "/one/short"
-#endif // if defined(WIN32) else
-                      ;
-
-    string childOfHere = fullPathString;
+    string childOfHere = shortBoondoggle;
     childOfHere += FilePath::pathSep;
     childOfHere += "here";
 
-    FilePath base(fullPathString);
+    FilePath base(shortBoondoggle);
     FilePath noChild(base.child("."));
     EXPECT_EQ(noChild, base);
     FilePath anotherNoChild(base.child(""));
@@ -388,7 +373,7 @@ TEST(FilePathTest, testChildOf)
     EXPECT_EQ(FilePath::invalidPath(), FilePath::invalidPath().child("someChild"));
 
     FilePath parent(base.child(".."));
-    EXPECT_EQ(childOfDotDot, parent.asUtf8String());
+    EXPECT_EQ(shortBoondoggleParent, parent.asUtf8String());
 
     FilePath here(base.child("here"));
     EXPECT_EQ(childOfHere, here.asUtf8String());
@@ -397,7 +382,6 @@ TEST(FilePathTest, testChildOf)
 TEST(FilePathTest, testChildOfUNC)
 {
     const string fullPathString = "\\\\someserver\\somevolume\\one\\short\\boondoggle";
-
     const string childOfDotDot = "\\\\someserver\\somevolume\\one\\short";
 
     string childOfHere = fullPathString;
@@ -433,16 +417,15 @@ TEST(FilePathTest, testRelativeToCWDrive)
     EXPECT_EQ(fullPathString, fullPath.asUtf8String());
     EXPECT_FALSE(fullPath.isRoot());
     EXPECT_FALSE(fullPath.isUNCPath());
-#if defined(WIN32)
+
+#if !defined(WIN32)
+    EXPECT_FALSE(fullPath.isValid());
+    EXPECT_FALSE(fullPath.isReal());
+#else // if !defined(WIN32)
     EXPECT_TRUE(fullPath.isValid());
     EXPECT_TRUE(fullPath.isRelative());
     EXPECT_TRUE(fullPath.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(fullPath.isValid());
-    EXPECT_FALSE(fullPath.isReal());
-#endif // if defined(WIN32) else
 
-#if defined(WIN32)
     FilePath relative1(fullPath.parent());
     EXPECT_EQ(parent1Path, relative1.asUtf8String());
     EXPECT_TRUE(relative1.isValid());
@@ -489,18 +472,14 @@ TEST(FilePathTest, testRelativeToCWDrive)
     EXPECT_FALSE(parentOfRoot.isRelative());
     EXPECT_FALSE(parentOfRoot.isRoot());
     EXPECT_FALSE(parentOfRoot.isUNCPath());
-#endif // if defined(WIN32)
+#endif // if !defined(WIN32)
 }
 
 TEST(FilePathTest, testRootPathFrom)
 {
-#if defined(WIN32)
-    FilePath someCwd("c:\\path\\to\\some\\cwd");
+    FilePath someCwd(someCwdString);
     EXPECT_EQ("cwd", someCwd.basename());
-#else
-    FilePath someCwd("/path/to/some/cwd");
-    EXPECT_EQ("cwd", someCwd.basename());
-#endif
+
     FilePath uncCwd("\\\\server\\share\\path\\to\\some\\cwd");
 
     FilePath null;
@@ -554,96 +533,64 @@ TEST(FilePathTest, testRelativeToDriveCWD)
     EXPECT_TRUE(fullPath.isValid());
     EXPECT_FALSE(fullPath.isRoot());
     EXPECT_FALSE(fullPath.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(fullPath.isRelative());
     EXPECT_TRUE(fullPath.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(fullPath.isReal());
-#endif // if defined(WIN32) else
 
     FilePath relative1(fullPath.parent());
     EXPECT_EQ(parent1Path, relative1.asUtf8String());
     EXPECT_TRUE(relative1.isValid());
     EXPECT_FALSE(relative1.isRoot());
     EXPECT_FALSE(relative1.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(relative1.isRelative());
     EXPECT_TRUE(relative1.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(relative1.isReal());
-#endif // if defined(WIN32) else
 
     FilePath relative2(relative1.parent());
     EXPECT_EQ(parent2Path, relative2.asUtf8String());
     EXPECT_TRUE(relative2.isValid());
     EXPECT_FALSE(relative2.isRoot());
     EXPECT_FALSE(relative2.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(relative2.isRelative());
     EXPECT_TRUE(relative2.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(relative2.isReal());
-#endif // if defined(WIN32) else
 
     FilePath relative3(relative2.parent());
     EXPECT_TRUE(relative3.asUtf8String() == parent3Path);
     EXPECT_TRUE(relative3.isValid());
     EXPECT_FALSE(relative3.isRoot());
     EXPECT_FALSE(relative3.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(relative3.isRelative());
     EXPECT_TRUE(relative3.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(relative3.isReal());
-#endif // if defined(WIN32) else
 
     FilePath relative4(relative3.parent());
     EXPECT_EQ(parent4Path, relative4.asUtf8String());
     EXPECT_TRUE(relative4.isValid());
     EXPECT_FALSE(relative4.isRoot());
     EXPECT_FALSE(relative4.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(relative4.isRelative());
     EXPECT_TRUE(relative4.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(relative4.isReal());
-#endif // if defined(WIN32) else
 
     FilePath relativeToRelativeRoot(relative4.parent());
     EXPECT_EQ(relativeRoot, relativeToRelativeRoot.asUtf8String());
     EXPECT_TRUE(relativeToRelativeRoot.isValid());
     EXPECT_FALSE(relativeToRelativeRoot.isRoot());
     EXPECT_FALSE(relativeToRelativeRoot.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(relativeToRelativeRoot.isRelative());
     EXPECT_TRUE(relativeToRelativeRoot.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(relativeToRelativeRoot.isReal());
-#endif // if defined(WIN32) else
 
     FilePath parentOfRelativeToRelativeRoot(relativeToRelativeRoot.parent());
     EXPECT_EQ(parentOfRelativeRoot, parentOfRelativeToRelativeRoot.asUtf8String());
     EXPECT_TRUE(parentOfRelativeToRelativeRoot.isValid());
     EXPECT_FALSE(parentOfRelativeToRelativeRoot.isRoot());
     EXPECT_FALSE(parentOfRelativeToRelativeRoot.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(parentOfRelativeToRelativeRoot.isRelative());
     EXPECT_TRUE(parentOfRelativeToRelativeRoot.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(parentOfRelativeToRelativeRoot.isReal());
-#endif // if defined(WIN32) else
 
     FilePath grandParentOfRelativeToRelativeRoot(parentOfRelativeToRelativeRoot.parent());
     EXPECT_EQ(grandParentOfRelativeRoot, grandParentOfRelativeToRelativeRoot.asUtf8String());
     EXPECT_TRUE(grandParentOfRelativeToRelativeRoot.isValid());
     EXPECT_FALSE(grandParentOfRelativeToRelativeRoot.isRoot());
     EXPECT_FALSE(grandParentOfRelativeToRelativeRoot.isUNCPath());
-#if defined(WIN32)
     EXPECT_TRUE(grandParentOfRelativeToRelativeRoot.isRelative());
     EXPECT_TRUE(grandParentOfRelativeToRelativeRoot.isReal());
-#else // if defined(WIN32)
-    EXPECT_FALSE(grandParentOfRelativeToRelativeRoot.isReal());
-#endif // if defined(WIN32) else
 
     const string cwdOfDrive = "C:.";
     const string parentOfCwdOfDrive = "C:..";

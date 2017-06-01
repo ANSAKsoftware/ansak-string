@@ -80,21 +80,6 @@ FileSystemPath::FileSystemPath
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// public, constructor
-
-FileSystemPath::FileSystemPath
-(
-    const string&       pathString          // I - string-form of a file path to wrap
-) : m_path(FilePath(pathString)),
-    m_isValid(m_path.isReal())
-{
-    if (m_isValid)
-    {
-        realize();
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////
 // public, destructor
 
 FileSystemPath::~FileSystemPath()
