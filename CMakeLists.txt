@@ -137,6 +137,12 @@ if( _useTests )
     endif()
 endif()
 
+find_package(sqlite3)
+if( NOT SQLITE3_FOUND )
+    message( "SQLite3 headers and libraries could not be found. ansakSqlite library and tests will not be built." )
+endif()
+
+
 # Bring in the source and test directories
 add_subdirectory( source )
 if( _useTests )

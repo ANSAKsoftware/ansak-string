@@ -185,7 +185,7 @@ void SqliteStatementImpl::bind
 {
     enforce(m_stmt != 0, "No active statement being wrapped.");
 
-    int rc = sqlite3_bind_text(m_stmt, n + 1, text.c_str(), text.size(), SQLITE_TRANSIENT);
+    int rc = sqlite3_bind_text(m_stmt, n + 1, text.c_str(), static_cast<int>(text.size()), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
         auto e = m_db->makeException("SqliteStatementImpl::bind(int, const string&)");
@@ -207,7 +207,7 @@ void SqliteStatementImpl::bind
 {
     enforce(m_stmt != 0, "No active statement being wrapped.");
 
-    int rc = sqlite3_bind_text(m_stmt, n + 1, text, strlen(text), SQLITE_TRANSIENT);
+    int rc = sqlite3_bind_text(m_stmt, n + 1, text, static_cast<int>(strlen(text)), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
         auto e = m_db->makeException("SqliteStatementImpl::bind(int, const char*)");
@@ -229,7 +229,7 @@ void SqliteStatementImpl::bind
 {
     enforce(m_stmt != 0, "No active statement being wrapped.");
 
-    int rc = sqlite3_bind_blob(m_stmt, n + 1, &data[0], data.size(), SQLITE_TRANSIENT);
+    int rc = sqlite3_bind_blob(m_stmt, n + 1, &data[0], static_cast<int>(data.size()), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
         auto e = m_db->makeException("SqliteStatementImpl::bind(int, const vector<char>&)");
@@ -405,7 +405,7 @@ void SqliteStatementImpl::operator()
             catch (RetrievalVarException& e)
             {
                 m_db->rollback();
-                throw m_db->makeException(e.what());
+                throw SqliteException(m_db->getDBPath(), e.what());
             }
             catch (...)
             {

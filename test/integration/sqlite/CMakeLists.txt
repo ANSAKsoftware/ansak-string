@@ -35,10 +35,6 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-find_package(sqlite3)
-if( NOT SQLITE3_FOUND )
-    message( SEND_ERROR "integrate-ansakSqlite test: could not find SQLite3 on this computer." )
-endif()
 set( _target integrate-ansakSqlite )
 set( _targetAsTest ansakSqliteIntegrationTest )
 set( _targetPrivateLibs ansakSqlite ansakFileTools ansakFile ansakPrimitives ansakString ansakOSLayer )

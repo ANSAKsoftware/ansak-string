@@ -41,4 +41,4 @@ add_library( ${_target} STATIC mock_sqlite_errmsg.cxx
                                mock_sqlite_statement.cxx )
 target_link_libraries( ${_target} PUBLIC ansakString ansakPrimitives
                                   mock-file gmock gmock_main gtest gtest_main )
-target_include_directories( ${_target} PUBLIC . )
+target_include_directories( ${_target} PRIVATE ${SQLITE3_INCLUDE_DIR} PUBLIC . )

@@ -54,15 +54,31 @@ if( SQLITE3_INCLUDE_DIR AND
     set(SQLITE3_FIND_QUIETLY TRUE)
 endif()
 
-find_path( SQLITE3_INCLUDE_DIR sqlite3.h  )
-
-find_library(SQLITE3_LIBRARY_RELEASE NAMES sqlite3 )
-
-if (WIN32)
-else()
+if (UNIX)
+    find_path( SQLITE3_INCLUDE_DIR sqlite3.h  )
+    find_library(SQLITE3_LIBRARY_RELEASE NAMES sqlite3 )
     find_library(SQLITE3_LIBRARY_DEBUG
                     NAMES sqlite3 sqlite3d
                     HINTS /usr/lib/debug/usr/lib/ )
+endif()
+
+if (WIN32)
+    find_path( SQLITE3_INCLUDE_DIR sqlite3.h HINT ${ANSAK_SQLITE_DIR}/include )
+    if (CMAKE_CL_64)
+        find_library(SQLITE3_LIBRARY_RELEASE
+                        NAMES sqlite3
+                        HINTS ${ANSAK_SQLITE_DIR}/x86_64  )
+        find_library(SQLITE3_LIBRARY_DEBUG
+                        NAMES sqlite3 sqlite3d
+                        HINTS ${ANSAK_SQLITE_DIR}/x86_64 )
+    else()
+        find_library(SQLITE3_LIBRARY_RELEASE
+                        NAMES sqlite3
+                        HINTS ${ANSAK_SQLITE_DIR}/i686  )
+        find_library(SQLITE3_LIBRARY_DEBUG
+                        NAMES sqlite3 sqlite3d
+                        HINTS ${ANSAK_SQLITE_DIR}/i686 )
+    endif()
 endif()
 
 if( SQLITE3_LIBRARY_RELEASE OR SQLITE3_LIBRARY_DEBUG AND SQLITE3_INCLUDE_DIR )

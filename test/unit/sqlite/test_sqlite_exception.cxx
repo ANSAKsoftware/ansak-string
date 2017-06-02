@@ -108,7 +108,7 @@ TEST(SqliteException, FilePathPlusCodePlusContext)
 TEST(SqliteException, FilePathPlusDBHPlusContext)
 {
     SqliteErrmsgMock mockIt;
-    sqlite3* db = reinterpret_cast<sqlite3*>(&mockIt);
+    sqlite3* db = reinterpret_cast<sqlite3*>(0xBAADF00Dull);
     EXPECT_CALL(mockIt, errmsg(_)).WillRepeatedly(Return("Simpering Sinews of Silliness"));
 
     SqliteException uut(junkPath, db, nullptr);

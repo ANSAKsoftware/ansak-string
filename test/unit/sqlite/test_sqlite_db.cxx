@@ -89,7 +89,7 @@ TEST(SqliteTest, createInMemory)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
 
     SqliteDB memDB;
@@ -100,7 +100,7 @@ TEST(SqliteTest, throwOnClose)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Throw(RuntimeException("boo!", "bam!", 232u)));
 
     SqliteDB memDB;
@@ -111,7 +111,7 @@ TEST(SqliteTest, createInFile)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
 
     FileSystemPathMock theFSMock;
@@ -185,7 +185,7 @@ TEST(SqliteTest, open)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
 
     FileSystemPathMock theFSMock;
@@ -241,7 +241,7 @@ TEST(SqliteTest, closeThrows)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(35));
 
     SqliteErrmsgMock exceptionMock;
@@ -260,12 +260,12 @@ TEST(SqliteTest, closeInTransaction)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
     EXPECT_CALL(theMock, prepare_v2(_, _, _, _, _)).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83ul)), Return(0)));
 
     FileSystemPathMock theFSMock;
     EXPECT_CALL(theFSMock, isDir(_)).WillOnce(Return(false));
@@ -288,12 +288,12 @@ TEST(SqliteTest, throwInBeginTransaction)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
     EXPECT_CALL(theMock, prepare_v2(_, _, _, _, _)).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83ul)), Return(0)));
 
     SqliteStatementMock theStmtMock;
     EXPECT_CALL(theStmtMock, step(_)).WillOnce(Return(3));
@@ -315,12 +315,12 @@ TEST(SqliteTest, throwInRollback)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
     EXPECT_CALL(theMock, prepare_v2(_, _, _, _, _)).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83ul)), Return(0)));
 
     FileSystemPathMock theFSMock;
     EXPECT_CALL(theFSMock, isDir(_)).WillOnce(Return(false));
@@ -350,7 +350,7 @@ TEST(SqliteTest, noActionRollback)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
 
     {
@@ -365,7 +365,7 @@ TEST(SqliteTest, noActionCommit)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
 
     FileSystemPathMock theFSMock;
@@ -384,12 +384,12 @@ TEST(SqliteTest, rollback)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
     EXPECT_CALL(theMock, prepare_v2(_, _, _, _, _)).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83ul)), Return(0)));
 
     SqliteStatementMock theStmtMock;
     EXPECT_CALL(theStmtMock, step(_)).WillOnce(Return(0)).WillOnce(Return(0));
@@ -409,12 +409,12 @@ TEST(SqliteTest, commit)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
     EXPECT_CALL(theMock, prepare_v2(_, _, _, _, _)).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83ul)), Return(0)));
 
     FileSystemPathMock theFSMock;
     EXPECT_CALL(theFSMock, isDir(_)).WillOnce(Return(false));
@@ -440,12 +440,12 @@ TEST(SqliteTest, throwInCommit)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
     EXPECT_CALL(theMock, prepare_v2(_, _, _, _, _)).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82)), Return(0))).
-            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(81ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(82ul)), Return(0))).
+            WillOnce(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(83ul)), Return(0)));
 
     SqliteStatementMock theStmtMock;
     EXPECT_CALL(theStmtMock, step(_)).WillOnce(Return(0)).WillOnce(Return(3)).WillOnce(Return(0));
@@ -471,10 +471,10 @@ TEST(SqliteTest, disposeStatementBeforeDB)
 {
     SqliteDBMock theMock;
     EXPECT_CALL(theMock, open_v2(_,_,_,_)).
-            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+            WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
     EXPECT_CALL(theMock, close(_)).WillOnce(Return(0));
     EXPECT_CALL(theMock, prepare_v2(_, _, _, _, _)).
-            WillRepeatedly(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(65)),
+            WillRepeatedly(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(65ul)),
                                  Return(0)));
 
     SqliteStatementMock theStmtMock;

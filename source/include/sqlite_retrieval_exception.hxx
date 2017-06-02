@@ -49,7 +49,7 @@ namespace ansak {
 
 namespace internal {
 
-class RetrievalVar;
+struct RetrievalVar;
 
 //=========================================================================
 

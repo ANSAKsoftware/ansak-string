@@ -1,3 +1,5 @@
+#! /bin/sh
+
 ###########################################################################
 #
 # Copyright (c) 2017, Arthur N. Klassen
@@ -32,27 +34,60 @@
 #    May you share freely, never taking more than you give.
 #
 ###########################################################################
+#
+#  SQLite is included in many Linux distros' package system but there is no
+#  orderly way to download and install it onto Windows machines.
+#
+#  For SQLite integration, ansakLib includes this sh script which will
+#  download a particular version of SQLite in its 32-bit and 64-bit libraries
+#  and its 32-bit tools.
+#
+#  It's a VERY dumb, VERY simplistic tool. In order to use it, install your
+#  favourite flavour of Cygwin on your Windows machine, create an **EMPTY**
+#  directory somewhere in your file system and execute this script from within
+#  it.
+#
+#  Before running CMake, you still have to use something like the following
+#  command lines in cmd.exe, from the same sub-directory
+#  cd i686
+#  "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\lib.exe" /def:sqlite3.def /machine:X86 /out:sqlite3.lib
+#  cd ..\x86_64
+#  "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\lib.exe" /def:sqlite3.def /machine:X64 /out:sqlite3.lib
+#
+#  Then when executing CMake for ansakLib (in a cmd.exe prompt), defined
+#  ANSAK_SQLITE_DIR= with the (non-Cygwin form of the) path where this script
+#  was executed.
+#
+###########################################################################
 
-cmake_minimum_required(VERSION 3.1)
+wget https://sqlite.org/2017/sqlite-amalgamation-3190200.zip
+mkdir include
+cd include
+unzip ../*.zip
+cp *amalgam*/*.h .
+rm -rf *amalgam*
+cd ..
+rm *zip
 
-set( _target test-ansakSqlite )
-set( _targetTest ansakSqliteTest )
-set( _targetIncludes ../../../source/include )
-set( _privLibraries ansakSqlite ansakFileTools mock-file mock-os ansakPrimitives ansakString )
-set( _mockLibraries mock-sqlite gmock_main )
+wget https://sqlite.org/2017/sqlite-dll-win32-x86-3190200.zip
+mkdir i686
+cd i686
+unzip ../*.zip
+cd ..
+rm *zip
 
-set( _targetSrc test_sqlite_exception.cxx
-                test_sqlite_db.cxx
-                test_sqlite_statement.cxx
-                test_sqlite_retrieval_exception.cxx
-                test_sqlite_pragmas.cxx
-                )
+wget https://sqlite.org/2017/sqlite-dll-win64-x64-3190200.zip
+mkdir x86_64
+cd x86_64/
+unzip ../*.zip
+cd ../
+rm *zip
 
-add_executable( ${_target} ${_targetSrc} )
-target_include_directories( ${_target} PRIVATE ${_targetIncludes} ${SQLITE3_INCLUDE_DIR} )
-target_link_libraries( ${_target} PRIVATE ${_privLibraries} ${_mockLibraries} )
-SETUP_TO_EXECUTE_GTEST( ${_target} )
-
-add_test( NAME ${_targetTest} COMMAND ${_target} )
-
-
+mkdir bin
+wget https://sqlite.org/2017/sqlite-tools-win32-x86-3190200.zip
+cd bin
+unzip ../*zip
+mv sqlite-tools*/* .
+rmdir sqlite-tools*
+cd ..
+rm *zip

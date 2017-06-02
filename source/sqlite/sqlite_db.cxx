@@ -296,11 +296,7 @@ SqliteStatementPointer SqliteDB::prepareStatement(const string& stmt)
     auto rc = sqlite3_prepare_v2(m_pDB, stmt.c_str(), -1, &theStatement, 0);
     if (rc != SQLITE_OK || theStatement == nullptr)
     {
-        string description("Failure to prepare statement: \"");
-        description += stmt;
-        description += "\", ";
-        description += sqlite3_errmsg(m_pDB);
-        throw SqliteException(m_path, rc, description.c_str());
+        throw SqliteException(m_path, m_pDB, "SqliteDB::prepareStatement failed");
     }
     auto stmtP = SqliteStatementPointer(new SqliteStatementImpl(this, theStatement));
 
@@ -414,6 +410,21 @@ void SqliteDB::commit()
             throw SqliteException(m_path, rc, "SqliteDb::beginTransaction() failed");
         }
         m_inTransaction = false;
+    }
+}
+
+//===========================================================================
+// public
+
+FilePath SqliteDB::getDBPath() const
+{
+    if (isMemory())
+    {
+        return FilePath::invalidPath();
+    }
+    else
+    {
+        return m_path;
     }
 }
 

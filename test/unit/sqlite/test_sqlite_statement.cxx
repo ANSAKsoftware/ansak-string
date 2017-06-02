@@ -60,19 +60,20 @@ class SqliteStmtFixture : public Test {
 public:
     SqliteStmtFixture()
     {
-        m_nextPreparedStmt = 1000000u;
+        m_nextPreparedStmt = 1000000ul;
     }
 
     void start(bool mockPrepare = true)
     {
         EXPECT_CALL(m_dbMock, open_v2(_,_,_,_)).
-                WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+                WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
         EXPECT_CALL(m_dbMock, close(_)).WillOnce(Return(0));
         if (mockPrepare)
         {
+            unsigned long long stmtX = m_nextPreparedStmt;
+            auto stmtVal = reinterpret_cast<sqlite3_stmt*>(stmtX);
             EXPECT_CALL(m_dbMock, prepare_v2(_, _, _, _, _)).
-                    WillRepeatedly(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(m_nextPreparedStmt)),
-                                         Return(0)));
+                    WillRepeatedly(DoAll(SetArgPointee<3>(stmtVal), Return(0)));
         }
 
         m_uut.create();
@@ -439,6 +440,7 @@ TEST_F(SqliteStmtFixture, retrievalsOneTooFewColumns)
 TEST_F(SqliteStmtFixture, retrievalsOneBlandness)
 {
     EXPECT_CALL(StatementMock(), step(_)).WillOnce(Return(0));
+    EXPECT_CALL(ErrMsgMock(), errmsg(_)).WillOnce(Return("no error"));
     start();
 
     auto stmt = uut().prepareStatement("select * from everything;");

@@ -168,6 +168,10 @@ public:
     void rollback();
     void commit();
 
+    ///////////////////////////////////////////////////////////////////////
+    // getDBPath -- where the database is stored
+    FilePath getDBPath() const;
+
 private:
 
     int transactionExecute(SqliteStatementPointer& transactionQuery);

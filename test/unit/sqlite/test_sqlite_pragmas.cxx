@@ -88,13 +88,14 @@ public:
         m_uut.reset(new SqliteDB(m_uutPath));
 
         EXPECT_CALL(m_dbMock, open_v2(_,_,_,_)).
-                WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42)), Return(0)));
+                WillOnce(DoAll(SetArgPointee<1>(reinterpret_cast<sqlite3*>(42ul)), Return(0)));
         EXPECT_CALL(m_dbMock, close(_)).WillOnce(Return(0));
         if (mockPrepare)
         {
+            unsigned long long stmtX = m_nextPreparedStmt;
+            auto stmtVal = reinterpret_cast<sqlite3_stmt*>(stmtX);
             EXPECT_CALL(m_dbMock, prepare_v2(_, _, _, _, _)).
-                    WillRepeatedly(DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(m_nextPreparedStmt)),
-                                         Return(0)));
+                    WillRepeatedly(DoAll(SetArgPointee<3>(stmtVal), Return(0)));
         }
 
         m_uut->create();
@@ -106,7 +107,11 @@ public:
 
     SqliteDB& uut() { ++m_nextPreparedStmt; return *(m_uut.get()); }
 
-    unsigned long nextStatementID() const { return m_nextPreparedStmt; }
+    sqlite3_stmt* nextStatementID() const
+    {
+        unsigned long long stmtX = m_nextPreparedStmt;
+        return reinterpret_cast<sqlite3_stmt*>(stmtX);
+    }
 
 private:
     NiceMock<SqliteErrmsgMock> m_msgMock;
@@ -179,10 +184,10 @@ TEST_F(SqliteDBPragmaFixture, setMemoryJournaling)
 {
     EXPECT_CALL(StatementMock(), step(_)).WillRepeatedly(Return(SQLITE_DONE));
     EXPECT_CALL(DBMock(), prepare_v2(_, StrEq("pragma journal_mode = off;"), _, _, _)).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35ul)),
                   Return(0)));
     EXPECT_CALL(DBMock(), prepare_v2(_, StrEq("pragma journal_mode = memory;"), _, _, _)).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36ul)),
                   Return(0)));
     start(false);
 
@@ -200,10 +205,10 @@ TEST_F(SqliteDBPragmaFixture, setFileJournaling)
 
     EXPECT_CALL(StatementMock(), step(_)).WillRepeatedly(Return(SQLITE_DONE));
     EXPECT_CALL(DBMock(), prepare_v2(_, StrEq("pragma journal_mode = off;"), _, _, _)).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35ul)),
                   Return(0)));
     EXPECT_CALL(DBMock(), prepare_v2(_, StrEq("pragma journal_mode = delete;"), _, _, _)).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36ul)),
                   Return(0)));
     start(false, junkPath);
 
@@ -215,9 +220,9 @@ TEST_F(SqliteDBPragmaFixture, getMemoryJournaling)
 {
     EXPECT_CALL(StatementMock(), step(_)).WillRepeatedly(Return(SQLITE_ROW));
     EXPECT_CALL(DBMock(), prepare_v2(_, StrEq("pragma journal_mode;"), _, _, _)).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35ul)),
                   Return(0))).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36ul)),
                   Return(0)));
     EXPECT_CALL(StatementMock(), column_count(_)).WillRepeatedly(Return(1));
     EXPECT_CALL(StatementMock(), column_type(_,_)).WillRepeatedly(Return(SQLITE_TEXT));
@@ -239,9 +244,9 @@ TEST_F(SqliteDBPragmaFixture, getFileJournaling)
 
     EXPECT_CALL(StatementMock(), step(_)).WillRepeatedly(Return(SQLITE_ROW));
     EXPECT_CALL(DBMock(), prepare_v2(_, StrEq("pragma journal_mode;"), _, _, _)).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(35ul)),
                   Return(0))).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36)),
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(36ul)),
                   Return(0)));
     EXPECT_CALL(StatementMock(), column_count(_)).WillRepeatedly(Return(1));
     EXPECT_CALL(StatementMock(), column_type(_,_)).WillRepeatedly(Return(SQLITE_TEXT));
@@ -332,13 +337,13 @@ TEST_F(SqliteDBPragmaFixture, integrity)
                                          .WillOnce(Return(SQLITE_ROW))
                                          .WillOnce(Return(SQLITE_ROW));
     EXPECT_CALL(DBMock(), prepare_v2(_, _, _, _, _)).WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(44)), Return(0))).
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(44ul)), Return(0))).
             WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(46)), Return(0))).
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(46ul)), Return(0))).
             WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(47)), Return(0))).
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(47ul)), Return(0))).
             WillOnce(
-            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(48)), Return(0)));
+            DoAll(SetArgPointee<3>(reinterpret_cast<sqlite3_stmt*>(48ul)), Return(0)));
     
     EXPECT_CALL(StatementMock(), column_count(_)).WillRepeatedly(Return(1));
     EXPECT_CALL(StatementMock(), column_type(_,_)).WillRepeatedly(Return(SQLITE_TEXT));

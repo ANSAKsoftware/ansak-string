@@ -37,4 +37,6 @@ cmake_minimum_required(VERSION 3.1)
 
 add_subdirectory( os )
 add_subdirectory( file )
-add_subdirectory( sqlite )
+if( SQLITE3_FOUND )
+    add_subdirectory( sqlite )
+endif()
