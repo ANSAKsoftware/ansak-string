@@ -163,9 +163,22 @@ public:
     // prepare -- prepare a statement and wrap it with the inner class
     SqliteDB::Statement prepare(const std::string& stmt);
 
+    ///////////////////////////////////////////////////////////////////////
+    // inTransaction -- returns true if the database is in the midst of a
+    // transaction, false otherwise
     bool inTransaction();
+
+    ///////////////////////////////////////////////////////////////////////
+    // beginTransaction -- starts a transaction if one is not already
+    // started
     void beginTransaction();
+
+    ///////////////////////////////////////////////////////////////////////
+    // rollback -- rolls back a transaction if one is active
     void rollback();
+
+    ///////////////////////////////////////////////////////////////////////
+    // commit -- commits a transactino if one is active
     void commit();
 
     ///////////////////////////////////////////////////////////////////////

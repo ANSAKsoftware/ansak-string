@@ -83,6 +83,12 @@ endif()
 
 if( SQLITE3_LIBRARY_RELEASE OR SQLITE3_LIBRARY_DEBUG AND SQLITE3_INCLUDE_DIR )
 	set( SQLITE3_FOUND TRUE )
+    if (WIN32)
+        if (SQLITE3_LIBRARY_RELEASE)
+            get_filename_component(releaseLibDir_ "${SQLITE3_LIBRARY_RELEASE}" PATH)
+            set( SQLITE3_DLL "${releaseLibDir_}/sqlite3.dll" )
+        endif()
+    endif()
 endif()
 
 if( SQLITE3_LIBRARY_DEBUG AND SQLITE3_LIBRARY_RELEASE )
