@@ -39,108 +39,75 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "TempFileTestFixture.hxx"
+#include <gmock/gmock.h>
 
-#include "sqlite_db_pragmas.hxx"
-#include "sqlite_db.hxx"
-#include "sqlite_db_pragmas.hxx"
-#include <sys/types.h>
-#include <unistd.h>
-#include <iostream>
-#include <string>
-#include <stdlib.h>
-#include "file_path.hxx"
+#include <sqlite_db_pragmas.hxx>
+#include <sqlite_db.hxx>
+#include <sqlite_db_pragmas.hxx>
+#include <file_path.hxx>
+#include <temp_file_wrapper.hxx>
+#include <runtime_exception.hxx>
 
 using namespace ansak;
+using namespace ansak::internal;
 using std::string;
+using namespace testing;
 
-class SqlitePragmaTestFixture : public TempFileTestFixture {
-
-CPPUNIT_TEST_SUITE( SqlitePragmaTestFixture );
-    CPPUNIT_TEST( testGetApplicationID );
-    CPPUNIT_TEST( testSetApplicationID );
-    CPPUNIT_TEST( testGetUserVersion );
-    CPPUNIT_TEST( testSetUserVersion );
-    CPPUNIT_TEST( testSetSecureDelete );
-    CPPUNIT_TEST( testJournaling );
-    CPPUNIT_TEST( testUtf8Encoding );
-    CPPUNIT_TEST( testForeignKeys );
-    CPPUNIT_TEST( testNoVacuuming );
-    CPPUNIT_TEST( testVacuuming );
-    CPPUNIT_TEST( testIncrementalVacuuming );
-    CPPUNIT_TEST( testIntegrityCheck );
-CPPUNIT_TEST_SUITE_END();
-
-public:
-
-    void testGetApplicationID();
-    void testSetApplicationID();
-    void testGetUserVersion();
-    void testSetUserVersion();
-    void testSetSecureDelete();
-    void testJournaling();
-    void testUtf8Encoding();
-    void testForeignKeys();
-    void testNoVacuuming();
-    void testVacuuming();
-    void testIncrementalVacuuming();
-    void testIntegrityCheck();
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(SqlitePragmaTestFixture);
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SqlitePragmaTestFixture, "SqlitePragmaTests");
-
-void SqlitePragmaTestFixture::testGetApplicationID()
+TEST(SqlitePragmaTest, testGetApplicationID)
 {
-    FilePath appIDPath(getTempDir().child("appID"));
-    SqliteDB appID(appIDPath());
+    TempFileWrapper tempDir;
+    FilePath appIDPath(tempDir.child("appID"));
+    SqliteDB appID(appIDPath);
     appID.create();
     int id = ansak::sqlite::getApplicationID(appID);
-    CPPUNIT_ASSERT_EQUAL(0, id);
+    EXPECT_EQ(0, id);
 }
 
-void SqlitePragmaTestFixture::testSetApplicationID()
+TEST(SqlitePragmaTest, testSetApplicationID)
 {
-    FilePath setAppIDPath(getTempDir().child("setAppID"));
+    TempFileWrapper tempDir;
+    FilePath setAppIDPath(tempDir.child("setAppID"));
     {
-        SqliteDB setAppID(setAppIDPath());
+        SqliteDB setAppID(setAppIDPath);
         setAppID.create();
         ansak::sqlite::setApplicationID(setAppID, 0xBAADF00D);
     }
-    SqliteDB appID(setAppIDPath());
+    SqliteDB appID(setAppIDPath);
     appID.open();
     int id = ansak::sqlite::getApplicationID(appID);
-    CPPUNIT_ASSERT_EQUAL((int)0xBAADF00D, id);
+    EXPECT_EQ((int)0xBAADF00D, id);
 }
 
-void SqlitePragmaTestFixture::testGetUserVersion()
+TEST(SqlitePragmaTest, testGetUserVersion)
 {
-    FilePath userVersionPath(getTempDir().child("userVersion"));
-    SqliteDB userVersion(userVersionPath());
+    TempFileWrapper tempDir;
+    FilePath userVersionPath(tempDir.child("userVersion"));
+    SqliteDB userVersion(userVersionPath);
     userVersion.create();
     int id = ansak::sqlite::getUserVersion(userVersion);
-    CPPUNIT_ASSERT_EQUAL(0, id);
+    EXPECT_EQ(0, id);
 }
 
-void SqlitePragmaTestFixture::testSetUserVersion()
+TEST(SqlitePragmaTest, testSetUserVersion)
 {
-    FilePath setUserVesionPath(getTempDir().child("setUserVesion"));
+    TempFileWrapper tempDir;
+    FilePath setUserVesionPath(tempDir.child("setUserVesion"));
     {
-        SqliteDB setUserVesion(setUserVesionPath());
+        SqliteDB setUserVesion(setUserVesionPath);
         setUserVesion.create();
         ansak::sqlite::setUserVersion(setUserVesion, 32965);
     }
-    SqliteDB userVesion(setUserVesionPath());
+    SqliteDB userVesion(setUserVesionPath);
     userVesion.open();
     int id = ansak::sqlite::getUserVersion(userVesion);
-    CPPUNIT_ASSERT_EQUAL(32965, id);
+    EXPECT_EQ(32965, id);
 }
 
-void SqlitePragmaTestFixture::testSetSecureDelete()
+TEST(SqlitePragmaTest, testSetSecureDelete)
 {
-    FilePath secureDeletePath(getTempDir().child("secureDelete"));
-    SqliteDB secureDelete(secureDeletePath());
+    TempFileWrapper tempDir;
+    FilePath secureDeletePath(tempDir.child("secureDelete"));
+    SqliteDB secureDelete(secureDeletePath);
     secureDelete.create();
 
     ansak::sqlite::setSecureDelete(secureDelete);
@@ -150,38 +117,40 @@ void SqlitePragmaTestFixture::testSetSecureDelete()
     secureStateQ->setupRetrieval(0, n);
     secureStateQ();
 
-    CPPUNIT_ASSERT_EQUAL(1, n);
+    EXPECT_EQ(1, n);
 }
 
-void SqlitePragmaTestFixture::testJournaling()
+TEST(SqlitePragmaTest, testJournaling)
 {
+    TempFileWrapper tempDir;
     {
         SqliteDB memo;
         memo.create();
 
-        CPPUNIT_ASSERT(ansak::sqlite::getJournaling(memo));
+        EXPECT_TRUE(ansak::sqlite::getJournaling(memo));
         ansak::sqlite::setJournaling(memo, false);
-        CPPUNIT_ASSERT(!ansak::sqlite::getJournaling(memo));
+        EXPECT_FALSE(ansak::sqlite::getJournaling(memo));
         ansak::sqlite::setJournaling(memo, true);
-        CPPUNIT_ASSERT(ansak::sqlite::getJournaling(memo));
+        EXPECT_TRUE(ansak::sqlite::getJournaling(memo));
     }
 
     {
-        SqliteDB fileO(getTempDir().child("journal0")());
+        SqliteDB fileO(tempDir.child("journal0"));
         fileO.create();
 
-        CPPUNIT_ASSERT(ansak::sqlite::getJournaling(fileO));
+        EXPECT_TRUE(ansak::sqlite::getJournaling(fileO));
         ansak::sqlite::setJournaling(fileO, false);
-        CPPUNIT_ASSERT(!ansak::sqlite::getJournaling(fileO));
+        EXPECT_FALSE(ansak::sqlite::getJournaling(fileO));
         ansak::sqlite::setJournaling(fileO, true);
-        CPPUNIT_ASSERT(ansak::sqlite::getJournaling(fileO));
+        EXPECT_TRUE(ansak::sqlite::getJournaling(fileO));
     }
 }
 
-void SqlitePragmaTestFixture::testUtf8Encoding()
+TEST(SqlitePragmaTest, testUtf8Encoding)
 {
-    FilePath utf8EncodingPath(getTempDir().child("utf8Encoding"));
-    SqliteDB utf8Encoding(utf8EncodingPath());
+    TempFileWrapper tempDir;
+    FilePath utf8EncodingPath(tempDir.child("utf8Encoding"));
+    SqliteDB utf8Encoding(utf8EncodingPath);
     utf8Encoding.create();
 
     ansak::sqlite::setUTF8Encoding(utf8Encoding);
@@ -190,13 +159,14 @@ void SqlitePragmaTestFixture::testUtf8Encoding()
     string encodingOut;
     stmt->setupRetrieval(0, encodingOut);
     stmt();
-    CPPUNIT_ASSERT_EQUAL(string("UTF-8"), encodingOut);
+    EXPECT_THAT(encodingOut, StrEq("UTF-8"));
 }
 
-void SqlitePragmaTestFixture::testForeignKeys()
+TEST(SqlitePragmaTest, testForeignKeys)
 {
-    FilePath foreignKeysPath(getTempDir().child("foreignKeys"));
-    SqliteDB foreignKeys(foreignKeysPath());
+    TempFileWrapper tempDir;
+    FilePath foreignKeysPath(tempDir.child("foreignKeys"));
+    SqliteDB foreignKeys(foreignKeysPath);
     foreignKeys.create();
 
     ansak::sqlite::setForeignKeys(foreignKeys);
@@ -205,13 +175,14 @@ void SqlitePragmaTestFixture::testForeignKeys()
     int foreignKeysOut;
     stmt->setupRetrieval(0, foreignKeysOut);
     stmt();
-    CPPUNIT_ASSERT_EQUAL(1, foreignKeysOut);
+    EXPECT_EQ(1, foreignKeysOut);
 }
 
-void SqlitePragmaTestFixture::testNoVacuuming()
+TEST(SqlitePragmaTest, testNoVacuuming)
 {
-    FilePath vacuumingPath(getTempDir().child("vacuuming"));
-    SqliteDB vacuuming(vacuumingPath());
+    TempFileWrapper tempDir;
+    FilePath vacuumingPath(tempDir.child("vacuuming"));
+    SqliteDB vacuuming(vacuumingPath);
     vacuuming.create();
 
     ansak::sqlite::setNoVacuuming(vacuuming);
@@ -220,13 +191,14 @@ void SqlitePragmaTestFixture::testNoVacuuming()
     int vacuumingOut;
     stmt->setupRetrieval(0, vacuumingOut);
     stmt();
-    CPPUNIT_ASSERT_EQUAL(0, vacuumingOut);
+    EXPECT_EQ(0, vacuumingOut);
 }
 
-void SqlitePragmaTestFixture::testVacuuming()
+TEST(SqlitePragmaTest, testVacuuming)
 {
-    FilePath vacuumingPath(getTempDir().child("vacuuming"));
-    SqliteDB vacuuming(vacuumingPath());
+    TempFileWrapper tempDir;
+    FilePath vacuumingPath(tempDir.child("vacuuming"));
+    SqliteDB vacuuming(vacuumingPath);
     vacuuming.create();
 
     ansak::sqlite::setVacuuming(vacuuming);
@@ -235,13 +207,14 @@ void SqlitePragmaTestFixture::testVacuuming()
     int vacuumingOut;
     stmt->setupRetrieval(0, vacuumingOut);
     stmt();
-    CPPUNIT_ASSERT_EQUAL(1, vacuumingOut);
+    EXPECT_EQ(1, vacuumingOut);
 }
 
-void SqlitePragmaTestFixture::testIncrementalVacuuming()
+TEST(SqlitePragmaTest, testIncrementalVacuuming)
 {
-    FilePath vacuumingPath(getTempDir().child("vacuuming"));
-    SqliteDB vacuuming(vacuumingPath());
+    TempFileWrapper tempDir;
+    FilePath vacuumingPath(tempDir.child("vacuuming"));
+    SqliteDB vacuuming(vacuumingPath);
     vacuuming.create();
 
     ansak::sqlite::setIncrementalVacuuming(vacuuming);
@@ -250,15 +223,16 @@ void SqlitePragmaTestFixture::testIncrementalVacuuming()
     int vacuumingOut;
     stmt->setupRetrieval(0, vacuumingOut);
     stmt();
-    CPPUNIT_ASSERT_EQUAL(2, vacuumingOut);
+    EXPECT_EQ(2, vacuumingOut);
 }
 
-void SqlitePragmaTestFixture::testIntegrityCheck()
+TEST(SqlitePragmaTest, testIntegrityCheck)
 {
-    FilePath checkItPath(getTempDir().child("checkIt"));
-    SqliteDB checkIt(checkItPath());
+    TempFileWrapper tempDir;
+    FilePath checkItPath(tempDir.child("checkIt"));
+    SqliteDB checkIt(checkItPath);
     checkIt.create();
 
-    CPPUNIT_ASSERT(ansak::sqlite::checkIntegrity(checkIt));
+    EXPECT_TRUE(ansak::sqlite::checkIntegrity(checkIt));
 }
 

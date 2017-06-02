@@ -48,7 +48,7 @@
 #include <file_of_lines_core.hxx>
 #include <file_of_lines_exception.hxx>
 #include <runtime_exception.hxx>
-#include "temp_file_wrapper.hxx"
+#include <temp_file_wrapper.hxx>
 
 #include <string.hxx>
 

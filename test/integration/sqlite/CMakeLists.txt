@@ -35,18 +35,22 @@
 
 cmake_minimum_required(VERSION 3.1)
 
+find_package(sqlite3)
+if( NOT SQLITE3_FOUND )
+    message( SEND_ERROR "integrate-ansakSqlite test: could not find SQLite3 on this computer." )
+endif()
 set( _target integrate-ansakSqlite )
 set( _targetAsTest ansakSqliteIntegrationTest )
-set( _targetPrivateLibs ansakFileTools ansakFile ansakPrimitives ansakString ansakOSLayer )
+set( _targetPrivateLibs ansakSqlite ansakFileTools ansakFile ansakPrimitives ansakString ansakOSLayer )
 set( _targetSource sqliteDBTest.cxx
-                   # sqlitePragmaTest.cxx
-                   # sqliteStmtTest.cxx
+                   sqlitePragmaTest.cxx
+                   sqliteStmtTest.cxx
    )
 
 add_executable( ${_target} ${_targetSource} )
 target_link_libraries( ${_target}
-               PRIVATE ${_targetPrivateLibs} gtest_main )
-target_include_directories( ${_target} PRIVATE ../../../source/include )
+               PRIVATE ${SQLITE3_LIBRARIES} ${_targetPrivateLibs} gtest_main gmock )
+target_include_directories( ${_target} PRIVATE ../../../source/include ${SQLITE3_INCLUDE_DIR} )
 
 SETUP_TO_EXECUTE_GTEST( ${_target} )
 

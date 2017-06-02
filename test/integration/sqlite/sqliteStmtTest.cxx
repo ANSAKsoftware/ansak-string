@@ -39,160 +39,60 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "TempFileTestFixture.hxx"
+#include <gmock/gmock.h>
 
-#include "sqlite_db.hxx"
-#include "sqlite_statement.hxx"
-#include "exception.hxx"
-#include "sqlite_exception_ids.hxx"
+#include <sqlite_statement.hxx>
+#include <sqlite_db.hxx>
+#include <file_path.hxx>
+#include <temp_file_wrapper.hxx>
+#include <runtime_exception.hxx>
+
 #include <iostream>
 #include <string>
 #include <string.h>
 #include <deque>
 
 using namespace ansak;
+using namespace ansak::internal;
 using std::string;
 using std::deque;
 using std::vector;
+using namespace testing;
 
-class SqliteStmtTestFixture : public TempFileTestFixture {
+namespace {
 
-CPPUNIT_TEST_SUITE( SqliteStmtTestFixture );
-    CPPUNIT_TEST( testPrepare );
-    CPPUNIT_TEST( testRetrieve );
-    CPPUNIT_TEST( testBind );
-    CPPUNIT_TEST( testNullity );
-    // CPPUNIT_TEST( testBlob );
-CPPUNIT_TEST_SUITE_END();
-
-public:
-
-    void testPrepare();
-    void testRetrieve();
-    void testBind();
-    void testNullity();
-    void testBlob();
-
-private:
-
-    void simpleSetupUsableDatabase();
-    void prepareOnceandBindSetupUsableDatabase();
-    void testContents(SqliteDB& db);
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(SqliteStmtTestFixture);
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SqliteStmtTestFixture, "SqliteStmtTests");
-
-static void testUp(int xTest, int x, bool xNull,
-                   double yTest, double y, bool yNull,
-                   const string& zTest, const string& z, bool zNull,
-                   const vector<char>& bTest, const vector<char>& b, bool bNull)
+void testUp(int xTest, int x, bool xNull,
+            double yTest, double y, bool yNull,
+            const string& zTest, const string& z, bool zNull,
+            const vector<char>& bTest, const vector<char>& b, bool bNull)
 {
     int bCount = xNull + yNull + zNull + bNull;
-    CPPUNIT_ASSERT_EQUAL(3, bCount);
+    EXPECT_EQ(3, bCount);
     if (!xNull)
     {
-        CPPUNIT_ASSERT_EQUAL(xTest, x);
+        EXPECT_EQ(xTest, x);
     }
     if (!yNull)
     {
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(yTest, y, 0.00000005);
+        EXPECT_THAT(yTest, DoubleEq(y));
     }
     if (!zNull)
     {
-        CPPUNIT_ASSERT_EQUAL(zTest, z);
+        EXPECT_EQ(zTest, z);
     }
     if (!bNull)
     {
-        CPPUNIT_ASSERT_EQUAL(bTest.size(), b.size());
-        CPPUNIT_ASSERT_EQUAL(0, memcmp(&bTest[0], &b[0], b.size()));
+        EXPECT_EQ(bTest.size(), b.size());
+        EXPECT_EQ(0, memcmp(&bTest[0], &b[0], b.size()));
     }
 }
 
-void SqliteStmtTestFixture::testPrepare()
-{
-    FilePath useMe(getTempDir().child("useMe"));
-    SqliteDB fileDB(useMe());
-    fileDB.create();
-
-    SqliteStatementPointer stmtP(fileDB.prepareStatement("select count(*) from sqlite_master;"));
-    int rows;
-    bool done = false;
-    stmtP->setupRetrieval(0, rows);
-    (*stmtP)(&done);
-    CPPUNIT_ASSERT_EQUAL(0, rows);
-    CPPUNIT_ASSERT(!done);
-    (*stmtP)(&done);
-    CPPUNIT_ASSERT(done);
-}
-
-void SqliteStmtTestFixture::testRetrieve()
-{
-    simpleSetupUsableDatabase();
-    FilePath useMe(getTempDir().child("useMe"));
-    SqliteDB fileDB(useMe());
-    testContents(fileDB);
-}
-
-void SqliteStmtTestFixture::testBind()
-{
-    prepareOnceandBindSetupUsableDatabase();
-    FilePath bindToMe(getTempDir().child("bindToMe"));
-    SqliteDB fileDB(bindToMe());
-    testContents(fileDB);
-}
-
-void SqliteStmtTestFixture::testNullity()
-{
-    FilePath useForNullity(getTempDir().child("hasNulls"));
-    SqliteDB nullity(useForNullity());
-    nullity.create();
-
-    nullity.execute("create table nullable(x INTEGER, y REAL, z TEXT, b BLOB );");
-    nullity.execute("insert into nullable(x) values(35);");
-    nullity.execute("insert into nullable(y) values(3.14159265358979);");
-    nullity.execute("insert into nullable(z) values('Now is the time for all good men...')");
-    nullity.execute("insert into nullable(b) values(x'0102030405')");
-
-    SqliteDB::Statement selects(nullity.prepare("select x, y, z, b from nullable"));
-    {
-        int x;
-        double y;
-        string z;
-        vector<char> b;
-        vector<char> bVector = { 1,2,3,4,5 };
-        bool xNull, yNull, zNull, bNull;
-        selects->setupRetrieval(0, x, &xNull);
-        selects->setupRetrieval(1, y, &yNull);
-        selects->setupRetrieval(2, z, &zNull);
-        selects->setupRetrieval(3, b, &bNull);
-
-        selects();
-        testUp(35, x, xNull, 3.14159265358979, y, yNull,
-               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
-        selects();
-        testUp(35, x, xNull, 3.14159265358979, y, yNull,
-               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
-        selects();
-        testUp(35, x, xNull, 3.14159265358979, y, yNull,
-               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
-        selects();
-        testUp(35, x, xNull, 3.14159265358979, y, yNull,
-               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
-    }
-}
-
-void SqliteStmtTestFixture::testBlob()
-{
-}
-
-void SqliteStmtTestFixture::simpleSetupUsableDatabase()
+void simpleSetupUsableDatabase(TempFileWrapper& tempDir)
 {
     try
     {
-        FilePath useMe(getTempDir().child("useMe"));
-        SqliteDB fileDB(useMe());
+        FilePath useMe(tempDir.child("useMe"));
+        SqliteDB fileDB(useMe);
         fileDB.create();
 
         fileDB.execute("pragma FOREIGN_KEYS = on;");
@@ -243,24 +143,151 @@ void SqliteStmtTestFixture::simpleSetupUsableDatabase()
         fileDB.execute("insert into teams(cityID, name, wins, losses, draws, for, against, percent, points) "
                        "values(1, 'St. Kilda Saints', 4, 18, 0, 1480, 2436, 60.8, 16);");
     }
-    catch (Exception& problem)
+    catch (std::exception& problem)
     {
-        std::cout << "Encountered problem during DB setup: " << problem() << std::endl;
-        if (exceptionIsSqliteError(problem.cause()))
-        {
-            std::cout << "SQLite error code is " << exceptionAsSqliteError(problem.cause());
-        }
+        std::cout << "Encountered problem during DB setup: " << problem.what() << std::endl;
         throw;
     }
 }
 
-void SqliteStmtTestFixture::prepareOnceandBindSetupUsableDatabase()
+void testContents(SqliteDB& db)
+{
+    try
+    {
+        db.open();
+
+        string query("select t.name, t.wins, t.losses, t.draws, t.percent, t.points "
+                       "from cities c, teams t "
+                      "where c.id = t.cityID "
+                        "and c.id = 1;");
+        SqliteDB::Statement stmt(db.prepare(query));
+        string name; int wins, losses, draws, points; double percent;
+        bool nameIsNull, winsIsNull, lossesIsNull, drawsIsNull, pointsIsNull, percentIsNull;
+        stmt->setupRetrieval(0, name, &nameIsNull);
+        stmt->setupRetrieval(1, wins, &winsIsNull);
+        stmt->setupRetrieval(2, losses, &lossesIsNull);
+        stmt->setupRetrieval(3, draws, &drawsIsNull);
+        stmt->setupRetrieval(5, points, &pointsIsNull);
+        stmt->setupRetrieval(4, percent, &percentIsNull);
+        deque<string> names;
+        deque<int> winsPer, lossesPer, drawsPer, pointsPer;
+        deque<double> percents;
+        bool isDone = false;
+        (*stmt)(&isDone);
+        while (!isDone)
+        {
+            EXPECT_FALSE(winsIsNull);
+            EXPECT_FALSE(lossesIsNull);
+            EXPECT_FALSE(drawsIsNull);
+            EXPECT_FALSE(pointsIsNull);
+            EXPECT_FALSE(nameIsNull);
+            EXPECT_FALSE(percentIsNull);
+
+            EXPECT_FALSE(name.empty());
+            names.push_back(name);
+            winsPer.push_back(wins);
+            lossesPer.push_back(losses);
+            drawsPer.push_back(draws);
+            percents.push_back(percent);
+            pointsPer.push_back(points);
+
+            (*stmt)(&isDone);
+        }
+        EXPECT_EQ(static_cast<size_t>(9), names.size());
+        for (size_t i = 0; i < names.size(); ++i)
+        {
+            if (names[i] == "Hawthorn Hawks")
+            {
+                EXPECT_EQ(17, winsPer[i]);
+                EXPECT_EQ(5, lossesPer[i]);
+                EXPECT_EQ(0, drawsPer[i]);
+                EXPECT_EQ(68, pointsPer[i]);
+                EXPECT_THAT(140.8, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "North Melbourne Kangaroos")
+            {
+                EXPECT_EQ(14, winsPer[i]);
+                EXPECT_EQ(8, lossesPer[i]);
+                EXPECT_EQ(0, drawsPer[i]);
+                EXPECT_EQ(56, pointsPer[i]);
+                EXPECT_THAT(117.0, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "Essendon Bombers")
+            {
+                EXPECT_EQ(12, winsPer[i]);
+                EXPECT_EQ(9, lossesPer[i]);
+                EXPECT_EQ(1, drawsPer[i]);
+                EXPECT_EQ(50, pointsPer[i]);
+                EXPECT_THAT(106.3, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "Richmond Tigers")
+            {
+                EXPECT_EQ(12, winsPer[i]);
+                EXPECT_EQ(10, lossesPer[i]);
+                EXPECT_EQ(0, drawsPer[i]);
+                EXPECT_EQ(48, pointsPer[i]);
+                EXPECT_THAT(105.8, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "Collingwood Magpies")
+            {
+                EXPECT_EQ(11, winsPer[i]);
+                EXPECT_EQ(11, lossesPer[i]);
+                EXPECT_EQ(0, drawsPer[i]);
+                EXPECT_EQ(44, pointsPer[i]);
+                EXPECT_THAT(94.1, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "Carlton Blues")
+            {
+                EXPECT_EQ(7, winsPer[i]);
+                EXPECT_EQ(14, lossesPer[i]);
+                EXPECT_EQ(1, drawsPer[i]);
+                EXPECT_EQ(30, pointsPer[i]);
+                EXPECT_THAT(89.8, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "Western Bulldogs")
+            {
+                EXPECT_EQ(7, winsPer[i]);
+                EXPECT_EQ(15, lossesPer[i]);
+                EXPECT_EQ(0, drawsPer[i]);
+                EXPECT_EQ(28, pointsPer[i]);
+                EXPECT_THAT(82.0, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "Melbourne Demons")
+            {
+                EXPECT_EQ(4, winsPer[i]);
+                EXPECT_EQ(18, lossesPer[i]);
+                EXPECT_EQ(0, drawsPer[i]);
+                EXPECT_EQ(16, pointsPer[i]);
+                EXPECT_THAT(68.4, DoubleEq(percents[i]));
+            }
+            else if (names[i] == "St. Kilda Saints")
+            {
+                EXPECT_EQ(4, winsPer[i]);
+                EXPECT_EQ(18, lossesPer[i]);
+                EXPECT_EQ(0, drawsPer[i]);
+                EXPECT_EQ(16, pointsPer[i]);
+                EXPECT_THAT(60.8, DoubleEq(percents[i]));
+            }
+            else
+            {
+                EXPECT_TRUE(i > 9); // should never be true, always blow up, if we get here
+            }
+        }
+    }
+    catch (std::exception& problem)
+    {
+        std::cout << "Encountered problem during DB setup: " << problem.what() << std::endl;
+        throw;
+    }
+}
+
+void prepareOnceandBindSetupUsableDatabase(TempFileWrapper& tempDir)
 {
     try
     {
         const char* cities[] = { "Melbourne", "Geelong", "Sydney", "Brisbane", "Adelaide", "Perth", 0 };
-        FilePath bindToMe(getTempDir().child("bindToMe"));
-        SqliteDB fileDB(bindToMe());
+        FilePath bindToMe(tempDir.child("bindToMe"));
+        SqliteDB fileDB(bindToMe);
         fileDB.create();
 
         fileDB.execute("pragma FOREIGN_KEYS = on;");
@@ -459,148 +486,94 @@ void SqliteStmtTestFixture::prepareOnceandBindSetupUsableDatabase()
             }
         }
     }
-    catch (Exception& problem)
+    catch (std::exception& problem)
     {
-        std::cout << "Encountered problem during DB setup: " << problem() << std::endl;
-        if (exceptionIsSqliteError(problem.cause()))
-        {
-            std::cout << "SQLite error code is " << exceptionAsSqliteError(problem.cause());
-        }
+        std::cout << "Encountered problem during DB setup: " << problem.what() << std::endl;
         throw;
     }
 }
 
-void SqliteStmtTestFixture::testContents(SqliteDB& db)
+}
+
+
+TEST(SqliteStatementTest, testPrepare)
 {
-    try
+    TempFileWrapper tempDir;
+    FilePath useMe(tempDir.child("useMe"));
+    SqliteDB fileDB(useMe);
+    fileDB.create();
+
+    SqliteStatementPointer stmtP(fileDB.prepareStatement("select count(*) from sqlite_master;"));
+    int rows;
+    bool done = false;
+
+    stmtP->setupRetrieval(0, rows);
+    (*stmtP)(&done);
+    EXPECT_EQ(0, rows);
+    EXPECT_FALSE(done);
+    (*stmtP)(&done);
+    EXPECT_TRUE(done);
+}
+
+TEST(SqliteStatementTest, testRetrieve)
+{
+    TempFileWrapper tempDir;
+    simpleSetupUsableDatabase(tempDir);
+    FilePath useMe(tempDir.child("useMe"));
+    SqliteDB fileDB(useMe);
+    testContents(fileDB);
+}
+
+TEST(SqliteStatementTest, testBind)
+{
+    TempFileWrapper tempDir;
+    prepareOnceandBindSetupUsableDatabase(tempDir);
+    FilePath bindToMe(tempDir.child("bindToMe"));
+    SqliteDB fileDB(bindToMe);
+    testContents(fileDB);
+}
+
+TEST(SqliteStatementTest, testNullity)
+{
+    TempFileWrapper tempDir;
+    FilePath useForNullity(tempDir.child("hasNulls"));
+    SqliteDB nullity(useForNullity);
+    nullity.create();
+
+    nullity.execute("create table nullable(x INTEGER, y REAL, z TEXT, b BLOB );");
+    nullity.execute("insert into nullable(x) values(35);");
+    nullity.execute("insert into nullable(y) values(3.14159265358979);");
+    nullity.execute("insert into nullable(z) values('Now is the time for all good men...')");
+    nullity.execute("insert into nullable(b) values(x'0102030405')");
+
+    SqliteDB::Statement selects(nullity.prepare("select x, y, z, b from nullable"));
     {
-        db.open();
+        int x;
+        double y;
+        string z;
+        vector<char> b;
+        vector<char> bVector = { 1,2,3,4,5 };
+        bool xNull, yNull, zNull, bNull;
+        selects->setupRetrieval(0, x, &xNull);
+        selects->setupRetrieval(1, y, &yNull);
+        selects->setupRetrieval(2, z, &zNull);
+        selects->setupRetrieval(3, b, &bNull);
 
-        string query("select t.name, t.wins, t.losses, t.draws, t.percent, t.points "
-                       "from cities c, teams t "
-                      "where c.id = t.cityID "
-                        "and c.id = 1;");
-        SqliteDB::Statement stmt(db.prepare(query));
-        string name; int wins, losses, draws, points; double percent;
-        bool nameIsNull, winsIsNull, lossesIsNull, drawsIsNull, pointsIsNull, percentIsNull;
-        stmt->setupRetrieval(0, name, &nameIsNull);
-        stmt->setupRetrieval(1, wins, &winsIsNull);
-        stmt->setupRetrieval(2, losses, &lossesIsNull);
-        stmt->setupRetrieval(3, draws, &drawsIsNull);
-        stmt->setupRetrieval(5, points, &pointsIsNull);
-        stmt->setupRetrieval(4, percent, &percentIsNull);
-        deque<string> names;
-        deque<int> winsPer, lossesPer, drawsPer, pointsPer;
-        deque<double> percents;
-        bool isDone = false;
-        (*stmt)(&isDone);
-        while (!isDone)
-        {
-            CPPUNIT_ASSERT(!winsIsNull);
-            CPPUNIT_ASSERT(!lossesIsNull);
-            CPPUNIT_ASSERT(!drawsIsNull);
-            CPPUNIT_ASSERT(!pointsIsNull);
-            CPPUNIT_ASSERT(!nameIsNull);
-            CPPUNIT_ASSERT(!percentIsNull);
-
-            CPPUNIT_ASSERT(!name.empty());
-            names.push_back(name);
-            winsPer.push_back(wins);
-            lossesPer.push_back(losses);
-            drawsPer.push_back(draws);
-            percents.push_back(percent);
-            pointsPer.push_back(points);
-
-            (*stmt)(&isDone);
-        }
-        CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(9), names.size());
-        for (int i = 0; i < names.size(); ++i)
-        {
-            if (names[i] == "Hawthorn Hawks")
-            {
-                CPPUNIT_ASSERT_EQUAL(17, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(5, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(0, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(68, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(140.8, percents[i], 0.005);
-            }
-            else if (names[i] == "North Melbourne Kangaroos")
-            {
-                CPPUNIT_ASSERT_EQUAL(14, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(8, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(0, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(56, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(117, percents[i], 0.005);
-            }
-            else if (names[i] == "Essendon Bombers")
-            {
-                CPPUNIT_ASSERT_EQUAL(12, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(9, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(1, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(50, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(106.3, percents[i], 0.005);
-            }
-            else if (names[i] == "Richmond Tigers")
-            {
-                CPPUNIT_ASSERT_EQUAL(12, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(10, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(0, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(48, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(105.8, percents[i], 0.005);
-            }
-            else if (names[i] == "Collingwood Magpies")
-            {
-                CPPUNIT_ASSERT_EQUAL(11, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(11, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(0, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(44, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(94.1, percents[i], 0.005);
-            }
-            else if (names[i] == "Carlton Blues")
-            {
-                CPPUNIT_ASSERT_EQUAL(7, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(14, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(1, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(30, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(89.8, percents[i], 0.005);
-            }
-            else if (names[i] == "Western Bulldogs")
-            {
-                CPPUNIT_ASSERT_EQUAL(7, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(15, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(0, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(28, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(82, percents[i], 0.005);
-            }
-            else if (names[i] == "Melbourne Demons")
-            {
-                CPPUNIT_ASSERT_EQUAL(4, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(18, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(0, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(16, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(68.4, percents[i], 0.005);
-            }
-            else if (names[i] == "St. Kilda Saints")
-            {
-                CPPUNIT_ASSERT_EQUAL(4, winsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(18, lossesPer[i]);
-                CPPUNIT_ASSERT_EQUAL(0, drawsPer[i]);
-                CPPUNIT_ASSERT_EQUAL(16, pointsPer[i]);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(60.8, percents[i], 0.005);
-            }
-            else
-            {
-                CPPUNIT_ASSERT(i > 9); // should never be true, always blow up, if we get here
-            }
-        }
+        selects();
+        testUp(35, x, xNull, 3.14159265358979, y, yNull,
+               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
+        selects();
+        testUp(35, x, xNull, 3.14159265358979, y, yNull,
+               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
+        selects();
+        testUp(35, x, xNull, 3.14159265358979, y, yNull,
+               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
+        selects();
+        testUp(35, x, xNull, 3.14159265358979, y, yNull,
+               string("Now is the time for all good men..."), z, zNull, bVector, b, bNull);
     }
-    catch (Exception& problem)
-    {
-        std::cout << "Encountered problem during DB setup: " << problem() << std::endl;
-        if (exceptionIsSqliteError(problem.cause()))
-        {
-            std::cout << "SQLite error code is " << exceptionAsSqliteError(problem.cause());
-        }
-        throw;
-    }
+}
+
+TEST(SqliteStatementTest, testBlob)
+{
 }

@@ -39,74 +39,25 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-#include <cppunit/extensions/HelperMacros.h>
-#include "TempFileTestFixture.hxx"
+#include <gtest/gtest.h>
 
-#include "sqlite_db.hxx"
-#include "exception.hxx"
-#include <sys/types.h>
-#include <unistd.h>
-#include <iostream>
-#include <string>
-#include <stdlib.h>
-#include "file_path.hxx"
+#include <sqlite_db.hxx>
+#include <file_path.hxx>
+#include <temp_file_wrapper.hxx>
+#include <runtime_exception.hxx>
 
 using namespace ansak;
+using namespace ansak::internal;
 using std::string;
 
-class SqliteDBTestFixture : public TempFileTestFixture {
-
-CPPUNIT_TEST_SUITE( SqliteDBTestFixture );
-    CPPUNIT_TEST( testCheckVersion );
-    CPPUNIT_TEST( testConstruction );
-    CPPUNIT_TEST( testCreateMemoryDB );
-    CPPUNIT_TEST_EXCEPTION( testBadCreateMemory, Exception );
-    CPPUNIT_TEST( testCreateFileDB );
-    CPPUNIT_TEST_EXCEPTION( testCreateCloseUse, Exception );
-    CPPUNIT_TEST( testCreateCloseOpen );
-    CPPUNIT_TEST_EXCEPTION( testBadCreateFileRO, Exception );
-    CPPUNIT_TEST_EXCEPTION( testBadCreateFileOpen, Exception );
-    CPPUNIT_TEST( testOpen );
-    CPPUNIT_TEST_EXCEPTION( testOpenThrowAlreadyOpen, Exception );
-    CPPUNIT_TEST_EXCEPTION( testThrowOpenMemory, Exception );
-    CPPUNIT_TEST( testPrepare );
-CPPUNIT_TEST_SUITE_END();
-
-public:
-
-    void testCheckVersion();
-    void testConstruction();
-    void testCreateMemoryDB();
-    void testBadCreateMemory();
-    void testCreateFileDB();
-    void testCreateCloseUse();
-    void testCreateCloseOpen();
-    void testBadCreateFileRO();
-    void testBadCreateFileOpen();
-    void testOpen();
-    void testOpenThrowAlreadyOpen();
-    void testThrowOpenMemory();
-    void testPrepare();
-
-    void testInTransaction();
-    void testCommitTransaction();
-    void testRollbackTransaction();
-};
-
-CPPUNIT_TEST_SUITE_REGISTRATION(SqliteDBTestFixture);
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SqliteDBTestFixture, "SqliteDBTests");
-
-void SqliteDBTestFixture::testCheckVersion()
+TEST(SqliteDBIntegration, testCheckVersion)
 {
-    CPPUNIT_ASSERT(SqliteDB::getVersionNumber() != 0);
-    string version(SqliteDB::getVersion());
-    string sourceId(SqliteDB::getVersion(true));
-
-    CPPUNIT_ASSERT(!version.empty());
-    CPPUNIT_ASSERT(!sourceId.empty());
+    EXPECT_NE(0, SqliteDB::getVersionNumber());
+    EXPECT_FALSE(SqliteDB::getVersion().empty());
+    EXPECT_FALSE(SqliteDB::getVersion(true).empty());
 }
 
-void SqliteDBTestFixture::testConstruction()
+TEST(SqliteDBIntegration, testConstruction)
 {
     SqliteDB one;
 
@@ -114,61 +65,65 @@ void SqliteDBTestFixture::testConstruction()
 
     FilePath cwd;
     FilePath threePath(cwd.child("three"));
-    SqliteDB three(threePath());
+    SqliteDB three(threePath);
 }
 
-void SqliteDBTestFixture::testCreateMemoryDB()
+TEST(SqliteDBIntegration, testCreateMemoryDB)
 {
     {
         SqliteDB memory;
         memory.create();
-        CPPUNIT_ASSERT(memory.isMemory());
-        CPPUNIT_ASSERT(memory.isOpen());
+        EXPECT_TRUE(memory.isMemory());
+        EXPECT_TRUE(memory.isOpen());
     }
 
     {
-        FilePath forgetPath(getTempDir().child("forgetMe"));
-        SqliteDB namedMemory(forgetPath());
+        TempFileWrapper tempDir;
+        FilePath forgetPath(tempDir.child("forgetMe"));
+        SqliteDB namedMemory(forgetPath);
         namedMemory.create(SqliteDB::kReadWrite | SqliteDB::kMemory | SqliteDB::kNoMutex);
-        CPPUNIT_ASSERT(namedMemory.isMemory());
-        CPPUNIT_ASSERT(namedMemory.isOpen());
+        EXPECT_TRUE(namedMemory.isMemory());
+        EXPECT_TRUE(namedMemory.isOpen());
     }
 }
 
-void SqliteDBTestFixture::testBadCreateMemory()     // tested for throwing
+TEST(SqliteDBIntegration, testBadCreateMemory)     // tested for throwing
 {
     SqliteDB memory;
-    memory.create(SqliteDB::kReadOnly);
+    EXPECT_THROW(memory.create(SqliteDB::kReadOnly), RuntimeException);
 }
 
-void SqliteDBTestFixture::testCreateFileDB()
+TEST(SqliteDBIntegration, testCreateFileDB)
 {
-    FilePath forgetPath(getTempDir().child("forgetMe"));
+    TempFileWrapper tempDir;
+    FilePath forgetPath(tempDir.child("forgetMe"));
     {
-        SqliteDB fileDB(forgetPath());
+        SqliteDB fileDB(forgetPath);
         fileDB.create();
-        CPPUNIT_ASSERT(!fileDB.isMemory());
-        CPPUNIT_ASSERT(fileDB.isOpen());
+        EXPECT_FALSE(fileDB.isMemory());
+        EXPECT_TRUE(fileDB.isOpen());
     }
 }
 
-void SqliteDBTestFixture::testCreateCloseUse()
+TEST(SqliteDBIntegration, testCreateCloseUse)
 {
-    FilePath forgetPath(getTempDir().child("reuse"));
+    TempFileWrapper tempDir;
+    FilePath forgetPath(tempDir.child("reuse"));
 
-    SqliteDB fileDB(forgetPath());
+    SqliteDB fileDB(forgetPath);
     fileDB.create();
 
     fileDB.close();
 
-    fileDB.execute("select * from noTable");
+    EXPECT_THROW(fileDB.execute("select * from noTable"), RuntimeException);
 }
 
-void SqliteDBTestFixture::testCreateCloseOpen()
+TEST(SqliteDBIntegration, testCreateCloseOpen)
 {
-    FilePath forgetPath(getTempDir().child("reopened"));
+    TempFileWrapper tempDir;
+    FilePath forgetPath(tempDir.child("reopened"));
     {
-        SqliteDB fileDB(forgetPath());
+        SqliteDB fileDB(forgetPath);
         fileDB.create();
 
         fileDB.close();
@@ -176,92 +131,99 @@ void SqliteDBTestFixture::testCreateCloseOpen()
         fileDB.open();
     }
     {
-        SqliteDB fileDB(forgetPath());
+        SqliteDB fileDB(forgetPath);
         fileDB.open();
         fileDB.close();
     }
 }
 
-void SqliteDBTestFixture::testBadCreateFileRO()     // tested for throwing
+TEST(SqliteDBIntegration, testBadCreateFileRO)     // tested for throwing
 {
-    FilePath forgetPath(getTempDir().child("forgetMe"));
-    SqliteDB fileDB(forgetPath());
-    fileDB.create(SqliteDB::kReadOnly);
+    TempFileWrapper tempDir;
+    FilePath forgetPath(tempDir.child("forgetMe"));
+    SqliteDB fileDB(forgetPath);
+    EXPECT_THROW(fileDB.create(SqliteDB::kReadOnly), RuntimeException);
 }
 
-void SqliteDBTestFixture::testBadCreateFileOpen()       // tested for throwing
+TEST(SqliteDBIntegration, testBadCreateFileOpen)       // tested for throwing
 {
-    FilePath forgetPath(getTempDir().child("forgetMe"));
+    TempFileWrapper tempDir;
+    FilePath forgetPath(tempDir.child("forgetMe"));
 
-    SqliteDB fileDB(forgetPath());
+    SqliteDB fileDB(forgetPath);
     fileDB.create();
 
-    SqliteDB refileDB(forgetPath());
-    refileDB.create();
+    SqliteDB refileDB(forgetPath);
+    EXPECT_THROW(refileDB.create(), SqliteException);
 }
 
-void SqliteDBTestFixture::testOpen()
+TEST(SqliteDBIntegration, testOpen)
 {
-    FilePath openPath(getTempDir().child("openMe"));
+    TempFileWrapper tempDir;
+    FilePath openPath(tempDir.child("openMe"));
 
     {
-        SqliteDB fileDB(openPath());
+        SqliteDB fileDB(openPath);
         fileDB.create();
     }
 
     {
-        SqliteDB openDB(openPath());
+        SqliteDB openDB(openPath);
         openDB.open();
     }
 }
 
-void SqliteDBTestFixture::testOpenThrowAlreadyOpen()        // tested for throwing
+TEST(SqliteDBIntegration, testOpenThrowAlreadyOpen)        // tested for throwing
 {
-    FilePath forgetPath(getTempDir().child("forgetMe"));
+    TempFileWrapper tempDir;
+    FilePath forgetPath(tempDir.child("forgetMe"));
 
     {
-        SqliteDB fileDB(forgetPath());
+        SqliteDB fileDB(forgetPath);
         fileDB.create();
     }
 
-    SqliteDB fileDB(forgetPath());
+    SqliteDB fileDB(forgetPath);
     fileDB.open();
-    fileDB.open();
+    EXPECT_THROW(fileDB.open(), RuntimeException);
 }
 
-void SqliteDBTestFixture::testThrowOpenMemory()     // tested for throwing
+TEST(SqliteDBIntegration, testThrowOpenMemory)     // tested for throwing
 {
     SqliteDB memoryDB;
-    memoryDB.open();
+    EXPECT_THROW(memoryDB.open(), SqliteException);
 }
 
-void SqliteDBTestFixture::testPrepare()
+TEST(SqliteDBIntegration, testPrepare)
 {
-    FilePath usePath(getTempDir().child("useMe"));
+    TempFileWrapper tempDir;
+    FilePath usePath(tempDir.child("useMe"));
 
     {
-        SqliteDB fileDB(usePath());
+        SqliteDB fileDB(usePath);
         fileDB.create();
 
         SqliteDB::Statement statement(fileDB.prepare("select count(*) from sqlite_master;"));
     }
 }
 
-void SqliteDBTestFixture::testInTransaction()
+TEST(SqliteDBIntegration, testInTransaction)
 {
-    FilePath usePath(getTempDir().child("trans0"));
-    SqliteDB useIt(usePath());
+    TempFileWrapper tempDir;
+    FilePath usePath(tempDir.child("trans0"));
+    SqliteDB useIt(usePath);
     useIt.create();
 
-    CPPUNIT_ASSERT(!useIt.inTransaction());
+    EXPECT_FALSE(useIt.inTransaction());
     useIt.beginTransaction();
-    CPPUNIT_ASSERT(useIt.inTransaction());
+    EXPECT_TRUE(useIt.inTransaction());
 }
 
-void SqliteDBTestFixture::testCommitTransaction()
+TEST(SqliteDBIntegration, testCommitTransaction)
 {
-    FilePath usePath(getTempDir().child("trans1"));
-    SqliteDB useIt(usePath());
+    TempFileWrapper tempDir;
+    FilePath usePath(tempDir.child("trans1"));
+    SqliteDB useIt(usePath);
     useIt.create();
 
     useIt.execute("create table foo(x INTEGER, y TEXT);");
@@ -270,25 +232,26 @@ void SqliteDBTestFixture::testCommitTransaction()
     useIt.execute("insert into foo(x, y) values(3, 'All mimsy were the borogoves');");
     useIt.execute("insert into foo(x, y) values(4, 'And the mome raths outgrabe.');");
 
-    CPPUNIT_ASSERT(!useIt.inTransaction());
+    EXPECT_FALSE(useIt.inTransaction());
     useIt.beginTransaction();
-    CPPUNIT_ASSERT(useIt.inTransaction());
+    EXPECT_TRUE(useIt.inTransaction());
     useIt.execute("update foo set x = x + 100;");
-    CPPUNIT_ASSERT(useIt.inTransaction());
+    EXPECT_TRUE(useIt.inTransaction());
     useIt.commit();
-    CPPUNIT_ASSERT(!useIt.inTransaction());
+    EXPECT_FALSE(useIt.inTransaction());
 
     SqliteDB::Statement sum(useIt.prepare("select sum(x) from foo;"));
     int xSum;
     sum->setupRetrieval(0, xSum);
     sum();
-    CPPUNIT_ASSERT_EQUAL(410, xSum);
+    EXPECT_EQ(410, xSum);
 }
 
-void SqliteDBTestFixture::testRollbackTransaction()
+TEST(SqliteDBIntegration, testRollbackTransaction)
 {
-    FilePath usePath(getTempDir().child("trans2"));
-    SqliteDB useIt(usePath());
+    TempFileWrapper tempDir;
+    FilePath usePath(tempDir.child("trans2"));
+    SqliteDB useIt(usePath);
     useIt.create();
 
     useIt.execute("create table foo(x INTEGER, y TEXT);");
@@ -297,18 +260,17 @@ void SqliteDBTestFixture::testRollbackTransaction()
     useIt.execute("insert into foo(x, y) values(3, 'All mimsy were the borogoves');");
     useIt.execute("insert into foo(x, y) values(4, 'And the mome raths outgrabe.');");
 
-    CPPUNIT_ASSERT(!useIt.inTransaction());
+    EXPECT_FALSE(useIt.inTransaction());
     useIt.beginTransaction();
-    CPPUNIT_ASSERT(useIt.inTransaction());
+    EXPECT_TRUE(useIt.inTransaction());
     useIt.execute("update foo set x = x + 100;");
-    CPPUNIT_ASSERT(useIt.inTransaction());
+    EXPECT_TRUE(useIt.inTransaction());
     useIt.rollback();
-    CPPUNIT_ASSERT(!useIt.inTransaction());
+    EXPECT_FALSE(useIt.inTransaction());
 
     SqliteDB::Statement sum(useIt.prepare("select sum(x) from foo;"));
     int xSum;
     sum->setupRetrieval(0, xSum);
     sum();
-    CPPUNIT_ASSERT_EQUAL(10, xSum);
+    EXPECT_EQ(10, xSum);
 }
-
