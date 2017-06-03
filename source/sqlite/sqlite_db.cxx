@@ -284,12 +284,12 @@ SqliteException SqliteDB::makeNotEnoughColumnsException(int actualColumns, int c
 //===========================================================================
 // public
 
-SqliteStatementPointer SqliteDB::prepareStatement(const string& stmt)
+SqliteStatementPtr SqliteDB::prepareStatement(const string& stmt)
 {
     enforce(m_pDB != 0, "SqliteDB::prepareStatement called on closed database");
     if (stmt.empty())
     {
-        return SqliteStatementPointer();
+        return SqliteStatementPtr();
     }
 
     sqlite3_stmt* theStatement = 0;
@@ -298,7 +298,7 @@ SqliteStatementPointer SqliteDB::prepareStatement(const string& stmt)
     {
         throw SqliteException(m_path, m_pDB, "SqliteDB::prepareStatement failed");
     }
-    auto stmtP = SqliteStatementPointer(new SqliteStatementImpl(this, theStatement));
+    auto stmtP = SqliteStatementPtr(new SqliteStatementImpl(this, theStatement));
 
     {
         lock_guard<mutex> l(m_statementsLock);
@@ -334,7 +334,7 @@ void SqliteDB::finalizeStatement(SqliteStatement* stmt)
 //===========================================================================
 // public
 
-void SqliteDB::finalizeStatement(SqliteStatementPointer& stmt)
+void SqliteDB::finalizeStatement(SqliteStatementPtr& stmt)
 {
     enforce(m_pDB != 0, "SqliteDB::finalizeStatement called on closed database");
     if (stmt.get())
@@ -431,7 +431,7 @@ FilePath SqliteDB::getDBPath() const
 //===========================================================================
 // public
 
-int SqliteDB::transactionExecute(SqliteStatementPointer& transactionQuery)
+int SqliteDB::transactionExecute(SqliteStatementPtr& transactionQuery)
 {
     auto stmtImpl = dynamic_cast<SqliteStatementImpl*>(transactionQuery.get());
     enforce(stmtImpl != nullptr, "SqliteDB::transactionExecute called on other sub-class "

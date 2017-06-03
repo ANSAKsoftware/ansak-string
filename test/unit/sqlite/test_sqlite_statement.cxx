@@ -115,7 +115,7 @@ TEST_F(SqliteStmtFixture, prepareEmpty)
 {
     start(false);
 
-    EXPECT_EQ(SqliteStatementPointer(), uut().prepareStatement(string()));
+    EXPECT_EQ(SqliteStatementPtr(), uut().prepareStatement(string()));
 }
 
 TEST_F(SqliteStmtFixture, prepareFailure)

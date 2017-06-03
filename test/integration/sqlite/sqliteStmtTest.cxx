@@ -503,7 +503,7 @@ TEST(SqliteStatementTest, testPrepare)
     SqliteDB fileDB(useMe);
     fileDB.create();
 
-    SqliteStatementPointer stmtP(fileDB.prepareStatement("select count(*) from sqlite_master;"));
+    SqliteStatementPtr stmtP(fileDB.prepareStatement("select count(*) from sqlite_master;"));
     int rows;
     bool done = false;
 

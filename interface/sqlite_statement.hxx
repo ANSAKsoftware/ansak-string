@@ -54,7 +54,7 @@ namespace ansak {
 class SqliteDB;
 
 class SqliteStatement;
-typedef std::shared_ptr<SqliteStatement> SqliteStatementPointer;
+typedef std::shared_ptr<SqliteStatement> SqliteStatementPtr;
 
 ///////////////////////////////////////////////////////////////////////////
 // class sqliteStatement -- wrapper for a SQLITE3 statement, including

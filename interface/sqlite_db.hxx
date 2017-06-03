@@ -121,13 +121,13 @@ public:
     ///////////////////////////////////////////////////////////////////////
     // prepareStatement -- prepare a statement that is expected to last
     //                     across multiple scopes
-    SqliteStatementPointer prepareStatement(const std::string& stmt);
+    SqliteStatementPtr prepareStatement(const std::string& stmt);
 
     ///////////////////////////////////////////////////////////////////////
     // finalizeStatement -- finalize a statement explicitly, either by pointer
     //                      or by smart pointer
     void finalizeStatement(SqliteStatement* stmt);
-    void finalizeStatement(SqliteStatementPointer& stmt);
+    void finalizeStatement(SqliteStatementPtr& stmt);
 
     ///////////////////////////////////////////////////////////////////////
     // accessors
@@ -140,7 +140,7 @@ public:
 
         friend class SqliteDB;
 
-        Statement(SqliteDB* pDB, SqliteStatementPointer p) : m_p(p), m_db(pDB) {}
+        Statement(SqliteDB* pDB, SqliteStatementPtr p) : m_p(p), m_db(pDB) {}
 
     public:
 
@@ -155,7 +155,7 @@ public:
         void operator()(bool* done = 0) { (m_p.get())->operator()(done); }
 
     private:
-        SqliteStatementPointer  m_p;        // the statement pointer being wrapped
+        SqliteStatementPtr      m_p;        // the statement pointer being wrapped
         SqliteDB*               m_db;       // the database associated with m_p
     };
 
@@ -187,7 +187,7 @@ public:
 
 private:
 
-    int transactionExecute(SqliteStatementPointer& transactionQuery);
+    int transactionExecute(SqliteStatementPtr& transactionQuery);
 
     ///////////////////////////////////////////////////////////////////////
     // Member variables
@@ -198,9 +198,9 @@ private:
     int                     m_flagsUsed;    // flags used during opening
 
     std::mutex              m_statementsLock;   // lock of statements list
-    std::map<int, SqliteStatementPointer>
+    std::map<int, SqliteStatementPtr>
                             m_statementMap;     // map of active statements
-    SqliteStatementPointer m_beginTran, m_rollback, m_commit;       // transaction queries
+    SqliteStatementPtr      m_beginTran, m_rollback, m_commit;       // transaction queries
     bool                    m_inTransaction;    // is the database in a transaction?
 };
 
