@@ -68,6 +68,9 @@ set( _useUnitTests 1 )
 
 set( _ansakBuildType "notCoverage")
 if( CMAKE_BUILD_TYPE )
+    if ( ${CMAKE_BUILD_TYPE} STREQUAL "asan" )
+        include( FindASan )
+    endif()
     set(_ansakBuildType "${CMAKE_BUILD_TYPE}")
 endif()
 
@@ -149,7 +152,12 @@ list( APPEND ansakString_src source/string.cxx
 
 add_library( ansakString STATIC ${ansakString_src} )
 if (UNIX)
-    target_compile_options( ansakString PRIVATE -Weffc++ )
+    string(COMPARE GREATER_EQUAL ${CMAKE_C_COMPILER_VERSION} 6.0.0 modern_)
+    if(modern_)
+        target_compile_options( ansakString PRIVATE -Weffc++ )
+    else()
+        message("Effective C++ warnings suppressed for older compiler: ${CMAKE_C_COMPILER_VERSION}")
+    endif()
 endif()
 
 set( ansakString_privIncludes )

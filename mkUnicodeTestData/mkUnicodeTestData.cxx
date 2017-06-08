@@ -103,7 +103,7 @@ void process(filebuf& inbuf, filebuf& outbuf)
             }
         }
 
-        outStream << endl << "};" << endl;
+        outStream << endl << " 0xFFFFFFFF };" << endl;
     }
 
     outbuf.close();
