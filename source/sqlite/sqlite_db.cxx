@@ -298,7 +298,7 @@ SqliteStatementPtr SqliteDB::prepareStatement(const string& stmt)
     {
         throw SqliteException(m_path, m_pDB, "SqliteDB::prepareStatement failed");
     }
-    auto stmtP = SqliteStatementPtr(new SqliteStatementImpl(this, theStatement));
+    auto stmtP = SqliteStatementPtr(new SqliteStatementImpl(*this, theStatement));
 
     {
         lock_guard<mutex> l(m_statementsLock);
@@ -313,7 +313,7 @@ SqliteStatementPtr SqliteDB::prepareStatement(const string& stmt)
 SqliteDB::Statement SqliteDB::prepare(const std::string& stmt)
 {
     enforce(m_pDB != 0, "SqliteDB::prepare called on closed database");
-    return Statement(this, prepareStatement(stmt));
+    return Statement(*this, prepareStatement(stmt));
 }
 
 //===========================================================================

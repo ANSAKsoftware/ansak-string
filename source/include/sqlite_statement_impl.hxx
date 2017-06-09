@@ -69,7 +69,7 @@ class SqliteStatementImpl : public SqliteStatement {
 
     SqliteStatementImpl
     (
-        SqliteDB*           db,         // I - a pointer to the SqliteDB object
+        SqliteDB&           db,         // I - a pointer to the SqliteDB object
         sqlite3_stmt*       stmt        // I - the SQLite3-prepared statement
     );
 
@@ -79,6 +79,12 @@ public:
     // Destructor
 
     ~SqliteStatementImpl();
+
+    //=======================================================================
+    // Copy Constructor, assignment deleted
+
+    SqliteStatementImpl(const SqliteStatementImpl& src) = delete;
+    SqliteStatementImpl& operator=(const SqliteStatementImpl& src) const = delete;
 
     //=======================================================================
     // setBeginTransaction
@@ -201,7 +207,7 @@ private:
     // Member variables
 
     std::mutex      m_statementLock;        // only one thread can touch this statement
-    SqliteDB*       m_db;                   // the database the statement lives in
+    SqliteDB&       m_db;                   // the database the statement lives in
     sqlite3_stmt*   m_stmt;                 // the prepared statement
     int             m_id;                   // a serial number for the prepared statement
     RetrievalMap    m_retrieveColumns;      // record retrieval, by column

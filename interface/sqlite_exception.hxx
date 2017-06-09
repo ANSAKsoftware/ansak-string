@@ -81,7 +81,7 @@ public:
 
 private:
     std::string         m_what = std::string();
-    FilePath            m_filePath;
+    FilePath            m_filePath = FilePath::invalidPath();
 };
 
 }

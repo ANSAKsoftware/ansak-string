@@ -76,7 +76,7 @@ public:
     static const bool resetOnlyStatement = true;
 
     //=======================================================================
-    // Copy Constructor, assignment deleted private -- called only by SqliteDB::prepare
+    // Copy Constructor, assignment deleted
 
     SqliteStatement(const SqliteStatement& src) = delete;
     SqliteStatement& operator=(const SqliteStatement& src) const = delete;
@@ -84,7 +84,7 @@ public:
     //=======================================================================
     // Destructor
 
-    ~SqliteStatement();
+    virtual ~SqliteStatement();
 
     //=======================================================================
     // setBeginTransaction

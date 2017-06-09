@@ -85,7 +85,7 @@ namespace
 
 SqliteStatementImpl::SqliteStatementImpl
 (
-    SqliteDB*           db,         // I - a pointer to the sqliteDB object
+    SqliteDB&           db,         // I - a pointer to the sqliteDB object
     sqlite3_stmt*       stmt        // I - the SQLite3-prepared statement
 ) : m_statementLock(),
     m_db(db),
@@ -122,8 +122,8 @@ void SqliteStatementImpl::bind
     int rc = sqlite3_bind_double(m_stmt, n + 1, d);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatementImpl::bind(int, double)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::bind(int, double)");
+        m_db.rollback();
         throw e;
     }
 
@@ -144,8 +144,8 @@ void SqliteStatementImpl::bind
     int rc = sqlite3_bind_int(m_stmt, n + 1, i);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatementImpl::bind(int, int)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::bind(int, int)");
+        m_db.rollback();
         throw e;
     }
 
@@ -166,8 +166,8 @@ void SqliteStatementImpl::bind
     int rc = sqlite3_bind_int64(m_stmt, n + 1, i64);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatementImpl::bind(int, long long)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::bind(int, long long)");
+        m_db.rollback();
         throw e;
     }
 
@@ -188,8 +188,8 @@ void SqliteStatementImpl::bind
     int rc = sqlite3_bind_text(m_stmt, n + 1, text.c_str(), static_cast<int>(text.size()), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const string&)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::bind(int, const string&)");
+        m_db.rollback();
         throw e;
     }
 
@@ -210,8 +210,8 @@ void SqliteStatementImpl::bind
     int rc = sqlite3_bind_text(m_stmt, n + 1, text, static_cast<int>(strlen(text)), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const char*)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::bind(int, const char*)");
+        m_db.rollback();
         throw e;
     }
 
@@ -232,8 +232,8 @@ void SqliteStatementImpl::bind
     int rc = sqlite3_bind_blob(m_stmt, n + 1, &data[0], static_cast<int>(data.size()), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const vector<char>&)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::bind(int, const vector<char>&)");
+        m_db.rollback();
         throw e;
     }
 
@@ -255,8 +255,8 @@ void SqliteStatementImpl::bind
     int rc = sqlite3_bind_blob(m_stmt, n + 1, data, dataLength, SQLITE_TRANSIENT);
     if (rc != SQLITE_OK)
     {
-        auto e = m_db->makeException("SqliteStatementImpl::bind(int, const char*, int)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::bind(int, const char*, int)");
+        m_db.rollback();
         throw e;
     }
 
@@ -368,9 +368,9 @@ void SqliteStatementImpl::operator()
 {
     lock_guard<mutex> l(m_statementLock);
     enforce(m_stmt != 0, "No active statement being wrapped.");
-    if (!m_started && m_beginTransaction && !m_db->inTransaction())
+    if (!m_started && m_beginTransaction && !m_db.inTransaction())
     {
-        m_db->beginTransaction();
+        m_db.beginTransaction();
     }
     m_started = true;
 
@@ -383,9 +383,9 @@ void SqliteStatementImpl::operator()
             *done = true;
         }
 
-        if (m_endTransaction && m_db->inTransaction())
+        if (m_endTransaction && m_db.inTransaction())
         {
-            m_db->commit();
+            m_db.commit();
         }
     }
     else if (rc == SQLITE_ROW)
@@ -395,8 +395,8 @@ void SqliteStatementImpl::operator()
         {
             if (v.first >= nCols)
             {
-                m_db->rollback();
-                throw m_db->makeNotEnoughColumnsException(nCols, v.first);
+                m_db.rollback();
+                throw m_db.makeNotEnoughColumnsException(nCols, v.first);
             }
             try
             {
@@ -404,12 +404,12 @@ void SqliteStatementImpl::operator()
             }
             catch (RetrievalVarException& e)
             {
-                m_db->rollback();
-                throw SqliteException(m_db->getDBPath(), e.what());
+                m_db.rollback();
+                throw SqliteException(m_db.getDBPath(), e.what());
             }
             catch (...)
             {
-                m_db->rollback();
+                m_db.rollback();
                 throw;
             }
         }
@@ -420,8 +420,8 @@ void SqliteStatementImpl::operator()
     }
     else
     {
-        auto e = m_db->makeException("SqliteStatementImpl::operator()(bool*)");
-        m_db->rollback();
+        auto e = m_db.makeException("SqliteStatementImpl::operator()(bool*)");
+        m_db.rollback();
         throw e;
     }
 }
@@ -478,7 +478,6 @@ void SqliteStatementImpl::finalize()
     {
         sqlite3_finalize(m_stmt);
         m_stmt = 0;
-        m_db = 0;
     }
 }
 

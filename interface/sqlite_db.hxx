@@ -140,11 +140,11 @@ public:
 
         friend class SqliteDB;
 
-        Statement(SqliteDB* pDB, SqliteStatementPtr p) : m_p(p), m_db(pDB) {}
+        Statement(SqliteDB& pDB, SqliteStatementPtr p) : m_p(p), m_db(pDB) {}
 
     public:
 
-        ~Statement() { m_db->finalizeStatement(m_p); }
+        ~Statement() { m_db.finalizeStatement(m_p); }
 
         ///////////////////////////////////////////////////////////////////
         // Make this class function as much like a smart pointer as possible
@@ -156,7 +156,7 @@ public:
 
     private:
         SqliteStatementPtr      m_p;        // the statement pointer being wrapped
-        SqliteDB*               m_db;       // the database associated with m_p
+        SqliteDB&               m_db;       // the database associated with m_p
     };
 
     ///////////////////////////////////////////////////////////////////////
