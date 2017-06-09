@@ -806,7 +806,6 @@ TEST(StringToLowerTest, testThirtyTwoBitToLowers)
     }
     {   // 0.62 - x
         result |= flag;
-        flag <<= 1;
     }
     }
 
@@ -1259,7 +1258,6 @@ TEST(StringToLowerTest, testThirtyTwoBitToLowers)
         ucs4String upperCase(U"\U00010414\U00010415\U00010416\U00010417\U00010418");
         ucs4String lowerCase(U"\U0001043C\U0001043D\U0001043E\U0001043F\U00010440");
         result |= lowerCase == toLower(upperCase) ? flag : 0;
-        flag <<= 1;
         EXPECT_EQ(lowerCase, toLower(lowerCase));
     }
     }
@@ -1347,13 +1345,11 @@ TEST(StringToLowerTest, testThirtyTwoBitToLowers)
         ucs4String upperCase(U"\U000118B8\U000118B9\U000118BA\U000118BB\U000118BC\U000118BD\U000118BE\U000118BF");
         ucs4String lowerCase(U"\U000118D8\U000118D9\U000118DA\U000118DB\U000118DC\U000118DD\U000118DE\U000118DF");
         result |= lowerCase == toLower(upperCase) ? flag : 0;
-        flag <<= 1;
         EXPECT_EQ(lowerCase, toLower(lowerCase));
     }
     }
 
-    auto result2 = result; result = 0;
-    flag = 1;
+    auto result2 = result;
     // result2 should be 0x7FF
 
     EXPECT_EQ( 0x7FFFFFFFFFFFFFFF, result0 );

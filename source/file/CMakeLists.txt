@@ -44,7 +44,7 @@ set( _targetSrc file_system_path.cxx
                 file_handle.cxx )
 
 add_library( ${_target} STATIC ${_targetSrc} )
-if (UNIX)
+if (ANSAK_EFFECTIVE_CPP)
     target_compile_options( ${_target} PRIVATE -Weffc++ )
 endif()
 target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )
