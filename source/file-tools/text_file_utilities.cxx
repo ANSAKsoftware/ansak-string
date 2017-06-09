@@ -108,6 +108,11 @@ inline FileOfLinesException ReadFailed(const FilePath& filePath)
     return FileOfLinesException("path could not be read", filePath);
 }
 
+struct ArrayDeleter
+{
+    void operator()(char* p) { delete [] p; }
+};
+
 }
 
 //===========================================================================
@@ -143,7 +148,7 @@ bool looksLikeText
         {
             return false;
         }
-        unique_ptr<char> work = unique_ptr<char>(new char[allocateSize]);
+        auto work = unique_ptr<char, ArrayDeleter>(new char[allocateSize]);
 
         // make sure the file can be read, though, even if it's not there
         int rd = 0;
@@ -324,7 +329,7 @@ bool bufferIsText
 
     // grab a copy so as to be able to massage the content for endian-ness (and
     // null-terminate to boot!)
-    unique_ptr<char> work(new char[nLeft + sizeof(char32_t)]);
+    auto work = unique_ptr<char, ArrayDeleter>(new char[nLeft + sizeof(char32_t)]);
     auto workP = work.get();
     memcpy(workP, pContent, nLeft);
     *(reinterpret_cast<char32_t*>(workP + nLeft)) = static_cast<char32_t>(0);

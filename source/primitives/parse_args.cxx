@@ -54,7 +54,6 @@ namespace ansak {
 namespace {
 
 static const int taintedArgumentCount = 10000;
-static const int oneK = 1024;
 static const int taintedArgumentSize = 1000;
 
 //===========================================================================
@@ -272,7 +271,7 @@ ParseArgs::ParseArgs
             maxArg = argX;
         }
         // no param needs to be 1K long
-        auto s = strnlen(argv[argX], oneK);
+        auto s = strnlen(argv[argX], taintedArgumentSize + 1);
         tainted |= s > taintedArgumentSize;
         totalSize += static_cast<int>(s);
     }
@@ -723,7 +722,7 @@ bool ParseArgs::areBad
     int totalSize = 0;
     for (auto i = 1; i < argc; ++i)
     {
-        auto s = strnlen(argv[i], oneK);
+        auto s = strnlen(argv[i], taintedArgumentSize + 1);
         if (s > taintedArgumentSize)
         {
             return true;

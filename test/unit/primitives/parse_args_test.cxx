@@ -430,7 +430,7 @@ TEST(ParseArgsTest, testThrowOnTaintedData)
 
         const char* argv[16];
         argv[0] = "too-much";
-        memset(longArg, '*', 880); longArg[879] = '0';
+        memset(longArg, '*', 880); longArg[879] = '\0';
         for (int i = 1; i < 16; ++i)
         {
             argv[i] = longArg;
@@ -468,7 +468,7 @@ TEST(ParseArgsTest, testDontThrowOnTaintedData)
         const char* argv[2];
         argv[0] = "too-much";
         argv[1] = reallyLongArg;
-        memset(reallyLongArg, '*', 1009); reallyLongArg[1009] = '0';
+        memset(reallyLongArg, '*', 1009); reallyLongArg[1009] = '\0';
         ParseArgs bounceOne(ParseArgs::preferringShortFlagsNoThrow(2, argv));
         ParseArgs bounceTwo(ParseArgs::preferringWordsNoThrow(2, argv));
     }
@@ -478,7 +478,7 @@ TEST(ParseArgsTest, testDontThrowOnTaintedData)
     {
         const char* argv[16];
         argv[0] = "too-much";
-        memset(longArg, '*', 880); longArg[879] = '0';
+        memset(longArg, '*', 880); longArg[879] = '\0';
         for (int i = 1; i < 16; ++i)
         {
             argv[i] = longArg;

@@ -638,7 +638,8 @@ TEST(FileHandleTest, testOpenForAppending)
     {
         FileHandle hWhere(FileHandle::openForAppending(here, FileHandle::OpenType::kCreateIfNotThere));
         EXPECT_NE(hWhere, FileHandle());
-        hWhere.write("Now is the time for all good men to come to the aid of the party.", 101);
+        const char now[] = "Now is the time for all good men to come to the aid of the party.";
+        hWhere.write(now, sizeof(now) - 1);
     }
 
     FileSystemPath whereAfter(FilePath(tempDir->asFileSystemPath().child("crateTest")));
