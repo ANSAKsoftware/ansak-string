@@ -75,7 +75,6 @@ void process(filebuf& inbuf, filebuf& outbuf)
     if (!fields.empty())
     {
         outStream << "char32_t validUnicodeCodePoints[] = {" << endl << "    ";
-        bool firstOne = true;
         int nCount = 0;
         while (oneLine.size() > 10)
         {
@@ -88,22 +87,17 @@ void process(filebuf& inbuf, filebuf& outbuf)
                 continue;
             }
 
-            if (!firstOne && nCount % 10 != 0)
-            {
-                outStream << ", ";
-            }
-            outStream << "0x" << fields[0];
+            outStream << " 0x" << fields[0] << ',';
             getline(inStream, oneLine);
             fields = split(oneLine, ';');
-            firstOne = false;
             ++nCount;
             if (oneLine.size() != 0 && nCount % 10 == 0)
             {
-                outStream << ',' << endl << "    ";
+                outStream << endl << "   ";
             }
         }
 
-        outStream << endl << " 0xFFFFFFFF };" << endl;
+        outStream << " 0xFFFFFFFF };" << endl;
     }
 
     outbuf.close();
