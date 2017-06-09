@@ -55,23 +55,21 @@ project(ansakString)
 
 ## part of ansak multi-part project? ####
 
+##############################################################################################################
 set( _ansakRoot 0 )
 if( "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}" )
     set( _ansakRoot 1 )
 endif()
-
-if( ${_ansakRoot} )
+if(_ansakRoot)
     list( INSERT CMAKE_MODULE_PATH
           0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules )
 endif()
-set( _useUnitTests 1 )
 
+##############################################################################################################
+set( _useUnitTests 1 )
 set( _ansakBuildType "notCoverage")
 if( CMAKE_BUILD_TYPE )
     string( TOLOWER "${CMAKE_BUILD_TYPE}" _ansakBuildType )
-    if ( ${_ansakBuildType} STREQUAL asan )
-        include( FindASan )
-    endif()
 endif()
 
 if( CMAKE_GENERATOR MATCHES "Visual Studio" )
@@ -84,15 +82,21 @@ if( CMAKE_GENERATOR MATCHES "Visual Studio" )
     endif()
 endif()
 
+#*************************************************************************************************************
 if( ${_ansakBuildType} STREQUAL coverage )
-    if( ${_useUnitTests} EQUAL 0 )
+    if( NOT _useUnitTests )
         message( "Coverage builds require unit tests to be active." )
         set( _useUnitTests 1 )
     endif()
 endif()
+##############################################################################################################
 
-if( _useUnitTests )
-    if( ${_ansakRoot} ) 
+##############################################################################################################
+if( _ansakRoot )
+    if ( ${_ansakBuildType} STREQUAL asan )
+        include( FindASan )
+    endif()
+    if( _useUnitTests )
         include( CTest )
         if( _ansakBuildType STREQUAL coverage )
             if( NOT UNIX )
@@ -103,19 +107,7 @@ if( _useUnitTests )
         add_subdirectory( submods )
     endif()
 endif()
-
-set( DEFAULT_SUPPORTED_UNICODE_VERSION "9" )
-if( ANSAK_UNICODE_SUPPORT )
-    if( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL 7 ) OR
-               ( ANSAK_UNICODE_SUPPORT STREQUAL 8 ) OR
-               ( ANSAK_UNICODE_SUPPORT STREQUAL 9 ) ) )
-        message( "Unicode version, ${ANSAK_UNICODE_SUPPORT}, is not supported. Reverting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
-        set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
-    endif()
-else()
-    message( "No Unicode version selected. Defaulting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
-    set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
-endif()
+##############################################################################################################
 
 if( UNIX )
     set( _isGnu 1 )
@@ -132,6 +124,20 @@ if( UNIX )
     if( _isGnu )
         add_compile_options( -Wno-missing-field-initializers )
     endif()
+endif()
+
+##############################################################################################################
+set( DEFAULT_SUPPORTED_UNICODE_VERSION "9" )
+if( ANSAK_UNICODE_SUPPORT )
+    if( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL 7 ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL 8 ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL 9 ) ) )
+        message( "Unicode version, ${ANSAK_UNICODE_SUPPORT}, is not supported. Reverting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
+        set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
+    endif()
+else()
+    message( "No Unicode version selected. Defaulting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
+    set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
 endif()
 
 set( ansakString_intfc )
@@ -171,6 +177,7 @@ set( ansakString_privIncludes )
 list( APPEND ansakString_privIncludes ${bitsDir} source )
 target_include_directories( ansakString PRIVATE ${ansakString_privIncludes} PUBLIC interface )
 
+##############################################################################################################
 if( _useUnitTests )
   add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
   target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
@@ -207,3 +214,4 @@ if( _useUnitTests )
       SETUP_TARGET_FOR_COVERAGE( ansak-string-coverage ansakStringTest ansakStringCoverage )
   endif()
 endif()
+##############################################################################################################
