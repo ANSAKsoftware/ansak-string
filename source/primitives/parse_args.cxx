@@ -60,14 +60,14 @@ static const int taintedArgumentSize = 1000;
 
 inline bool isBareDoubleHyphen(const char* arg)
 {
-    return arg[0] == '-' && arg[1] == '-' && arg[2] == '\0';
+    return arg != nullptr && arg[0] == '-' && arg[1] == '-' && arg[2] == '\0';
 }
 
 //===========================================================================
 
 bool isFlagOrSetting(const char* arg)
 {
-    if (arg[0] == '-')
+    if (arg != nullptr && arg[0] == '-')
     {
         return arg[1] != '\0';
     }
@@ -78,7 +78,7 @@ bool isFlagOrSetting(const char* arg)
 
 inline bool hasDoubleHyphen(const char* arg)
 {
-    return arg[0] == '-' && arg[1] == '-';
+    return arg != nullptr && arg[0] == '-' && arg[1] == '-';
 }
 
 //===========================================================================
@@ -121,36 +121,6 @@ void addToLine(ostringstream& line, const string& src, int& runningSize, std::se
     }
     line << src;
     runningSize += static_cast<int>(src.size());
-}
-
-//===========================================================================
-
-void throwBadArgs
-(
-    int         argc,           // I - from argc to main()
-    const char* argv[],         // I - from argv to main()
-    int         totalSize = -1  // I - size if it's been totted up
-)
-{
-    ostringstream line;
-    line << "argc/argv were not reasonable. argc = " << argc <<
-            "; argv = " << std::hex << reinterpret_cast<unsigned long long>(argv);
-    if (totalSize == -1)
-    {
-        line << '.';
-    }
-    else
-    {
-        if (totalSize >= taintedArgumentCount)
-        {
-            line << "; total size was " << std::dec << totalSize << '.';
-        }
-        else
-        {
-            line << "; some argument was longer than " << taintedArgumentSize << "characters.";
-        }
-    }
-    throw BadArgsException(line.str());
 }
 
 }
@@ -246,11 +216,8 @@ ParseArgs::ParseArgs
     m_splitForFlags(splitForFlags)
 {
     // avoid tainted inputs
-    if (argc < 1 || argc >= taintedArgumentCount)
+    if (argv == nullptr || argc < 1 || argc >= taintedArgumentCount)
     {
-        m_allArgsParsed = false;
-        m_shippingArgc = 0;
-        m_shippingArgv = 0;
         throwBadArgs(argc, argv);
     }
     int maximumToScan = limit;
@@ -261,6 +228,11 @@ ParseArgs::ParseArgs
     int totalSize = 0;
     for (argX = 1; argX < argc; ++argX)
     {
+        auto argP = argv[argX];
+        if (argP == nullptr)
+        {
+            throwBadArgs(argc, argv);
+        }
         if (isBareDoubleHyphen(argv[argX]))
         {
             doubleHyphenX = argX;
@@ -280,9 +252,6 @@ ParseArgs::ParseArgs
     if (tainted)
     {
         // whatever we thought we were going to do, all args were not parsed
-        m_allArgsParsed = false;
-        m_shippingArgc = 0;
-        m_shippingArgv = 0;
         throwBadArgs(argc, argv, totalSize);
     }
 
@@ -775,6 +744,41 @@ const char* BadArgsException::what() const noexcept
 
     static const char emptyWhat[] = "BadArgsException - no info available.";
     return emptyWhat;
+}
+
+//===========================================================================
+// private
+
+void ParseArgs::throwBadArgs
+(
+    int             argc,       // I - from argc to main()
+    const char*     argv[],     // I - from argv to main()
+    int             totalSize   // I - size if it's been totted up, def -1
+)
+{
+    m_allArgsParsed = false;
+    m_shippingArgc = 0;
+    m_shippingArgv = 0;
+
+    ostringstream line;
+    line << "argc/argv were not reasonable. argc = " << argc <<
+            "; argv = " << std::hex << reinterpret_cast<unsigned long long>(argv);
+    if (totalSize == -1)
+    {
+        line << '.';
+    }
+    else
+    {
+        if (totalSize >= taintedArgumentCount)
+        {
+            line << "; total size was " << std::dec << totalSize << '.';
+        }
+        else
+        {
+            line << "; some argument was longer than " << taintedArgumentSize << "characters.";
+        }
+    }
+    throw BadArgsException(line.str());
 }
 
 }

@@ -387,6 +387,13 @@ private:
 
     static bool areBad(int argc, const char* argv[]);
 
+    void throwBadArgs
+    (
+        int         argc,           // I - from argc to main()
+        const char* argv[],         // I - from argv to main()
+        int         totalSize = -1  // I - size if it's been totted up
+    );
+
     std::string                             m_procName;         // argv[0]
     std::set<std::string>                   m_flags;            // single values from argc/argv
     std::map<std::string, std::string>      m_settings;         // set parameters from argc/argv
