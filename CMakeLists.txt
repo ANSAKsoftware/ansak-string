@@ -110,6 +110,14 @@ endif()
 ##############################################################################################################
 # Sanity
 if( _ansakRoot )
+
+    ##########################################################################################################
+    # Dynamic v. Static on Windows
+    if( WIN32 )
+        include( WindowsCRuntime )
+        SETUP_C_RUNTIME( DYNAMIC )
+    endif()
+
     set( _useO0 0 )
     if ( (_buildType STREQUAL asand) OR
          (_buildType STREQUAL msand) OR
@@ -143,13 +151,6 @@ if( _ansakRoot )
         endif()
         add_subdirectory( submods )
     endif()
-endif()
-
-##############################################################################################################
-# Dynamic v. Static on Windows
-if( WIN32 )
-    include( WindowsCRuntime )
-    SETUP_C_RUNTIME( DYNAMIC )
 endif()
 
 ##############################################################################################################
