@@ -292,6 +292,7 @@ TEST(IsUnicodeTest, testIsUnicode)
         case 0x2A700:
         case 0x2B740:
         case 0x2B820:
+        case 0x2CEB0:
             startCJKSection = *iValid;
             endCJKSection = *++iValid;
             break;

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2015, Arthur N. Klassen
+// Copyright (c) 2017, Arthur N. Klassen
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2015.10.16 - First version
+// 2017.06.14 - First version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,7 +35,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// string_tolower_test8.cxx -- gtest-compatible tests to exercise string.hxx/.cxx
+// string_tolower_test10.cxx -- gtest-compatible tests to exercise string.hxx/.cxx
 //                   If you find new conditions that I missed, please let
 //                   me make my version of this better, too.
 //
@@ -190,9 +190,9 @@ TEST(StringToLowerTest, testSixteenBitToLowers)
       u48(u"\uA692\uA694\uA696\uA698\uA69A\uA722\uA724\uA726\uA728\uA72A\uA72C\uA72E\uA732\uA734\uA736\uA738\uA73A\uA73C\uA73E\uA740\uA742"),
       u49(u"\uA744\uA746\uA748\uA74A\uA74C\uA74E\uA750\uA752\uA754\uA756\uA758\uA75A\uA75C\uA75E\uA760\uA762\uA764\uA766\uA768\uA76A\uA76C"),
       u50(u"\uA76E\uA779\uA77B\uA77D\uA77E\uA780\uA782\uA784\uA786\uA78B\uA78D\uA790\uA792\uA796\uA798\uA79A\uA79C\uA79E\uA7A0\uA7A2\uA7A4"),
-      u51(u"\uA7A6\uA7A8\uA7AA\uA7AB\uA7AC\uA7AD\uA7B0\uA7B1\uA7B2\uA7B3\uA7B4\uA7B6\uFF21\uFF22\uFF23\uFF24\uFF25\uFF26\uFF27\uFF28\uFF29"),
-      u52(u"\uFF2A\uFF2B\uFF2C\uFF2D\uFF2E\uFF2F\uFF30\uFF31\uFF32\uFF33\uFF34\uFF35\uFF36\uFF37\uFF38\uFF39\uFF3A\uFE5A\u0601\u0702\u0803"),
-      u53(u"\u0904\u0a05\u0b06\u0c07\u0d08\u0e09\u0f0a\u3001\u4002\u5003\u6004\u7005\u8006\u9007\ub008\uc009\ud00a\ue00b");
+      u51(u"\uA7A6\uA7A8\uA7AA\uA7AB\uA7AC\uA7AD\uA7AE\uA7B0\uA7B1\uA7B2\uA7B3\uA7B4\uA7B6\uFF21\uFF22\uFF23\uFF24\uFF25\uFF26\uFF27\uFF28"),
+      u52(u"\uFF29\uFF2A\uFF2B\uFF2C\uFF2D\uFF2E\uFF2F\uFF30\uFF31\uFF32\uFF33\uFF34\uFF35\uFF36\uFF37\uFF38\uFF39\uFF3A\uFE5A\u0601\u0702"),
+      u53(u"\u0803\u0904\u0a05\u0b06\u0c07\u0d08\u0e09\u0f0a\u3001\u4002\u5003\u6004\u7005\u8006\u9007\ub008\uc009\ud00a\ue00b");
     ucs2String
       l00(u"\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u006A\u006B\u006C\u006D\u006E\u006F\u0070\u0071\u0072\u0073\u0074\u0075"),
       l01(u"\u0076\u0077\u0078\u0079\u007A\u00E0\u00E1\u00E2\u00E3\u00E4\u00E5\u00E6\u00E7\u00E8\u00E9\u00EA\u00EB\u00EC\u00ED\u00EE\u00EF"),
@@ -245,9 +245,9 @@ TEST(StringToLowerTest, testSixteenBitToLowers)
       l48(u"\uA693\uA695\uA697\uA699\uA69B\uA723\uA725\uA727\uA729\uA72B\uA72D\uA72F\uA733\uA735\uA737\uA739\uA73B\uA73D\uA73F\uA741\uA743"),
       l49(u"\uA745\uA747\uA749\uA74B\uA74D\uA74F\uA751\uA753\uA755\uA757\uA759\uA75B\uA75D\uA75F\uA761\uA763\uA765\uA767\uA769\uA76B\uA76D"),
       l50(u"\uA76F\uA77A\uA77C\u1D79\uA77F\uA781\uA783\uA785\uA787\uA78C\u0265\uA791\uA793\uA797\uA799\uA79B\uA79D\uA79F\uA7A1\uA7A3\uA7A5"),
-      l51(u"\uA7A7\uA7A9\u0266\u025C\u0261\u026C\u029E\u0287\u029D\uAB53\uA7B5\uA7B7\uFF41\uFF42\uFF43\uFF44\uFF45\uFF46\uFF47\uFF48\uFF49"),
-      l52(u"\uFF4A\uFF4B\uFF4C\uFF4D\uFF4E\uFF4F\uFF50\uFF51\uFF52\uFF53\uFF54\uFF55\uFF56\uFF57\uFF58\uFF59\uFF5A\uFE5A\u0601\u0702\u0803"),
-      l53(u"\u0904\u0a05\u0b06\u0c07\u0d08\u0e09\u0f0a\u3001\u4002\u5003\u6004\u7005\u8006\u9007\ub008\uc009\ud00a\ue00b");
+      l51(u"\uA7A7\uA7A9\u0266\u025C\u0261\u026C\u026A\u029E\u0287\u029D\uAB53\uA7B5\uA7B7\uFF41\uFF42\uFF43\uFF44\uFF45\uFF46\uFF47\uFF48"),
+      l52(u"\uFF49\uFF4A\uFF4B\uFF4C\uFF4D\uFF4E\uFF4F\uFF50\uFF51\uFF52\uFF53\uFF54\uFF55\uFF56\uFF57\uFF58\uFF59\uFF5A\uFE5A\u0601\u0702"),
+      l53(u"\u0803\u0904\u0a05\u0b06\u0c07\u0d08\u0e09\u0f0a\u3001\u4002\u5003\u6004\u7005\u8006\u9007\ub008\uc009\ud00a\ue00b");
 
     int64_t x = 0;
     x|= (l00 == toLower(u00)) ? 0b1 : 0;    // good
@@ -1248,8 +1248,8 @@ TEST(StringToLowerTest, testThirtyTwoBitToLowers)
 
     ////////////////////////////////////////////////////////////
     {   // 1.56 - x
-        ucs4String upperCase(U"\U0000A7A6\U0000A7A8\U0000A7AA\U0000A7AB\U0000A7AC\U0000A7AD\U0000A7B0\U0000A7B1\U0000A7B2");
-        ucs4String lowerCase(U"\U0000A7A7\U0000A7A9\U00000266\U0000025C\U00000261\U0000026C\U0000029E\U00000287\U0000029D");
+        ucs4String upperCase(U"\U0000A7A6\U0000A7A8\U0000A7AA\U0000A7AB\U0000A7AC\U0000A7AD\U0000A7AE\U0000A7B0\U0000A7B1\U0000A7B2");
+        ucs4String lowerCase(U"\U0000A7A7\U0000A7A9\U00000266\U0000025C\U00000261\U0000026C\U0000026A\U0000029E\U00000287\U0000029D");
         result |= lowerCase == toLower(upperCase) ? flag : 0;
         flag <<= 1;
         EXPECT_EQ(lowerCase, toLower(lowerCase));
@@ -1380,6 +1380,66 @@ TEST(StringToLowerTest, testThirtyTwoBitToLowers)
         ucs4String upperCase(U"\U000118B8\U000118B9\U000118BA\U000118BB\U000118BC\U000118BD\U000118BE\U000118BF");
         ucs4String lowerCase(U"\U000118D8\U000118D9\U000118DA\U000118DB\U000118DC\U000118DD\U000118DE\U000118DF");
         result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+    {   // 2.11 - x
+        ucs4String upperCase(U"\U000104B0\U000104B1\U000104B2\U000104B3\U000104B4\U000104B5\U000104B6\U000104B7\U000104B8");
+        ucs4String lowerCase(U"\U000104D8\U000104D9\U000104DA\U000104DB\U000104DC\U000104DD\U000104DE\U000104DF\U000104E0");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+
+    ////////////////////////////////////////////////////////////
+    {   // 2.12 - x
+        ucs4String upperCase(U"\U000104B9\U000104BA\U000104BB\U000104BC\U000104BD\U000104BE\U000104BF\U000104C0\U000104C1");
+        ucs4String lowerCase(U"\U000104E1\U000104E2\U000104E3\U000104E4\U000104E5\U000104E6\U000104E7\U000104E8\U000104E9");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+    {   // 2.13 - x
+        ucs4String upperCase(U"\U000104C2\U000104C3\U000104C4\U000104C5\U000104C6\U000104C7\U000104C8\U000104C9\U000104CA");
+        ucs4String lowerCase(U"\U000104EA\U000104EB\U000104EC\U000104ED\U000104EE\U000104EF\U000104F0\U000104F1\U000104F2");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+    {   // 2.14 - x
+        ucs4String upperCase(U"\U000104CB\U000104CC\U000104CD\U000104CE\U000104CF\U000104D0\U000104D1\U000104D2\U000104D3");
+        ucs4String lowerCase(U"\U000104F3\U000104F4\U000104F5\U000104F6\U000104F7\U000104F8\U000104F9\U000104FA\U000104FB");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+    {   // 2.15 - x
+        ucs4String upperCase(U"\U0001E900\U0001E901\U0001E902\U0001E903\U0001E904\U0001E905\U0001E906\U0001E907\U0001E908");
+        ucs4String lowerCase(U"\U0001E922\U0001E923\U0001E924\U0001E925\U0001E926\U0001E927\U0001E928\U0001E929\U0001E92A");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+
+    ////////////////////////////////////////////////////////////
+    {   // 2.16 - x
+        ucs4String upperCase(U"\U0001E909\U0001E90A\U0001E90B\U0001E90C\U0001E90D\U0001E90E\U0001E90F\U0001E910\U0001E911");
+        ucs4String lowerCase(U"\U0001E92B\U0001E92C\U0001E92D\U0001E92E\U0001E92F\U0001E930\U0001E931\U0001E932\U0001E933");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+    {   // 2.17 - x
+        ucs4String upperCase(U"\U0001E912\U0001E913\U0001E914\U0001E915\U0001E916\U0001E917\U0001E918\U0001E919\U0001E91A");
+        ucs4String lowerCase(U"\U0001E934\U0001E935\U0001E936\U0001E937\U0001E938\U0001E939\U0001E93A\U0001E93B\U0001E93C");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
+        flag <<= 1;
+        EXPECT_EQ(lowerCase, toLower(lowerCase));
+    }
+    {   // 2.18 - x
+        ucs4String upperCase(U"\U0001E91B\U0001E91C\U0001E91D\U0001E91E\U0001E91F\U0001E920\U0001E921");
+        ucs4String lowerCase(U"\U0001E93D\U0001E93E\U0001E93F\U0001E940\U0001E941\U0001E942\U0001E943");
+        result |= lowerCase == toLower(upperCase) ? flag : 0;
         EXPECT_EQ(lowerCase, toLower(lowerCase));
     }
     }
@@ -1389,7 +1449,7 @@ TEST(StringToLowerTest, testThirtyTwoBitToLowers)
 
     EXPECT_EQ( 0x7FFFFFFFFFFFFFFF, result0 );
     EXPECT_EQ( 0x7FFFFFFFFFFFFFFF, result1 );
-    EXPECT_EQ( static_cast<int64_t>(0x7FF), result2 );
+    EXPECT_EQ( static_cast<int64_t>(0x7FFFF), result2 );
 }
 
 TEST(StringToLowerTest, testPageZeroUnshiftables)
@@ -1473,7 +1533,7 @@ TEST(StringToLowerTest, testPageAToFUnshiftables)
                               u"\ua66e\ua66f\ua670\ua675\ua67a\ua67f\ua69c\ua69d\ua69e\ua69f"
                               u"\ua700\ua70c\ua712\ua718\ua71e\ua721\ua730\ua731"
                               u"\ua770\ua771\ua772\ua773\ua774\ua775\ua776\ua777\ua778"
-                              u"\ua788\ua789\ua78a\ua78e\ua78f\ua794\ua795\ua7ae\ua7af"
+                              u"\ua788\ua789\ua78a\ua78e\ua78f\ua794\ua795\ua7af"
                               u"\ua7b8\ua7b9\ua7ba\ua7bb\ua7bc\ua7bd\ua7be\ua7bf\ua7c0"
                               u"\uabc0\uabd0\uabe0\uabf0"
                               u"\uff00\uff04\uff08\uff0c\uff10\uff18\uff1c\uff1f\uff20"

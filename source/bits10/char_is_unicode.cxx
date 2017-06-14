@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2015, Arthur N. Klassen
+// Copyright (c) 2017, Arthur N. Klassen
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2015.11.05 - First version
+// 2017.06.14 - First version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -36,7 +36,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 // char_is_unicode.cxx -- Code to check if a code-point value is inside
-//                        Unicode, locally Unicode 7.0
+//                        Unicode, locally Unicode 10.0.0d2
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -49,14 +49,14 @@ namespace ansak {
 
 namespace internal {
 
-const utf8String supportedUnicodeVersion = "7.0.0";
+const utf8String supportedUnicodeVersion = "10.0.0d2";
 
 namespace
 {
 
 // "isInTheGap" routines for sub-ranges of Unicode domain values. Numbers after isInTheGap
 // gives most significant digits of the 21-bit Unicode values. Values less than U+0300 are
-// all in the Unicode 7.0 standard
+// all in the Unicode 10.0 standard
 
 bool isInTheGap0003(char16_t c)
 {
@@ -120,16 +120,15 @@ bool isInTheGap0008(char16_t c)
     case 2:     return row >= 14;
     case 3:     return row == 15;
     case 5:     return row >= 12 && row != 14;
+    case 6:     return row > 10;
 
-    case 6:
     case 7:
     case 8:
     case 9:
-    case 12:
-    case 13:    return true;
+    case 12:    return true;
 
-    case 11:    return row >= 3;
-    case 14:    return row <= 3;
+    case 13:    return row <= 3;
+    case 11:    return row == 5 || row >= 14;
     }
 }
 
@@ -174,7 +173,7 @@ bool isInTheGap0009(char16_t c)
         case 15:    return false;
         }
     case 14:        return row == 4 || row == 5;
-    case 15:        return row >= 12;
+    case 15:        return row >= 14;
     }
 }
 
@@ -251,7 +250,7 @@ bool isInTheGap000A(char16_t c)
     case 12:    return row == 6 || row == 10 || row >= 14;
     case 13:    return row >= 1;
     case 14:    return row == 4 || row == 5;
-    case 15:    return row >= 2;
+    case 15:    return row > 1 && row < 9;
     }
 }
 
@@ -350,10 +349,10 @@ bool isInTheGap000C(char16_t c)
     case 2:     return row == 9;
     case 3:     return row >= 10 && row <= 12;
     case 4:     return row == 5 || row == 9 || row >= 14;
-    case 5:     return row <= 4 || row == 7 || row >= 10;
+    case 5:     return row <= 4 || row == 7 || row >= 11;
     case 6:     return row == 4 || row == 5;
     case 7:     return row <= 7;
-    case 8:     return row == 0 || row == 4 || row == 13;
+    case 8:     return row == 4 || row == 13;
     case 9:     return row == 1;
     case 10:    return row == 9;
     case 11:    return row == 4 || row == 10 || row == 11;
@@ -371,13 +370,12 @@ bool isInTheGap000D(char16_t c)
     switch (column)
     {
     default:    return false;
-    case 0:     return row == 0 || row == 4 || row == 13;
+
+    case 0:     return row == 4 || row == 13;
     case 1:     return row == 1;
-    case 3:     return row == 11 || row == 12;
-    case 4:     return row == 5 || row == 9 || row == 15;
-    case 5:     return row != 7;
+    case 4:     return row == 5 || row == 9;
+    case 5:     return row <= 3;
     case 6:     return row == 4 || row == 5;
-    case 7:     return row >= 6 && row <= 8;
     case 8:     return row < 2 || row == 4;
     case 9:     return row >= 7 && row <= 9;
     case 11:    return row == 2 || (row >= 12 && row != 13);
@@ -489,7 +487,7 @@ bool isInTheGap0013(char16_t c)
     case 5:     return row == 11 || row == 12;
     case 7:     return row >= 13;
     case 9:     return row >= 10;
-    case 15:    return row >= 5;
+    case 15:    return (row & 7) >= 6;
     }
 }
 
@@ -601,12 +599,12 @@ bool isInTheGap001C(char16_t c)
     default:    return false;
     case 3:     return row >= 8 && row <= 10;
     case 4:     return row >= 10 && row <= 12;
-    case 8:
+    case 8:     return row >= 9;
     case 9:
     case 10:
     case 11:    return true;
     case 12:    return row >= 8;
-    case 15:    return row == 7 || row >= 10;
+    case 15:    return row >= 10;
     }
 }
 
@@ -615,8 +613,7 @@ bool isInTheGap001D(char16_t c)
     auto column = (c >> 4) & 0xF;
     if (column == 15)
     {
-        auto row = c & 0xF;
-        return row >= 6 && row <= 11;
+        return (c & 0xF) == 10;
     }
     return false;
 }
@@ -650,7 +647,6 @@ bool isInTheGap0020(char16_t c)
     case 7:     return row == 2 || row == 3;
     case 8:     return row == 15;
     case 9:     return row >= 13;
-    case 11:    return row >= 14;
     case 12:    return true;
     case 15:    return row != 0;
     }
@@ -661,17 +657,7 @@ bool isInTheGap0021(char16_t c)
     auto column = (c >> 4) & 0xF;
     if (column == 8)
     {
-        return (c & 0xF) >= 10;
-    }
-    return false;
-}
-
-bool isInTheGap0023(char16_t c)
-{
-    auto column = (c >> 4) & 0xF;
-    if (column == 15)
-    {
-        return (c & 0xF) >= 11;
+        return (c & 0xF) >= 12;
     }
     return false;
 }
@@ -701,8 +687,8 @@ bool isInTheGap002B(char16_t c)
     case 9:     return row == 6 || row == 7;
     case 11:    return row == 10 || row == 11 || row == 12;
     case 12:    return row == 9;
-    case 13:    return row >= 2;
-    case 14:
+    case 13:    return row >= 3;
+    case 14:    return row <= 11;
     case 15:    return true;
     }
 }
@@ -757,7 +743,7 @@ bool isInTheGap002E(char16_t c)
     switch (column)
     {
     default:    return false;
-    case 4:     return row >= 3;
+    case 4:     return row >= 10;
     case 5:
     case 6:
     case 7:     return true;
@@ -799,7 +785,7 @@ bool isInTheGap0031(char16_t c)
     {
     default:    return false;
     case 0:     return row <= 4;
-    case 2:     return row >= 14;
+    case 2:     return row == 15;
     case 3:     return row == 0;
     case 8:     return row == 15;
     case 11:    return row >= 11;
@@ -829,16 +815,7 @@ bool isInTheGap004D(char16_t c)
 
 bool isInTheGap009F(char16_t c)
 {
-    auto column = (c >> 4) & 0xF;
-    if (column == 12)
-    {
-        return (c & 0xF) > 12;
-    }
-    else if (column >= 13)
-    {
-        return true;
-    }
-    return false;
+    return c + 0x15 >= 0xa000;
 }
 
 bool isInTheGap00A4(char16_t c)
@@ -862,7 +839,6 @@ bool isInTheGap00A6(char16_t c)
     default:    return false;
     case 2:     return row >= 12;
     case 3:     return true;
-    case 9:     return row == 14;
     case 15:    return row >= 8;
     }
 }
@@ -874,9 +850,8 @@ bool isInTheGap00A7(char16_t c)
     switch (column)
     {
     default:    return false;
-    case 8:     return row == 15;
-    case 10:    return row >= 14;
-    case 11:    return row >= 2;
+    case 10:    return row == 15;
+    case 11:    return row >= 8;
     case 12:
     case 13:
     case 14:    return true;
@@ -894,9 +869,9 @@ bool isInTheGap00A8(char16_t c)
     case 2:     return row >= 12;
     case 3:     return row >= 10;
     case 7:     return row >= 8;
-    case 12:    return row >= 5 && row <= 13;
+    case 12:    return row >= 6 && row <= 13;
     case 13:    return row >= 10;
-    case 15:    return row >= 12;
+    case 15:    return row >= 14;
     }
 }
 
@@ -941,12 +916,7 @@ bool isInTheGap00AB(char16_t c)
     case 0:     return row == 0 || row == 7 || row == 8 || row == 15;
     case 1:     return row == 0 || row >= 7;
     case 2:     return row == 7 || row == 15;
-    case 6:     return row != 4 && row != 5;
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:    return true;
+    case 6:     return row >= 6;
     case 14:    return row >= 14;
     case 15:    return row >= 10;
     }
@@ -1024,7 +994,6 @@ bool isInTheGap00FE(char16_t c)
     {
     default:    return false;
     case 1:     return row >= 10;
-    case 2:     return row >= 14;
     case 5:     return row == 3;
     case 6:     return row == 7 || row >= 12;
     case 7:     return row == 5;
@@ -1075,7 +1044,7 @@ bool isInTheGap0101(char32_t c)
     default:    return false;
     case 0:     return row >= 3 && row <= 6;
     case 3:     return row >= 4 && row <= 6;
-    case 8:     return row >= 13;
+    case 8:     return row == 15;
     case 9:     return row >= 12;
     case 10:    return row != 0;
     case 11:
@@ -1109,7 +1078,7 @@ bool isInTheGap0103(char32_t c)
     switch (column)
     {
     default:    return false;
-    case 2:     return row >= 4;
+    case 2:     return row >= 4 && row <= 12;
     case 4:
     case 7:     return row >= 11;
     case 9:     return row == 14;
@@ -1123,16 +1092,14 @@ bool isInTheGap0103(char32_t c)
 bool isInTheGap0104(char32_t c)
 {
     auto column = (c >> 4) & 0xF;
-    if (column >= 11)
-    {
-        return true;
-    }
     auto row = c & 0xF;
     switch (column)
     {
     default:    return false;
     case 9:     return row >= 14;
     case 10:    return row >= 10;
+    case 13:    return row >= 4 && row <= 7;
+    case 15:    return row >= 12;
     }
 }
 
@@ -1183,9 +1150,8 @@ bool isInTheGap0108(char32_t c)
     case 10:    return row <= 6;
     case 11:
     case 12:
-    case 13:
-    case 14:
-    case 15:    return true;
+    case 13:    return true;
+    case 15:    return row == 3 || (row >= 6 && row <= 10);
     }
 }
 
@@ -1195,15 +1161,15 @@ bool isInTheGap0109(char32_t c)
     auto row = c & 0xF;
     switch (column)
     {
-    default:    return true;
-    case 0:
-    case 2:
-    case 8:
-    case 9:
-    case 10:    return false;
+    default:    return false;
     case 1:     return row >= 12 && row <= 14;
     case 3:     return row >= 10 && row <= 14;
-    case 11:    return row >= 8 && row <= 13;
+    case 4:
+    case 5:
+    case 6:
+    case 7:     return true;
+    case 11:    return row >= 8 && row <= 11;
+    case 13:    return row <= 1;
     }
 }
 
@@ -1252,12 +1218,13 @@ bool isInTheGap010C(char32_t c)
     auto row = c & 0xF;
     switch (column)
     {
-    default:    return true;
-    case 0:
-    case 1:
-    case 2:
-    case 3:     return false;
+    default:    return false;
     case 4:     return row >= 9;
+    case 5:
+    case 6:
+    case 7:     return true;
+    case 11:    return row >= 3;
+    case 15:    return row >= 3 && row <= 9;
     }
 }
 
@@ -1293,8 +1260,7 @@ bool isInTheGap0111(char32_t c)
     case 3:     return row == 5;
     case 4:     return row >= 4;
     case 7:     return row >= 7;
-    case 12:    return row >= 9 && row != 13;
-    case 13:    return row >= 11;
+    case 12:    return row >= 14;
     case 14:    return row == 0;
     case 15:    return row >= 5;
     }
@@ -1306,14 +1272,16 @@ bool isInTheGap0112(char32_t c)
     auto row = c & 0xF;
     switch (column)
     {
-    case 0:
-    case 2:
-    case 11:
-    case 12:
-    case 13:    return false;
+    default:    return false;
     case 1:     return row == 2;
-    case 3:     return row >= 14;
-    default:    return true;
+    case 3:     return row == 15;
+    case 4:
+    case 5:
+    case 6:
+    case 7:     return true;
+    case 8:     return row == 7 || row == 9 || row == 14;
+    case 9:     return row == 14;
+    case 10:    return row >= 10;
     case 14:    return row >= 11;
     case 15:    return row >= 10;
     }
@@ -1330,7 +1298,7 @@ bool isInTheGap0113(char32_t c)
     switch (column)
     {
     default:    return false;
-    case 0:     return row == 0 || row == 4 || row == 13 || row == 14;
+    case 0:     return row == 4 || row == 13 || row == 14;
     case 1:     return row == 1 || row == 2;
     case 2:     return row == 9;
     case 3:     return row == 1 || row == 4 || row == 10 || row == 11;
@@ -1345,7 +1313,7 @@ bool isInTheGap0113(char32_t c)
             case 14:
             case 15:    return true;
         }
-    case 5:     return row <= 6 || (row >= 8 && row <= 12);
+    case 5:     return (row >= 1 && row <= 6) || (row >= 8 && row <= 12);
     case 6:     return row == 4 || row == 5 || row >= 13;
     case 7:     return row >= 5;
     }
@@ -1354,16 +1322,15 @@ bool isInTheGap0113(char32_t c)
 bool isInTheGap0114(char32_t c)
 {
     auto column = (c >> 4) & 0xF;
-    if (column <= 7)
-    {
-        return true;
-    }
     auto row = c & 0xF;
     switch (column)
     {
     default:    return false;
+    case 5:     return row == 10 || row == 12 || row >= 14;
     case 12:    return row >= 8;
     case 13:    return row >= 10;
+    case 6:
+    case 7:
     case 14:
     case 15:    return true;
     }
@@ -1378,9 +1345,10 @@ bool isInTheGap0115(char32_t c)
     default:    return true;
     case 8:
     case 9:
-    case 10:    return false;
+    case 10:
+    case 12:    return false;
     case 11:    return row == 6 || row == 7;
-    case 12:    return row >= 10;
+    case 13:    return row >= 14;
     }
 }
 
@@ -1393,13 +1361,27 @@ bool isInTheGap0116(char32_t c)
     default:    return false;
     case 4:     return row >= 5;
     case 5:     return row >= 10;
-    case 6:
+    case 6:     return row >= 13;
     case 7:
     case 13:
     case 14:
     case 15:    return true;
     case 11:    return row >= 8;
     case 12:    return row >= 10;
+    }
+}
+
+bool isInTheGap0117(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    auto row = c & 0xF;
+    switch (column)
+    {
+    default:    return true;
+    case 0:
+    case 3:     return false;
+    case 1:     return row >= 10 && row <= 12;
+    case 2:     return row >= 12;
     }
 }
 
@@ -1424,11 +1406,63 @@ bool isInTheGap011A(char32_t c)
     auto row = c & 0xF;
     switch (column)
     {
-    default:    return true;
+    default:    return false;
+
+    case 11:    return true;
+
+    case 4:     return row >= 8;
+    case 8:     return row == 4 || row == 5;
+    case 9:     return row == 13;
+    case 10:    return row >= 3;
+    case 15:    return row >= 9;
+    }
+}
+
+bool isInTheGap011C(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    auto row = c & 0xF;
+    switch (column)
+    {
+    default:    return false;
+    case 0:     return row == 9;
+    case 3:     return row == 7;
+    case 4:     return row >= 6;
+    case 6:     return row >= 13;
+    case 9:     return row <= 1;
+    case 10:    return row == 8;
+    case 11:    return row >= 7;
     case 12:
     case 13:
-    case 14:    return false;
-    case 15:    return row >= 9;
+    case 14:
+    case 15:    return true;
+    }
+}
+
+bool isInTheGap011D(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    auto row = c & 0xF;
+    switch (column)
+    {
+    default:    return true;
+
+    case 1:
+    case 2:     return false;
+
+    case 0:     return row == 7 || row == 10;
+    case 4:     return row >= 8;
+    case 5:     return row >= 10;
+    case 3:
+        switch (row)
+        {
+        default:    return false;
+        case 7:
+        case 8:
+        case 9:
+        case 11:
+        case 14:    return true;
+        }
     }
 }
 
@@ -1444,7 +1478,7 @@ bool isInTheGap0123(char32_t c)
     switch (column)
     {
     default:    return false;
-    case 9:     return row >= 9;
+    case 9:     return row >= 10;
     }
 }
 
@@ -1454,16 +1488,24 @@ bool isInTheGap0124(char32_t c)
     auto row = c & 0xF;
     switch (column)
     {
-    default:    return true;
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:     return false;
+    default:    return false;
     case 6:     return row == 15;
     case 7:     return row >= 5;
     }
+}
+
+bool isInTheGap0125(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    if (column < 4)
+    {
+        return false;
+    }
+    if (column > 4)
+    {
+        return true;
+    }
+    return (c & 0xF) >= 4;
 }
 
 bool isInTheGap0134(char32_t c)
@@ -1478,6 +1520,20 @@ bool isInTheGap0134(char32_t c)
         return true;
     }
     return (c & 0xF) == 15;
+}
+
+bool isInTheGap0146(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    if (column < 4)
+    {
+        return false;
+    }
+    if (column > 4)
+    {
+        return true;
+    }
+    return (c & 0xF) >= 7;
 }
 
 bool isInTheGap016A(char32_t c)
@@ -1521,24 +1577,69 @@ bool isInTheGap016B(char32_t c)
 bool isInTheGap016F(char32_t c)
 {
     auto column = (c >> 4) & 0xF;
-    if (column >= 10)
-    {
-        return true;
-    }
-
     auto row = c & 0xF;
     switch (column)
     {
     default:    return false;
+
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 15:    return true;
+
     case 4:     return row >= 5;
     case 7:     return row == 15;
     case 8:     return row <= 14;
+    case 14:    return row >= 2;
     }
 }
 
-bool isInTheGap01B0(char32_t c)
+bool isInTheGap0187(char32_t c)
 {
-    return (c & 0xFF) >= 2;
+    auto column = (c >> 4) & 0xF;
+    switch (column)
+    {
+    default:    return false;
+    case 14:    return (c & 0xF) >= 13;
+    case 15:    return true;
+    }
+}
+
+bool isInTheGap018A(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    if (column == 15)
+    {
+        return (c & 0xF) >= 3;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool isInTheGap01B1(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    auto row = c & 0xF;
+    switch (column)
+    {
+    default:    return false;
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:     return true;
+
+    case 1:     return row == 15;
+    }
+}
+
+bool isInTheGap01B2(char32_t c)
+{
+    auto value = c & 0xff;
+    return value >= 0xfc;
 }
 
 bool isInTheGap01BC(char32_t c)
@@ -1574,8 +1675,7 @@ bool isInTheGap01D1(char32_t c)
     {
     default:    return false;
     case 2:     return row == 7 || row == 8;
-    case 13:    return row >= 14;
-    case 14:
+    case 14:    return row >= 9;
     case 15:    return true;
     }
 }
@@ -1669,6 +1769,40 @@ bool isInTheGap01D7(char32_t c)
     return offset == 0xCC || offset == 0xCD;
 }
 
+bool isInTheGap01DA(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    if (column >= 11)
+    {
+        return true;
+    }
+    auto row = c & 0xF;
+    switch (column)
+    {
+    default:    return false;
+    case 8:     return row >= 12;
+    case 9:     return row <= 10;
+    case 10:    return row == 0;
+    }
+}
+
+bool isInTheGap01E0(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    if (column >= 3)
+    {
+        return true;
+    }
+    auto row = c & 0xF;
+    switch (column)
+    {
+    case 0:     return row == 7;
+    case 1:     return row == 9 || row == 10;
+    case 2:     return row == 2 || row == 5 || row >= 11;
+    default:    return true;
+    }
+}
+
 bool isInTheGap01E8(char32_t c)
 {
     auto column = (c >> 4) & 0xF;
@@ -1682,6 +1816,28 @@ bool isInTheGap01E8(char32_t c)
     default:    return false;
     case 12:    return row == 5 || row == 6;
     case 13:    return row >= 7;
+    }
+}
+
+bool isInTheGap01E9(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    if (column >= 6)
+    {
+        return true;
+    }
+    else if (column < 4)
+    {
+        return false;
+    }
+    auto row = c & 0xF;
+    if (column == 4)
+    {
+        return row >= 11;
+    }
+    else    // if (column == 5)
+    {
+        return row >= 10 && row <= 13;
     }
 }
 
@@ -1782,11 +1938,10 @@ bool isInTheGap01F1(char32_t c)
     case 0:     return row >= 13;
     case 2:     return row == 15;
     case 6:     return row >= 12;
-    case 10:
+    case 10:    return row >= 13;
     case 11:
     case 12:
     case 13:    return true;
-    case 9:     return row >= 11;
     case 14:    return row <= 5;
     }
 }
@@ -1794,7 +1949,7 @@ bool isInTheGap01F1(char32_t c)
 bool isInTheGap01F2(char32_t c)
 {
     auto column = (c >> 4) & 0xF;
-    if (column >= 6)
+    if (column >= 7)
     {
         return true;
     }
@@ -1803,38 +1958,17 @@ bool isInTheGap01F2(char32_t c)
     {
     default:    return false;
     case 0:     return row >= 3;
-    case 3:     return row >= 11;
+    case 3:     return row >= 12;
     case 4:     return row >= 9;
     case 5:     return row >= 2;
+    case 6:     return row >= 6;
     }
-}
-
-bool isInTheGap01F3(char32_t c)
-{
-    auto column = (c >> 4) & 0xF;
-    auto row = c & 0xF;
-    switch (column)
-    {
-    default:    return false;
-
-    case 2:     return row >= 13;
-    case 7:     return row >= 14;
-    case 12:    return row == 15;
-    case 13:    return row <= 3;
-    case 15:    return row >= 8;
-    }
-}
-
-bool isInTheGap01F5(char32_t c)
-{
-    auto offset = c & 0xFF;
-    return (offset >= 0x4b && offset <= 0x4f) || offset == 0x7a || offset == 0xa4;
 }
 
 bool isInTheGap01F6(char32_t c)
 {
     auto column = (c >> 4) & 0xF;
-    if (column < 4)
+    if (column < 13)
     {
         return false;
     }
@@ -1843,10 +1977,9 @@ bool isInTheGap01F6(char32_t c)
     switch (column)
     {
     default:    return false;
-    case 4:     return row == 3 || row == 4;
-    case 13:    return true;
+    case 13:    return row >= 5;
     case 14:    return row >= 13;
-    case 15:    return row >= 4;
+    case 15:    return row >= 9;
     }
 }
 
@@ -1885,6 +2018,30 @@ bool isInTheGap01F8(char32_t c)
     case 5:     return row >= 10;
     case 8:     return row >= 8;
     case 10:    return row >= 14;
+    }
+}
+
+bool isInTheGap01F9(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    auto row = c & 0xF;
+    switch (column)
+    {
+    default:    return true;
+    case 1:
+    case 2:
+    case 5:
+    case 8:
+    case 13:    return false;
+
+    case 0:
+    case 6:     return row >= 12;
+    case 3:     return row == 15;
+
+    case 4:     return row >= 13;
+    case 9:     return row >= 8;
+    case 12:    return row != 0;
+    case 14:    return row >= 7;
     }
 }
 
@@ -1931,8 +2088,11 @@ bool isInTheGap01(char32_t c)
         case 4:     return isInTheGap0114(c);
         case 5:     return isInTheGap0115(c);
         case 6:     return isInTheGap0116(c);
+        case 7:     return isInTheGap0117(c);
         case 8:     return isInTheGap0118(c);
         case 10:    return isInTheGap011A(c);
+        case 12:    return isInTheGap011C(c);
+        case 13:    return isInTheGap011D(c);
         }
 
     case 2:     // U+12xxx
@@ -1944,6 +2104,7 @@ bool isInTheGap01(char32_t c)
         case 2:     return false;
         case 3:     return isInTheGap0123(c);
         case 4:     return isInTheGap0124(c);
+        case 5:     return isInTheGap0125(c);
         }
 
     case 3:     // U+13xxx
@@ -1957,6 +2118,15 @@ bool isInTheGap01(char32_t c)
         case 4:     return isInTheGap0134(c);
         }
 
+    case 4:     // U+14xxx
+        switch (page)
+        {
+        default:    return true;
+        case 4:
+        case 5:     return false;
+        case 6:     return isInTheGap0146(c);
+        }
+
     case 6:     // U+16xxx
         switch (page)
         {
@@ -1968,11 +2138,27 @@ bool isInTheGap01(char32_t c)
         case 15:    return isInTheGap016F(c);
         }
 
+    case 7:         return false;
+    case 8:
+        switch (page)
+        {
+        default:    return false;
+        case 7:     return isInTheGap0187(c);
+        case 10:    return isInTheGap018A(c);
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:    return true;
+        }
+
     case 11:    // U+1Bxxx
         switch (page)
         {
         default:    return true;
-        case 0:     return isInTheGap01B0(c);
+        case 0:     return false;
+        case 1:     return isInTheGap01B1(c);
+        case 2:     return isInTheGap01B2(c);
         case 12:    return isInTheGap01BC(c);
         }
 
@@ -1980,6 +2166,9 @@ bool isInTheGap01(char32_t c)
         switch(page)
         {
         default:    return true;
+
+        case 8:
+        case 9:     return false;
 
         case 0:     return isInTheGap01D0(c);
         case 1:     return isInTheGap01D1(c);
@@ -1989,13 +2178,16 @@ bool isInTheGap01(char32_t c)
         case 5:     return isInTheGap01D5(c);
         case 6:     return isInTheGap01D6(c);
         case 7:     return isInTheGap01D7(c);
+        case 10:    return isInTheGap01DA(c);
         }
 
     case 14:    // U+1Exxx
         switch(page)
         {
         default:    return true;
+        case 0:     return isInTheGap01E0(c);
         case 8:     return isInTheGap01E8(c);
+        case 9:     return isInTheGap01E9(c);
         case 14:    return isInTheGap01EE(c);
         }
 
@@ -2003,16 +2195,17 @@ bool isInTheGap01(char32_t c)
         switch(page)
         {
         default:    return true;
+        case 3:
+        case 4:
+        case 5:     return false;
 
         case 0:     return isInTheGap01F0(c);
         case 1:     return isInTheGap01F1(c);
         case 2:     return isInTheGap01F2(c);
-        case 3:     return isInTheGap01F3(c);
-        case 4:     return c == 0x1f4ff;
-        case 5:     return isInTheGap01F5(c);
         case 6:     return isInTheGap01F6(c);
         case 7:     return isInTheGap01F7(c);
         case 8:     return isInTheGap01F8(c);
+        case 9:     return isInTheGap01F9(c);
         }
     }
 }
@@ -2045,18 +2238,41 @@ bool isInTheGap02B7(char32_t c)
 
 bool isInTheGap02B8(char32_t c)
 {
-    auto column = (c >> 4) & 0xF;
-    if (column == 0)
-    {
-        return false;
-    }
-    else if (column == 1)
+    if (((c >> 4) & 0xF) == 1)
     {
         return (c & 0xF) >= 14;
     }
     else
     {
+        return false;
+    }
+}
+
+bool isInTheGap02CE(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    auto row = c & 0xF;
+    switch (column)
+    {
+    default:    return false;
+    case 10:    return row >= 2;
+    }
+}
+
+bool isInTheGap02EB(char32_t c)
+{
+    auto column = (c >> 4) & 0xF;
+    if (column < 14)
+    {
+        return false;
+    }
+    else if (column == 15)
+    {
         return true;
+    }
+    else
+    {
+        return (c & 0xf) != 0;
     }
 }
 
@@ -2083,9 +2299,6 @@ bool isInTheGap02(char32_t c)
     switch (sheaf)
     {
     default:    return false;
-    case 12:
-    case 13:
-    case 14:    return true;
     case 10:
         if (page == 6)
         {
@@ -2098,16 +2311,25 @@ bool isInTheGap02(char32_t c)
     case 11:
         switch (page)
         {
-        default:    return true;
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:     return false;
+        default:    return false;
         case 7:     return isInTheGap02B7(c);
         case 8:     return isInTheGap02B8(c);
+        }
+    case 12:
+        switch (page)
+        {
+        default:    return false;
+        case 14:    return isInTheGap02CE(c);
+        }
+    case 14:
+        switch (page)
+        {
+        default:    return false;
+        case 11:    return isInTheGap02EB(c);
+        case 12:
+        case 13:
+        case 14:
+        case 15:    return true;
         }
     case 15:
         if (page < 8 || page > 10)
@@ -2206,7 +2428,6 @@ bool isUnicodeAssigned(char16_t c)
         default:    return true;
         case 0:     return !isInTheGap0020(c);
         case 1:     return !isInTheGap0021(c);
-        case 3:     return !isInTheGap0023(c);
         case 4:     return !isInTheGap0024(c);
         case 11:    return !isInTheGap002B(c);
         case 12:    return !isInTheGap002C(c);

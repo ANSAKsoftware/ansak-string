@@ -84,10 +84,10 @@ char32_t controls32[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
                         153, 154, 155, 156, 157, 158, 159, 0 };
 
 char16_t unassigneds16[] = { 0x378, 0x379, 0x10c8, 0x10c9, 0x2072, 0x2073, 0x321f, 0x32ff,
-                             0x4db7, 0x4db8, 0x9fd7, 0x9fd8, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
+                             0x4db7, 0x4db8, 0x9feb, 0x9fec, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
                              0xd800, 0xdc00, 0xfa6e, 0xfa6f, 0 };
 char32_t unassigneds32[] = { 0x378, 0x379, 0x10c8, 0x10c9, 0x2072, 0x2073, 0x321f, 0x32ff,
-                             0x4db7, 0x4db8, 0x9fd7, 0x9fd8, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
+                             0x4db7, 0x4db8, 0x9feb, 0x9fec, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
                              0xd800, 0xdc00, 0xfa6e, 0xfa6f,
                              0x1004e, 0x1004f, 0x12545, 0x12546, 0x16FF0, 0x187ED, 0x1f0c0, 0x1f0d0,
                              0x2a6d7, 0x2a6d8, 0x30001, 0x40001, 0x50001, 0x60001, 0x70001, 0x80001,
@@ -157,8 +157,8 @@ TEST(EncodePredicateTest, testSimpleAssignedsPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
-    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
+    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testSimpleSpacesPredicate)
@@ -174,8 +174,8 @@ TEST(EncodePredicateTest, testSimpleSpacesPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(spaces16), end(spaces16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
-    for_each(begin(spaces32), end(spaces32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(spaces16), end(spaces16), [&](const char16_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
+    for_each(begin(spaces32), end(spaces32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testSimpleControlPredicate)
@@ -191,8 +191,8 @@ TEST(EncodePredicateTest, testSimpleControlPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(controls16), end(controls16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
-    for_each(begin(controls32), end(controls32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(controls16), end(controls16), [&](const char16_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
+    for_each(begin(controls32), end(controls32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testSimplePrivatesPredicate)
@@ -208,7 +208,7 @@ TEST(EncodePredicateTest, testSimplePrivatesPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(privates32), end(privates32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(privates32), end(privates32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testSimpleNonAssignedsPredicate)
@@ -224,7 +224,7 @@ TEST(EncodePredicateTest, testSimpleNonAssignedsPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(unassigneds32), end(unassigneds32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(unassigneds32), end(unassigneds32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testSimpleNonSpacesPredicate)
@@ -247,8 +247,8 @@ TEST(EncodePredicateTest, testSimpleNonSpacesPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(camelCaseSentence16), end(camelCaseSentence16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
-    for_each(begin(camelCaseSentence32), end(camelCaseSentence32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(camelCaseSentence16), end(camelCaseSentence16), [&](const char16_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
+    for_each(begin(camelCaseSentence32), end(camelCaseSentence32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testSimpleNonControlPredicate)
@@ -264,8 +264,8 @@ TEST(EncodePredicateTest, testSimpleNonControlPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
-    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
+    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testSimpleNonPrivatesPredicate)
@@ -281,8 +281,8 @@ TEST(EncodePredicateTest, testSimpleNonPrivatesPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
-    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) EXPECT_TRUE(pred(c)); });
+    for_each(begin(quickBrownTamil16), end(quickBrownTamil16), [&](const char16_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
+    for_each(begin(quickBrownTamil32), end(quickBrownTamil32), [&](const char32_t c){ if (c != 0) { EXPECT_TRUE(pred(c)); } });
 }
 
 TEST(EncodePredicateTest, testCombinedFlagsPredicate)
