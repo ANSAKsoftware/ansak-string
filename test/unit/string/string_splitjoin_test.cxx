@@ -60,7 +60,9 @@ TEST(StringSplitJoinTest, testEmpties)
 TEST(StringSplitJoinTest, testUnicodeVersion)
 {
     string emptyString;
-    ASSERT_TRUE(ansak::getUnicodeVersionSupported() >= "7.0");
+    bool version7OrGreater = ansak::getUnicodeVersionSupported() >= "7.0"; 
+    bool version10OrGreater = ansak::getUnicodeVersionSupported() >= "10.0"; 
+    ASSERT_TRUE(version7OrGreater || version10OrGreater);
 }
 
 TEST(StringSplitJoinTest, testSplitter)

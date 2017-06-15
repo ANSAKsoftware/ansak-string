@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2015, Arthur N. Klassen
+// Copyright (c) 2017, Arthur N. Klassen
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// 2015.10.16 - First version
+// 2017.06.14 - First version
 //
 //    May you do good and not evil.
 //    May you find forgiveness for yourself and forgive others.
@@ -35,7 +35,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// string_tolower_test9.cxx -- gtest-compatible tests to exercise string.hxx/.cxx
+// string_tolower_test10.cxx -- gtest-compatible tests to exercise string.hxx/.cxx
 //                   If you find new conditions that I missed, please let
 //                   me make my version of this better, too.
 //
@@ -43,8 +43,8 @@
 
 #include <gtest/gtest.h>
 
-#include <string.hxx>
-#include <string_internal.hxx>
+#include "string.hxx"
+#include "string_internal.hxx"
 #include <string.h>
 
 using namespace ansak;

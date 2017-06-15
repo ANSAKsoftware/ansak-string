@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -35,7 +35,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// string_tolower_test.cxx -- CPPUNIT-compatible tests to exercise string.hxx/.cxx
+// string_tolower_test8.cxx -- gtest-compatible tests to exercise string.hxx/.cxx
 //                   If you find new conditions that I missed, please let
 //                   me make my version of this better, too.
 //
