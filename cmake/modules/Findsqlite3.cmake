@@ -41,6 +41,18 @@
 #  dialect and am making it compatible with Win32 as well.
 
 ##########################################################################
+# On entry:
+#   For Linux and other package based systems, nothing is needed.
+#   For Windows, SQLITE_DIR should point at a directory containing
+#       ./include -- that contains sqlite3.h
+#   and any of
+#       ./x86_64
+#       ./i686   containing the implib and dll for the appropriate
+#                runtime environment to run Sqlite3 on Windows
+#   For debug builds, libraries named sqlite3d will be preferred over
+#   those named sqlite3
+#
+##########################################################################
 # Resulting values are:
 #   SQLITE3_INCLUDE_DIR - directory containing Sqlite 3 header files
 #   SQLITE3_LIBRARIES - Sqlite 3 libraries by name
@@ -63,21 +75,21 @@ if (UNIX)
 endif()
 
 if (WIN32)
-    find_path( SQLITE3_INCLUDE_DIR sqlite3.h HINT ${ANSAK_SQLITE_DIR}/include )
+    find_path( SQLITE3_INCLUDE_DIR sqlite3.h HINT ${SQLITE_DIR}/include )
     if (CMAKE_CL_64)
         find_library(SQLITE3_LIBRARY_RELEASE
                         NAMES sqlite3
-                        HINTS ${ANSAK_SQLITE_DIR}/x86_64  )
+                        HINTS ${SQLITE_DIR}/x86_64  )
         find_library(SQLITE3_LIBRARY_DEBUG
-                        NAMES sqlite3 sqlite3d
-                        HINTS ${ANSAK_SQLITE_DIR}/x86_64 )
+                        NAMES sqlite3d sqlite3
+                        HINTS ${SQLITE_DIR}/x86_64 )
     else()
         find_library(SQLITE3_LIBRARY_RELEASE
                         NAMES sqlite3
-                        HINTS ${ANSAK_SQLITE_DIR}/i686  )
+                        HINTS ${SQLITE_DIR}/i686  )
         find_library(SQLITE3_LIBRARY_DEBUG
-                        NAMES sqlite3 sqlite3d
-                        HINTS ${ANSAK_SQLITE_DIR}/i686 )
+                        NAMES sqlite3d sqlite3
+                        HINTS ${SQLITE_DIR}/i686 )
     endif()
 endif()
 
