@@ -199,6 +199,7 @@ endif()
 ##############################################################################################################
 # Bring in the source and test directories
 add_subdirectory( source )
+add_ansak_lib()
 if( _useTests )
     add_subdirectory( mock )
     add_subdirectory( test )

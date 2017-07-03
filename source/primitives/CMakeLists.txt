@@ -44,5 +44,4 @@ set( _targetSrc file_path.cxx
                 runtime_exception.cxx
                 time_stamp.cxx )
 
-ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
-target_include_directories( ${_target} PUBLIC ${_interface} )
+ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} PUBLIC_INCLUDE ${_interface} )

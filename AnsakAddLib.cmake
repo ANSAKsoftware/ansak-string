@@ -50,18 +50,18 @@
 #
 # Calling root CMake file with no parameters produces static-linked libraries,
 # that on Windows are compatible with a DLL-based C-RunTime. This is the same
-# as adding -DANSAK_LIB_TYPE=Static -DANSAK_CRUNTIME=Dynamic to the CMake
+# as adding -DANSAK_LIB_TYPE=Static -DANSAK_CRUNTIME=Shared to the CMake
 # invocation.
 #
-# Adding -DANSAK_LIB_TYPE=Dynamic to the CMake invocation produces .DLL / .so
+# Adding -DANSAK_LIB_TYPE=Shared to the CMake invocation produces .DLL / .so
 # libraries.
 #
 # On Windows, adding -DANSAK_CRUNTIME=Static to the CMake invocation, produces
 # libraries that are compatible with the statically-linked C-Runtime.
 #
 # Selecting -DANSAK_CRUNTIME=Static on Linux has no effect.
-# Selecting -DANSAK_CRUNTIME=Static with -DANSAK_LIB_TYPE=Dynamic is an error.
-# Using other values than Dynamic and Static with these defines is an error.
+# Selecting -DANSAK_CRUNTIME=Static with -DANSAK_LIB_TYPE=Shared is an error.
+# Using other values than Shared and Static with these defines is an error.
 #
 ###########################################################################
 
@@ -84,8 +84,10 @@ if( ansak_lib_predicate STREQUAL "SHARED" )
     set( CMAKE_POSITION_INDEPENDENT_CODE ON )
 endif()
 
+set( _ansak_lib_objects CACHE INTERNAL "libs in libansak.xx" FORCE )
+
 if( WIN32 )
-    set( _ansak_runtime "dynamic" )
+    set( _ansak_runtime "shared" )
     set( _ansak_runtime_is_static false )
     if( ANSAK_CRUNTIME )
         string( TOLOWER "${ANSAK_RUNTIME}" _ansakRuntime )
@@ -96,13 +98,13 @@ if( WIN32 )
         else()
             set( _ansak_runtime_is_static true )
         endif()
-    elseif( _ansakRuntime STREQUAL dynamic )
+    elseif( _ansakRuntime STREQUAL shared )
         set( _ansak_runtime_is_static false )
     else()
         message( FATAL ": -DANSAK_CRUNTIME=${ANSAK_CRUNTIME} is invalid" )
     endif()
 
-    # Dynamic v. Static on Windows
+    # Dynamic ("shared") v. Static on Windows
     include( WindowsCRuntime )
     if( _ansak_runtime_is_static )
         SETUP_C_RUNTIME( "STATIC" )
@@ -113,58 +115,41 @@ elseif( ANSAK_CRUNTIME )
     message( FATAL ": -DANSAK_CRUNTIME=${ANSAK_CRUNTIME} is valid only for Windows." )
 endif()
 
-#set( _ansak_library_bits )
-#
-#function( _add_library _targetName _targetSource )
-#    if( _targetName STREQUAL ansak )
-#        add_library( ansak ${ansak_lib_predicate} ${_ansak_library_bits} )
-#    else()
-#        add_library( ${_targetName}-o OBJECT "${_targetSource}" )
-#        set( _targetNameObjects $<TARGET_OBJECTS:${_targetName}-o> )
-#        add_library( ${_targetName} ${ansak_lib_predicate} ${_targetNameObjects} )
-#        list( APPEND _ansak_library_bits ${_targetNameObjects} )
-#    endif()
-#    if (ANSAK_EFFECTIVE_CPP)
-#        target_compile_options( ${_targetName} PRIVATE -Weffc++ )
-#    endif()
-#endfunction()
-#
-function( ansak_add_library )
+macro( ansak_add_library )
+    set( _local_ansak_lib_objects "${_ansak_lib_objects}" )
     set( _options )
     set( _oneValue TARGET )
-    set( _multiValue SOURCES )
+    set( _multiValue SOURCES PRIVATE_INCLUDE PUBLIC_INCLUDE )
     cmake_parse_arguments( _ADD_LIB "${_options}" "${_oneValue}" "${_multiValue}" "${ARGN}" )
-    add_library( ${_ADD_LIB_TARGET} ${ansak_lib_predicate} ${_ADD_LIB_SOURCES} )
-    if (ANSAK_EFFECTIVE_CPP)
-        target_compile_options( ${_ADD_LIB_TARGET} PRIVATE -Weffc++ )
-    endif()
-endfunction()
+    set( _ADD_LIB_OBJ_TARGET "${_ADD_LIB_TARGET}-o" )
 
-#    message( "ansak_add_library is ${ansak_add_library}" )
-#    message( "TARGETNAME is ${TARGETNAME}" )
-#    message( "TARGETSOURCE is ${TARGETSOURCE}" )
-#    if( ansak STREQUAL TARGETNAME )
-#        message( "Got the mudder-ship" )
-#        _add_library( ansak objects )
-#        # foreach member of _ansak_library_bits
-#        # 
-#    elseif( ( ansakConfig STREQUAL TARGETNAME ) OR
-#            ( ansakString STREQUAL TARGETNAME ) OR
-#            ( ansakFileTools STREQUAL TARGETNAME ) OR
-#            ( ansakFile STREQUAL TARGETNAME ) OR
-#            ( ansakPrimitives STREQUAL TARGETNAME ) OR
-#            ( ansakOSLayer STREQUAL TARGETNAME ) )
-#        _add_library( ${TARGETNAME} ${ansak_lib_predicate} "${TARGETSOURCE}" )
-#    elseif( ansakSqlite STREQUAL TARGETNAME )
-#        message( "Got the latest and greatest piece." )
-#    elseif( NOT "" STREQUAL TARGETNAME )
-#        message( FATAL ": Got unknown parameter to ansak_add_library: '${TARGETNAME}. Error, aborting." )
-#    endif()
-#endfunction()
-#
-#function( ansak_add_overall_library _targetName )
-#    _add_library( _targetName, _ansak_library_bits )
-#endfunction()
+    add_library( ${_ADD_LIB_OBJ_TARGET} OBJECT ${_ADD_LIB_SOURCES} )
+    if( _ADD_LIB_PRIVATE_INCLUDE AND _ADD_LIB_PUBLIC_INCLUDE )
+        target_include_directories( ${_ADD_LIB_OBJ_TARGET} PRIVATE ${_ADD_LIB_PRIVATE_INCLUDE}
+                                                           PUBLIC ${_ADD_LIB_PUBLIC_INCLUDE} )
+    elseif( _ADD_LIB_PUBLIC_INCLUDE )
+        target_include_directories( ${_ADD_LIB_OBJ_TARGET} PUBLIC ${_ADD_LIB_PUBLIC_INCLUDE} )
+    elseif( _ADD_LIB_PRIVATE_INCLUDE )
+        target_include_directories( ${_ADD_LIB_OBJ_TARGET} PRIVATE ${_ADD_LIB_PRIVATE_INCLUDE} )
+    endif()
+    if( ANSAK_EFFECTIVE_CPP )
+        target_compile_options( ${_ADD_LIB_OBJ_TARGET} PRIVATE -Weffc++ )
+    endif()
+
+    if( NOT _ADD_LIB_TARGET MATCHES Sql )
+        list( APPEND _local_ansak_lib_objects "$<TARGET_OBJECTS:${_ADD_LIB_OBJ_TARGET}>" )
+    endif()
+
+    add_library( ${_ADD_LIB_TARGET} ${ansak_lib_predicate} $<TARGET_OBJECTS:${_ADD_LIB_OBJ_TARGET}> )
+    if( _ADD_LIB_PUBLIC_INCLUDE )
+        target_include_directories( ${_ADD_LIB_TARGET} PUBLIC ${_ADD_LIB_PUBLIC_INCLUDE} )
+    endif()
+    set( _ansak_lib_objects "${_local_ansak_lib_objects}" CACHE INTERNAL "libs in libansak.xx" FORCE )
+endmacro()
+
+macro( add_ansak_lib )
+    add_library( ansakLib ${ansak_lib_predicate} ${_ansak_lib_objects} )
+endmacro()
 
 function( ansak_add_mock_library )
     set( _options )

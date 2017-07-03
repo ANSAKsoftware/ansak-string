@@ -47,8 +47,10 @@ set( _targetSrc string.cxx
                 ${unicodeSubDir}/char_to_lower.cxx
                 ${unicodeSubDir}/char_is_unicode.cxx )
 
-ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
-target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )
+ansak_add_library( TARGET ${_target}
+                  SOURCES ${_targetSrc}
+          PRIVATE_INCLUDE ${_privIncludes}
+           PUBLIC_INCLUDE ${_interface} )
 
 # set absUnicodeSubDir, to be used in test-ansakString to find the Unicode character specs file
 set( absUnicodeSubDir "${CMAKE_CURRENT_SOURCE_DIR}/${unicodeSubDir}"

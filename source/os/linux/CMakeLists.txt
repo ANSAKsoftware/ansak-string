@@ -40,5 +40,7 @@ set( _interface ../../../interface )
 set( _privIncludes ../../include )
 set( _targetSrc os_layer_linux.cxx linux_directory_scanner.cxx )
 
-ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
-target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )
+ansak_add_library( TARGET ${_target}
+                  SOURCES ${_targetSrc}
+          PRIVATE_INCLUDE ${_privIncludes}
+           PUBLIC_INCLUDE ${_interface} )

@@ -48,8 +48,7 @@ set( _targetSrc sqlite_db.cxx
                 sqlite_retrieval_exception.cxx
    )
 
-ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
-target_include_directories( ${_target}
-                    PRIVATE ${_privIncludes} ${SQLITE3_INCLUDE_DIR}
-                     PUBLIC ${_interface} )
-
+ansak_add_library( TARGET ${_target}
+                  SOURCES ${_targetSrc}
+          PRIVATE_INCLUDE ${_privIncludes} ${SQLITE3_INCLUDE_DIR}
+           PUBLIC_INCLUDE ${_interface} )
