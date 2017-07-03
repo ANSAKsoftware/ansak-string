@@ -36,6 +36,8 @@
 cmake_minimum_required(VERSION 3.1)
 
 set( _target mock-os )
-add_library( ${_target} STATIC mock_operating_system.cxx )
+set( _targetSrc mock_operating_system.cxx )
+
+ansak_add_mock_library( TARGET ${_target} SOURCES ${_targetSrc} )
 target_link_libraries( ${_target} PUBLIC ansakString ansakPrimitives gmock gmock_main gtest gtest_main )
 target_include_directories( ${_target} PUBLIC . ../../source/include )

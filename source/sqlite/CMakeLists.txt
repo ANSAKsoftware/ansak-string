@@ -48,10 +48,7 @@ set( _targetSrc sqlite_db.cxx
                 sqlite_retrieval_exception.cxx
    )
 
-add_library( ${_target} STATIC ${_targetSrc} )
-if (ANSAK_EFFECTIVE_CPP)
-    target_compile_options( ${_target} PRIVATE -Weffc++ )
-endif()
+ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
 target_include_directories( ${_target}
                     PRIVATE ${_privIncludes} ${SQLITE3_INCLUDE_DIR}
                      PUBLIC ${_interface} )

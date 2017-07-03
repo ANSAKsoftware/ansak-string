@@ -36,9 +36,11 @@
 cmake_minimum_required(VERSION 3.1)
 
 set( _target mock-sqlite )
-add_library( ${_target} STATIC mock_sqlite_errmsg.cxx
-                               mock_sqlite_db.cxx
-                               mock_sqlite_statement.cxx )
+set( _targetSrc mock_sqlite_errmsg.cxx
+                mock_sqlite_db.cxx
+                mock_sqlite_statement.cxx )
+
+ansak_add_mock_library( TARGET ${_target} SOURCES ${_targetSrc} )
 target_link_libraries( ${_target} PUBLIC ansakString ansakPrimitives
                                   mock-file gmock gmock_main gtest gtest_main )
 target_include_directories( ${_target} PRIVATE ${SQLITE3_INCLUDE_DIR} PUBLIC . )

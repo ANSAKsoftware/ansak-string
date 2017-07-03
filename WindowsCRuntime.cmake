@@ -44,8 +44,9 @@
 
 set( C_RUNTIME_CHOICE ambiguous )
 
+if( WIN32 )
+
 MACRO( SETUP_C_RUNTIME CHOICE )
-    if( WIN32 )
         if ( ${CHOICE} STREQUAL "STATIC" )
             set( C_RUNTIME_CHOICE static )
             set( _src1 "/MD" )
@@ -76,5 +77,6 @@ MACRO( SETUP_C_RUNTIME CHOICE )
         else()
             message( FATAL_ERROR "Call SETUP_RUNTIME with DYNAMIC or STATIC, only." )
         endif()
-    endif()
 ENDMACRO()
+
+endif()

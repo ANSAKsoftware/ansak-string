@@ -62,6 +62,8 @@ if(_ansakRoot)
     list( INSERT CMAKE_MODULE_PATH
           0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules )
 endif()
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} )
+include( AnsakAddLib )
 
 ##############################################################################################################
 # Choose Unicode version to support
@@ -90,69 +92,69 @@ if( CMAKE_BUILD_TYPE )
     string( TOLOWER "${CMAKE_BUILD_TYPE}" _buildType )
 endif()
 
-if( CMAKE_GENERATOR MATCHES "Visual Studio" )
-    if( _buildType STREQUAL coverage )
-        message( FATAL_ERROR "Coverage is not available in Visual Studio Builds." )
+if( ansak_lib_predicate STREQUAL "SHARED" )
+    message( "Tests require building statically linked libraries. Suppressing..." )
+    set( _buildType "notCoverage" )
+    set( _useTests 0 )
+else()
+    if( CMAKE_GENERATOR MATCHES "Visual Studio" )
+        if( _buildType STREQUAL coverage )
+            message( FATAL_ERROR "Coverage is not available in Visual Studio Builds." )
+        endif()
+        if( _useTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
+            message( "Tests require Visual Studio 2015 or later. Suppressing..." )
+            set( _useTests 0 )
+        endif()
     endif()
-    if( _useTests AND ${CMAKE_GENERATOR} STRLESS "Visual Studio 14 2015" )
-        message( "Tests require Visual Studio 2015 or later. Suppressing..." )
-        set( _useTests 0 )
-    endif()
-endif()
+
 
 #*************************************************************************************************************
-if( ${_buildType} STREQUAL coverage )
-    if( NOT _useTests )
-        message( "Coverage builds require tests to be active." )
-        set( _useTests 1 )
-    endif()
-endif()
-
-##############################################################################################################
-# Sanity
-if( _ansakRoot )
-
-    ##########################################################################################################
-    # Dynamic v. Static on Windows
-    if( WIN32 )
-        include( WindowsCRuntime )
-        SETUP_C_RUNTIME( DYNAMIC )
-    endif()
-
-    set( _useO0 0 )
-    if ( (_buildType STREQUAL asand) OR
-         (_buildType STREQUAL msand) OR
-         (_buildType STREQUAL ubsand) OR
-         (_buildType STREQUAL coverage) )
-        set( _useO0 1 )
-    endif()
-
-    if ( ${_buildType} MATCHES asan )
-        include( FindASan )
-    endif()
-    if ( ${_buildType} MATCHES msan )
-        set( CMAKE_BUILD_TYPE msan )
-        include( FindMSan )
-    endif()
-    if ( ${_buildType} MATCHES tsan )
-        set( CMAKE_BUILD_TYPE tsan )
-        include( FindTSan )
-    endif()
-    if ( ${_buildType} MATCHES ubsan )
-        set( CMAKE_BUILD_TYPE ubsan )
-        include( FindUBSan )
-    endif()
-    if( _useTests )
-        include( CTest )
-        if( _buildType STREQUAL coverage )
-            if( NOT UNIX )
-                message( "Trying to build code coverage on a non-Linux system isn't going to end well." )
-            endif()
-            include( CodeCoverage )
+    if( ${_buildType} STREQUAL coverage )
+        if( NOT _useTests )
+            message( "Coverage builds require tests to be active." )
+            set( _useTests 1 )
         endif()
-        add_subdirectory( submods )
     endif()
-endif()
+
+    ##############################################################################################################
+    # Sanity etc.
+    if( _ansakRoot )
+        set( _useO0 0 )
+        if ( (_buildType STREQUAL asand) OR
+             (_buildType STREQUAL msand) OR
+             (_buildType STREQUAL ubsand) OR
+             (_buildType STREQUAL coverage) )
+            set( _useO0 1 )
+        endif()
+
+        if ( ${_buildType} MATCHES asan )
+            include( FindASan )
+        endif()
+        if ( ${_buildType} MATCHES msan )
+            set( CMAKE_BUILD_TYPE msan )
+            include( FindMSan )
+        endif()
+        if ( ${_buildType} MATCHES tsan )
+            set( CMAKE_BUILD_TYPE tsan )
+            include( FindTSan )
+        endif()
+        if ( ${_buildType} MATCHES ubsan )
+            set( CMAKE_BUILD_TYPE ubsan )
+            include( FindUBSan )
+        endif()
+    endif() # if( _ansakRoot )
+endif() # if( ansak_lib_predicate STREQUAL "SHARED" ) ... else()
+
+if( _useTests )
+    include( CTest )
+    if( _buildType STREQUAL coverage )
+        if( NOT UNIX )
+            message( "Trying to build code coverage on a non-Linux system isn't going to end well." )
+        endif()
+        include( CodeCoverage )
+    endif()
+    add_subdirectory( submods )
+endif() # if( _useTests )
 
 ##############################################################################################################
 # Choose basic compiler options

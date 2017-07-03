@@ -47,10 +47,7 @@ set( _targetSrc string.cxx
                 ${unicodeSubDir}/char_to_lower.cxx
                 ${unicodeSubDir}/char_is_unicode.cxx )
 
-add_library( ${_target} STATIC ${_targetSrc} )
-if (ANSAK_EFFECTIVE_CPP)
-    target_compile_options( ${_target} PRIVATE -Weffc++ )
-endif()
+ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
 target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )
 
 # set absUnicodeSubDir, to be used in test-ansakString to find the Unicode character specs file

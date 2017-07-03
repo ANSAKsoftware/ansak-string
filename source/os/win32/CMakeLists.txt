@@ -40,5 +40,5 @@ set( _interface ../../../interface )
 set( _privIncludes ../../include )
 set( _targetSrc os_layer_windows.cxx windows_directory_scanner.cxx windows_registry_key.cxx )
 
-add_library( ${_target} STATIC ${_targetSrc} )
+ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
 target_include_directories( ${_target} PRIVATE ${_privIncludes} PUBLIC ${_interface} )

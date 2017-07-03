@@ -44,8 +44,5 @@ set( _targetSrc file_path.cxx
                 runtime_exception.cxx
                 time_stamp.cxx )
 
-add_library( ${_target} STATIC ${_targetSrc} )
-if (ANSAK_EFFECTIVE_CPP)
-    target_compile_options( ${_target} PRIVATE -Weffc++ )
-endif()
+ansak_add_library( TARGET ${_target} SOURCES ${_targetSrc} )
 target_include_directories( ${_target} PUBLIC ${_interface} )

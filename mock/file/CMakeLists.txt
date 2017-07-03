@@ -36,9 +36,11 @@
 cmake_minimum_required(VERSION 3.1)
 
 set( _target mock-file )
-add_library( ${_target} STATIC mock_file_system_path.cxx
-                               mock_file_handle.cxx
-                               mock_file_handle_exception.cxx )
+set( _targetSrc mock_file_system_path.cxx
+                mock_file_handle.cxx
+                mock_file_handle_exception.cxx )
+
+ansak_add_mock_library( TARGET ${_target} SOURCES ${_targetSrc} )
 target_link_libraries( ${_target} PUBLIC ansakString ansakPrimitives gmock gmock_main gtest gtest_main )
 target_include_directories( ${_target} PUBLIC . )
 
