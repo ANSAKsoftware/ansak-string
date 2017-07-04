@@ -92,7 +92,7 @@ if( CMAKE_BUILD_TYPE )
     string( TOLOWER "${CMAKE_BUILD_TYPE}" _buildType )
 endif()
 
-if( ansak_lib_predicate STREQUAL "SHARED" )
+if( ANSAK_LIB_PREDICATE STREQUAL "SHARED" )
     message( "Tests require building statically linked libraries. Suppressing..." )
     set( _buildType "notCoverage" )
     set( _useTests 0 )
