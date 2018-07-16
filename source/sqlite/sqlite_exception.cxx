@@ -116,9 +116,13 @@ SqliteException::SqliteException
     {
         enforce(db != nullptr, "Must have open database for sqlite3_errmsg-based exception.");
         ostringstream os;
+        const char* errorCharPtr = sqlite3_errmsg(db);
+        utf8String errorMessage(errorCharPtr == nullptr ? "<no error supplied>" :
+                                                          errorCharPtr);
+        utf8String fileName(dbFile == FilePath::invalidPath() ? "memeory" :
+                                                                dbFile.asUtf8String());
         os << "SqliteException during database access: errorString = "
-           << sqlite3_errmsg(db) << "; file = " <<
-              (dbFile == FilePath::invalidPath() ? "memory" : dbFile.asUtf8String());
+           << errorMessage << "; file = " << fileName;
         if (context != nullptr && *context != '\0')
         {
             os << "; context = " << context;

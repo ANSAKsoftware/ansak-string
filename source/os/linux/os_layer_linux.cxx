@@ -161,7 +161,11 @@ TimeStamp LinuxPrimitives::lastModTime
     else
     {
         struct std::tm modGmtTime;
+#if defined(__APPLE__)
+        gmtime_r(&statBuf.st_mtimespec.tv_sec, &modGmtTime);
+#else
         gmtime_r(&statBuf.st_mtim.tv_sec, &modGmtTime);
+#endif
         r.year = modGmtTime.tm_year + 1900;
         r.month = modGmtTime.tm_mon + 1;
         r.day = modGmtTime.tm_mday;

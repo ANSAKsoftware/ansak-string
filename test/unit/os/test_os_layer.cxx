@@ -114,6 +114,8 @@ TEST(OSLayerTest, testPathExists)
 {
 #if defined(WIN32)
     EXPECT_TRUE(p->pathExists(FilePath(getSystemRoot()).child("win.ini")));
+#elif defined(__APPLE__)
+    EXPECT_TRUE(p->pathExists(FilePath("/Library/Preferences/.GlobalPreferences.plist")));
 #else
     EXPECT_TRUE(p->pathExists(FilePath("/proc/cpuinfo")));
 #endif
