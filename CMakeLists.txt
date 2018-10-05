@@ -183,7 +183,7 @@ if( _useUnitTests )
   target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
 
   add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-              COMMAND "${CMAKE_CFG_INTDIR}/mkUnicodeTestData"
+              COMMAND "mkUnicodeTestData"
                       "${absBitsDir}/UnicodeData.txt"
                       "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                       COMMENT "Generating test data for charIsUnicode test"
