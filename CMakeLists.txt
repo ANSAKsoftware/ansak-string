@@ -127,12 +127,13 @@ if( UNIX )
 endif()
 
 ##############################################################################################################
-set( DEFAULT_SUPPORTED_UNICODE_VERSION "10" )
+set( DEFAULT_SUPPORTED_UNICODE_VERSION "9" )
 if( ANSAK_UNICODE_SUPPORT )
     if( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL 7 ) OR
                ( ANSAK_UNICODE_SUPPORT STREQUAL 8 ) OR
                ( ANSAK_UNICODE_SUPPORT STREQUAL 9 ) OR
-               ( ANSAK_UNICODE_SUPPORT STREQUAL 10 ) ) )
+               ( ANSAK_UNICODE_SUPPORT STREQUAL 10 ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL 11 ) ) )
         message( "Unicode version, ${ANSAK_UNICODE_SUPPORT}, is not supported. Reverting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
         set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
     endif()

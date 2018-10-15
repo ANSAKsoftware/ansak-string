@@ -84,12 +84,12 @@ char32_t controls32[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
                         153, 154, 155, 156, 157, 158, 159, 0 };
 
 char16_t unassigneds16[] = { 0x378, 0x379, 0x10c8, 0x10c9, 0x2072, 0x2073, 0x321f, 0x32ff,
-                             0x4db7, 0x4db8, 0x9feb, 0x9fec, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
+                             0x4db7, 0x4db8, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
                              0xd800, 0xdc00, 0xfa6e, 0xfa6f, 0 };
 char32_t unassigneds32[] = { 0x378, 0x379, 0x10c8, 0x10c9, 0x2072, 0x2073, 0x321f, 0x32ff,
-                             0x4db7, 0x4db8, 0x9feb, 0x9fec, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
+                             0x4db7, 0x4db8, 0xa62c, 0xa62d, 0xd7a4, 0xd7a5,
                              0xd800, 0xdc00, 0xfa6e, 0xfa6f,
-                             0x1004e, 0x1004f, 0x12545, 0x12546, 0x16FF0, 0x187ED, 0x1f0c0, 0x1f0d0,
+                             0x1004e, 0x1004f, 0x12545, 0x12546, 0x16FF0, 0x18BED, 0x1f0c0, 0x1f0d0,
                              0x2a6d7, 0x2a6d8, 0x30001, 0x40001, 0x50001, 0x60001, 0x70001, 0x80001,
                              0x90001, 0xA0001, 0xB0001, 0xC0001, 0xD0001, 0xE0000, 0x110000, 0 };
 
@@ -224,7 +224,16 @@ TEST(EncodePredicateTest, testSimpleNonAssignedsPredicate)
             EXPECT_TRUE(pred(c));
         }
     });
-    for_each(begin(unassigneds32), end(unassigneds32), [&](const char32_t c){ if (c != 0) {EXPECT_TRUE(pred(c));} });
+    for_each(begin(unassigneds32), end(unassigneds32), [&](const char32_t c){
+        if (c != 0)
+        {
+            if (!pred(c))
+            {
+                cout << endl << "Problem with value, " << static_cast<int>(c) << ": pred(c) fails." << endl;
+            }
+            EXPECT_TRUE(pred(c));
+        }
+    });
 }
 
 TEST(EncodePredicateTest, testSimpleNonSpacesPredicate)
