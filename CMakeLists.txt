@@ -66,7 +66,11 @@ if(_ansakRoot)
 endif()
 
 ##############################################################################################################
-set( _useUnitTests 1 )
+set( _useUnitTests 0 )
+if(TEST_ANSAKSTRING OR _ansakRoot)
+  set( _useUnitTests 1 )
+endif() 
+
 set( _ansakBuildType "notCoverage")
 if( CMAKE_BUILD_TYPE )
     string( TOLOWER "${CMAKE_BUILD_TYPE}" _ansakBuildType )
