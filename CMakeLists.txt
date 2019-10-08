@@ -36,8 +36,8 @@
 # This project requires CMake 3.1 or later with a C++11-compatible compiler.
 
 # Select your desired version of unicode with the ANSAK_UNICODE_SUPPORT variable, e.g.:
-#   cmake -DANSAK_UNICODE_SUPPORT=10      # to use the 10.0.0 version of Unicode
-# ANSAK_UNICODE_SUPPORT defualts to 10.
+#   cmake -DANSAK_UNICODE_SUPPORT=11      # to use the 11.0.0 version of Unicode
+# ANSAK_UNICODE_SUPPORT defualts to 11.
 
 # Be sure to update the gtest sub-module so the unit tests will work!
 
@@ -131,7 +131,7 @@ if( UNIX )
 endif()
 
 ##############################################################################################################
-set( DEFAULT_SUPPORTED_UNICODE_VERSION "9" )
+set( DEFAULT_SUPPORTED_UNICODE_VERSION "11" )
 if( ANSAK_UNICODE_SUPPORT )
     if( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL 7 ) OR
                ( ANSAK_UNICODE_SUPPORT STREQUAL 8 ) OR
