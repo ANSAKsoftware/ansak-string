@@ -5,7 +5,7 @@ Copyright 2015, Arthur N. Klassen; see LICENSE for usage guidelines (BSD 2-claus
 
 This library started as the first piece of a larger project that has been stalled. It's a simple string library. With the release of version 2.0, I am returning to work on the larger project now, and the results will be available under the **ansak-tools** branch of this repository. String changes will be merged into the master branch and pushed down to **ansak-tools**.
 
-**ansak-string** is mostly about purifying input and performing conversions more simply than other available APIs. If your string (whether it's 7-bit ASCII, UTF-8, UTF-16, UCS-2 or UTF-32/UCS-4) makes it through my APIs (into 7-bit ASCII, UTF-8 etc.), then that's what it is. No more, no less. This includes filtering for publicly assigned Unicode values, currently following Unicode 8.0.
+**ansak-string** is mostly about purifying input and performing conversions more simply than other available APIs. If your string (whether it's 7-bit ASCII, UTF-8, UTF-16, UCS-2 or UTF-32/UCS-4) makes it through my APIs (into 7-bit ASCII, UTF-8 etc.), then that's what it is. No more, no less. This includes filtering for publicly assigned Unicode values, currently following Unicode 12.1.
 
 A simple pair of split and join templates, based on character types and using basic\_string for their processing are also present.
 
@@ -34,4 +34,3 @@ ISO-639 codes for Turkic languages:
 * Kazakh: "kk", "kaz"
 * Tatar: "tt", "tat"
 * Turkish "tr", "tur"
-
