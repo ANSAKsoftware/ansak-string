@@ -1878,7 +1878,7 @@ bool isInTheGap01E2(char32_t c)
     case 12:
     case 13:
     case 14:    return false;
-    case 15:    return row >= 10 and row <= 14;
+    case 15:    return row >= 10 && row <= 14;
     default:    return true;
     }
 }
