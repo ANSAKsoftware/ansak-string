@@ -288,11 +288,13 @@ TEST(IsUnicodeTest, testIsUnicode)
         default:
             break;
         case 0x17000:
+        case 0x18d00:
         case 0x20000:
         case 0x2A700:
         case 0x2B740:
         case 0x2B820:
         case 0x2CEB0:
+        case 0x30000:
             startCJKSection = *iValid;
             endCJKSection = *++iValid;
             break;
