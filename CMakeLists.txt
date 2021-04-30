@@ -37,7 +37,7 @@
 
 # Select your desired version of unicode with the ANSAK_UNICODE_SUPPORT variable, e.g.:
 #   cmake -DANSAK_UNICODE_SUPPORT=11      # to use the 11.0.0 version of Unicode
-# ANSAK_UNICODE_SUPPORT defualts to 13 (denoting Unicode 13).
+# ANSAK_UNICODE_SUPPORT defaults to 13 (denoting Unicode 13).
 
 # Be sure to update the gtest sub-module so the unit tests will work!
 
