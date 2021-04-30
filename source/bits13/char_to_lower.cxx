@@ -448,6 +448,9 @@ char16_t toLowerA000(char16_t c)
                 case 0xA7C4:    return 0xA794;
                 case 0xA7C5:    return 0x0282;
                 case 0xA7C6:    return 0x1D8E;
+                case 0xA7C7:    return 0xA7C8;
+                case 0xA7C9:    return 0xA7CA;
+                case 0xA7F5:    return 0xA7F6;
             }
         }
         break;
