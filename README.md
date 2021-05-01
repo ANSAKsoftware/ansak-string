@@ -5,7 +5,7 @@ Copyright 2015, Arthur N. Klassen; see LICENSE for usage guidelines (BSD 2-claus
 
 This library started as the first piece of a larger project. It's a simple string library. With the release of version 2.0, I am returning to work on the larger project now, and the results will be available under an **ansak-lib** repository.
 
-**ansak-string** is mostly about purifying input and performing conversions more simply than other available APIs. If your string (whether it's 7-bit ASCII, UTF-8, UTF-16, UCS-2 or UTF-32/UCS-4) makes it through my APIs (into 7-bit ASCII, UTF-8 etc.), then that's what it is. No more, no less. This includes filtering for publicly assigned Unicode values, currently following Unicode 12.1.
+**ansak-string** is mostly about purifying input and performing conversions more simply than other available APIs. If your string (whether it's 7-bit ASCII, UTF-8, UTF-16, UCS-2 or UTF-32/UCS-4) makes it through my APIs (into 7-bit ASCII, UTF-8 etc.), then that's what it is. No more, no less. This includes filtering for publicly assigned Unicode values, currently following Unicode 13, supporting through cmake switch every major version back to 7.0.
 
 A simple pair of split and join templates, based on character types (not strings as in their python analogue) and using basic\_string for their processing are also present.
 
@@ -82,7 +82,6 @@ endif()
 Add `find_package(ANSAK)` to your root `CMakeLists.txt` file; use the
 variables you see in your `CMakeCache.txt` file as you would for any other
 dependant component.
-
 
 Long-Term Goal:
 ---------------
