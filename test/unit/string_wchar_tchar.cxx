@@ -35,9 +35,18 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-// string_wchar_tcha.cxx - testing wchar_t (and for WIN32, TCHAR) adaptation.
+// string_wchar_tchar.cxx - testing wchar_t (and for WIN32, TCHAR) adaptation.
 //
 ///////////////////////////////////////////////////////////////////////////
+
+#if defined(WIN32)
+#if defined(_UNICODE)
+#undef _UNICODE
+#endif
+#if !defined(_MBCS)
+#define _MBCS
+#endif
+#endif
 
 #include <gtest/gtest.h>
 
@@ -115,11 +124,11 @@ TEST(StringAdaptation, testNarrowTcharIsUcs2)
 {
     // utf8 string that can be UCS-2
     char testGood[] = "This is some string, any string.";
-    EXPECT_TRUE(isUtf16(testGood));
+    EXPECT_TRUE(isUcs2(testGood));
 
     // utf8 string that cannot be UCS-2 -- UTF-16 escapes
-    char utf8PairedUTF16[] = "Can do \xed\xa8\xb2\xed\xb8\xb2 together.";
-    EXPECT_FALSE(isUtf8(utf8PairedUTF16, kUcs2));
+    char utf8PairedUcs2[] = "Can do \xed\xa8\xb2\xed\xb8\xb2 together.";
+    EXPECT_FALSE(isUtf8(utf8PairedUcs2, kUcs2));
 }
 
 TEST(StringAdaptation, testNarrowTcharIsUcs4)
@@ -131,6 +140,39 @@ TEST(StringAdaptation, testNarrowTcharIsUcs4)
     // string that cannot be UTF-8
     char utf8BadC0_DF[] = "Bad C0-DF \xc0 will fail.";
     EXPECT_FALSE(isUcs4(utf8BadC0_DF));
+}
+
+TEST(StringAdaptation, test8BitIsTstring)
+{
+    // string that can be UTF-8 (and hence convertible to tstring)
+    char testGood[] = "This is some string, any string.";
+    EXPECT_TRUE(isTstring(testGood));
+
+    // string that cannot be UTF-8 -- illegal UTF-16 escapes
+    char bad[] = "Can do \xed\xa8\xb2\xed\xa8\xb2 together.";
+    EXPECT_FALSE(isTstring(bad));
+}
+
+TEST(StringAdaptation, test16BitIsTstring)
+{
+    // string that can be UTF-16 (and hence convertible to tstring)
+    char16_t testGood[] = u"This is some string, any string.";
+    EXPECT_TRUE(isTstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char16_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_FALSE(isTstring(testBadIllegalEscape));
+}
+
+TEST(StringAdaptation, test32BitIsTstring)
+{
+    // string that can be UTF-16 (and hence convertible to tstring)
+    char32_t testGood[] = U"This is some string, any string.";
+    EXPECT_TRUE(isTstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char32_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_FALSE(isTstring(testBadIllegalEscape));
 }
 
 #endif
@@ -183,6 +225,42 @@ TEST(StringAdaptation, test16BitWcharToUcs4)
     EXPECT_TRUE(toUcs4(testBadIllegalEscape).empty());
 }
 
+TEST(StringAdaptation, testUtf8ToWstring)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char testGood[] = "This is some string, any string.";
+    wchar_t targetGood[] = L"This is some string, any string.";
+    EXPECT_EQ(wstring(targetGood), toWstring(testGood));
+
+    // string that cannot be UTF-8 -- illegal UTF-16 escapes
+    char bad[] = "Can do \xed\xa8\xb2\xed\xa8\xb2 together.";
+    EXPECT_TRUE(toWstring(bad).empty());
+}
+
+TEST(StringAdaptation, testUtf16ToWstring)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char16_t testGood[] = u"This is some string, any string.";
+    wchar_t targetGood[] = L"This is some string, any string.";
+    EXPECT_EQ(wstring(targetGood), toWstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char16_t bad[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toWstring(bad).empty());
+}
+
+TEST(StringAdaptation, testUcs4ToWstring)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char32_t testGood[] = U"This is some string, any string.";
+    wchar_t targetGood[] = L"This is some string, any string.";
+    EXPECT_EQ(wstring(targetGood), toWstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char32_t bad[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toWstring(bad).empty());
+}
+
 #if defined(WIN32)
 
 TEST(StringAdaptation, testNarrowTcharToUtf8)
@@ -196,17 +274,57 @@ TEST(StringAdaptation, testNarrowTcharToUtf8)
     EXPECT_TRUE(toUtf8(utf8BadC0_DF).empty());
 }
 
+TEST(StringAdaptation, testUtf8toNarrowTstring)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char testGood[] = "This is some string, any string.";
+    EXPECT_EQ(string(testGood), toTstring(testGood));
+
+    // string that cannot be UTF-8 -- illegal UTF-16 escapes
+    char bad[] = "Can do \xed\xa8\xb2\xed\xa8\xb2 together.";
+    EXPECT_TRUE(toTstring(bad).empty());
+}
+
+TEST(StringAdaptation, testUtf16toNarrowTstring)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char16_t testGood[] = u"This is some string, any string.";
+    char targetGood[] = "This is some string, any string.";
+    EXPECT_EQ(string(targetGood), toTstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char16_t bad[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toTstring(bad).empty());
+}
+
+TEST(StringAdaptation, testUcs4toNarrowTstring)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char32_t testGood[] = U"This is some string, any string.";
+    char targetGood[] = "This is some string, any string.";
+    EXPECT_EQ(string(targetGood), toTstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char32_t bad[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toTstring(bad).empty());
+}
+
 #endif
 
 #endif
 
 #if WCHAR_MAX > 0x10000
 
-/* isUtf8 always returns true
 TEST(StringAdaptation, test32BitWcharIsUtf8)
 {
+    // string that can be UTF-16 (and hence convertible to utf8)
+    wchar_t testGood[] = L"This is some string, any string.";
+    EXPECT_TRUE(isUtf8(testGood));
+
+    // string that cannot be UTF-16 -- illegal UTF-16 escapes
+    wchar_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_FALSE(isUtf8(testBadIllegalEscape));
 }
-*/
 
 TEST(StringAdaptation, test32BitWcharIsUtf16)
 {
@@ -234,18 +352,28 @@ TEST(StringAdaptation, test32BitWcharIsUcs2)
     EXPECT_FALSE(isUcs2(testBadGoodEscape));
 }
 
-/* isUcs4 always returns true
 TEST(StringAdaptation, test32BitWcharIsUcs4)
 {
-}
-*/
+    // string that can be UTF-16 (and hence convertible to ucs4)
+    wchar_t testGood[] = L"This is some string, any string.";
+    EXPECT_TRUE(isUcs4(testGood));
 
-/* all 32-bit strings re-encode to UTF-8
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    wchar_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_FALSE(isUcs4(testBadIllegalEscape));
+}
+
 TEST(StringAdaptation, test32BitWcharToUtf8)
 {
-    // some string, any string
+    // string that can be UTF-16 (and hence convertible to utf8)
+    wchar_t testGood[] = L"This is some string, any string.";
+    char targetGood[] = "This is some string, any string.";
+    EXPECT_EQ(utf8String(targetGood), toUtf8(testGood));
+
+    // string that cannot be UTF-16 -- illegal UTF-16 escapes
+    wchar_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toUtf8(testBadIllegalEscape).empty());
 }
-*/
 
 TEST(StringAdaptation, test32BitWcharToUtf16)
 {
@@ -275,11 +403,85 @@ TEST(StringAdaptation, test32BitWcharToUcs2)
     EXPECT_TRUE(toUcs2(testBadGoodEscape).empty());
 }
 
-/* toUcs4 tests the constructor
 TEST(StringAdaptation, test32BitWcharToUcs4)
 {
-    // some string, any string
+    // some UTF-16 string, any string
+    wchar_t testGood[] = L"This is some string, any string.";
+    char32_t targetGood[] = U"This is some string, any string.";
+    EXPECT_EQ(ucs4String(targetGood), toUcs4(testGood));
+
+    // string that cannot be UTF-16
+    wchar_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toUcs4(testBadIllegalEscape).empty());
 }
-*/
+
+TEST(StringAdaptation, test8BitTo32bitWString)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char testGood[] = "This is some string, any string.";
+    wchar_t targetGood[] = L"This is some string, any string.";
+    EXPECT_EQ(wstring(targetGood), toWstring(testGood));
+
+    // string that cannot be UTF-8 -- illegal UTF-16 escapes
+    char bad[] = "Can do \xed\xa8\xb2\xed\xa8\xb2 together.";
+    EXPECT_TRUE(toWstring(bad).empty());
+}
+
+TEST(StringAdaptation, test16BitTo32bitWString)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char16_t testGood[] = u"This is some string, any string.";
+    wchar_t targetGood[] = L"This is some string, any string.";
+    EXPECT_EQ(wstring(targetGood), toWstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char16_t bad[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toWstring(bad).empty());
+}
+
+TEST(StringAdaptation, test32BitTo32bitWString)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char32_t testGood[] = U"This is some string, any string.";
+    wchar_t targetGood[] = L"This is some string, any string.";
+    EXPECT_EQ(wstring(targetGood), toWstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char32_t bad[] = { 0xd801, 0xd801, 0 };
+    EXPECT_TRUE(toWstring(bad).empty());
+}
 
 #endif
+
+TEST(StringAdaptation, test8BitIsWstring)
+{
+    // string that can be UTF-8 (and hence convertible to wstring)
+    char testGood[] = "This is some string, any string.";
+    EXPECT_TRUE(isWstring(testGood));
+
+    // string that cannot be UTF-8 -- illegal UTF-16 escapes
+    char bad[] = "Can do \xed\xa8\xb2\xed\xa8\xb2 together.";
+    EXPECT_FALSE(isWstring(bad));
+}
+
+TEST(StringAdaptation, test16BitIsWstring)
+{
+    // string that can be UTF-16 (and hence convertible to wstring)
+    char16_t testGood[] = u"This is some string, any string.";
+    EXPECT_TRUE(isWstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char16_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_FALSE(isWstring(testBadIllegalEscape));
+}
+
+TEST(StringAdaptation, test32BitIsWstring)
+{
+    // string that can be UTF-16 (and hence convertible to wstring)
+    char32_t testGood[] = U"This is some string, any string.";
+    EXPECT_TRUE(isWstring(testGood));
+
+    // string that cannot be UTF-16 -- out-of-range, or illegal UTF-16 escapes
+    char32_t testBadIllegalEscape[] = { 0xd801, 0xd801, 0 };
+    EXPECT_FALSE(isWstring(testBadIllegalEscape));
+}

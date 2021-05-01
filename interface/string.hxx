@@ -489,7 +489,7 @@ inline bool isUtf8(const std::wstring& test) { return isUtf8(test.c_str()); }
 
 inline bool isUtf16(const wchar_t* test)
 {
-   return isUtf16(reinterpret_cast<const char16_t*>(test), kUtf16);
+   return isUtf16(reinterpret_cast<const char16_t*>(test), kUtf8);
 }
 inline bool isUtf16(const std::wstring& test) { return isUtf16(test.c_str()); }
 
@@ -575,39 +575,39 @@ inline bool isUcs4(const std::string& test) { return isUcs4(test.c_str()); }
 
 inline bool isTstring(const utf8String& test)
 {
-    return isUtf8(test);
+    return isUtf8(test, kUtf16);
 }
 
 inline bool isTstring(const char* test)
 {
-    return isUtf8(test);
+    return isUtf8(test, kUtf16);
 }
 
 inline bool isTstring(const utf16String& test)
 {
-    return isUtf16(test, kUtf8);
+    return isUtf16(test);
 }
 
 /* ucs2String and utf16String are the same type under the hood
 inline bool isTstring(const ucs2String& test)
 {
-    return isUcs2(test, kUtf8);
+    return isUcs2(test, kUtf16);
 }
 */
 
 inline bool isTstring(const char16_t* test)
 {
-    return isUtf16(test, kUtf8);
+    return isUtf16(test);
 }
 
 inline bool isTstring(const ucs4String& test)
 {
-    return isUcs4(test, kUtf8);
+    return isUcs4(test, kUtf16);
 }
 
 inline bool isTstring(const char32_t* test)
 {
-    return isUcs4(test, kUtf8);
+    return isUcs4(test, kUtf16);
 }
 
 #elif defined(_UNICODE)
@@ -711,7 +711,14 @@ inline std::wstring toWstring(const utf8String& src)
 
 inline std::wstring toWstring(const char16_t* src)
 {
-    return std::wstring(reinterpret_cast<const wchar_t*>(src));
+    if (isUtf16(src))
+    {
+        return std::wstring(reinterpret_cast<const wchar_t*>(src));
+    }
+    else
+    {
+        return std::wstring();
+    }
 }
 inline std::wstring toWstring(const utf16String& src)
 {
@@ -755,17 +762,24 @@ inline utf8String toUtf8(const std::string& src) { return toUtf8(src.c_str()); }
 
 inline std::string toTstring(const utf8String& test)
 {
-    return std::string(test.c_str());
+    return toTstring(test.c_str());
 }
 
 inline std::string toTstring(const char* test)
 {
-    return std::string(test);
+    if (isUtf8(test, kAscii))
+    {
+        return std::string(test);
+    }
+    else
+    {
+        return std::string();
+    }
 }
 
 inline std::string toTstring(const utf16String& test)
 {
-    return std::string(toUtf8(test).c_str());
+    return toTstring(test.c_str());
 }
 
 /* ucs2String and utf16String are the same type under the hood
@@ -777,29 +791,43 @@ inline std::string toTstring(const ucs2String& test)
 
 inline std::string toTstring(const char16_t* test)
 {
-    return std::string(toUtf8(test).c_str());
+    if (isUtf16(test, kAscii))
+    {
+        return std::string(toUtf8(test).c_str());
+    }
+    else
+    {
+        return std::string();
+    }
 }
 
 inline std::string toTstring(const ucs4String& test)
 {
-    return std::string(toUtf8(test).c_str());
+    return toTstring(test.c_str());
 }
 
 inline std::string toTstring(const char32_t* test)
 {
-    return std::string(toUtf8(test).c_str());
+    if (isUcs4(test, kAscii))
+    {
+        return std::string(toUtf8(test).c_str());
+    }
+    else
+    {
+        return std::string();
+    }
 }
 
 #elif defined(_UNICODE)
 
 inline std::wstring toTstring(const utf8String& test)
 {
-    return std::wstring(toUtf16(test).c_str());
+    return std::wstring(reinterpret_cast<const wchar_t*>(toUtf16(test).c_str()));
 }
 
 inline std::wstring toTstring(const char* test)
 {
-    return std::wstring(toUtf16(test).c_str());
+    return std::wstring(reinterpret_cast<const wchar_t*>(toUtf16(test).c_str()));
 }
 
 inline std::wstring toTstring(const utf16String& test)
@@ -821,12 +849,12 @@ inline std::wstring toTstring(const char16_t* test)
 
 inline std::wstring toTstring(const ucs4String& test)
 {
-    return std::wstring(toUtf16(test).c_str());
+    return std::wstring(reinterpret_cast<const wchar_t*>(toUtf16(test).c_str()));
 }
 
 inline std::wstring toTstring(const char32_t* test)
 {
-    return std::wstring(toUtf16(test).c_str());
+    return std::wstring(reinterpret_cast<const wchar_t*>(toUtf16(test).c_str()));
 }
 
 #endif
@@ -840,11 +868,12 @@ inline std::wstring toTstring(const char32_t* test)
 ////////////////////////////////////////////////////////////////////////////////
 // isXxxxx for 32-bit wchar_t
 
-inline bool isUtf8(const wchar_t*)
+inline bool isUtf8(const wchar_t* test)
 {
    // return isUcs4(reinterpret_cast<const char32_t*>(test), kUtf8);
    // anything that's ucs-4 will go to utf8
-   return true;
+   // but systems that use narrow wchar_t often trade in utf-16 there...
+   return isUcs4(reinterpret_cast<const char32_t*>(test), kUtf16);
 }
 inline bool isUtf8(const std::wstring& test) { return isUtf8(test.c_str()); }
 
@@ -860,13 +889,51 @@ inline bool isUcs2(const wchar_t* test)
 }
 inline bool isUcs2(const std::wstring& test) { return isUcs2(test.c_str()); }
 
-inline bool isUcs4(const wchar_t*)
+inline bool isUcs4(const wchar_t* test)
 {
    // return isUcs4(reinterpret_cast<const char32_t*>(test), kUcs4);
    // anything that's ucs-4 will go to ucs-4
-   return true;
+   // but systems that use narrow wchar_t often trade in utf-16 there...
+   return isUcs4(reinterpret_cast<const char32_t*>(test), kUtf16);
 }
 inline bool isUcs4(const std::wstring& test) { return isUcs4(test.c_str()); }
+
+inline bool isWstring(const utf8String& test)
+{
+    return isUtf8(test, kUtf16);
+}
+
+inline bool isWstring(const char* test)
+{
+    return isUtf8(test, kUtf16);
+}
+
+inline bool isWstring(const utf16String& test)
+{
+    return isUtf16(test, kUcs4);
+}
+
+/* ucs2String and utf16String are the same type under the hood
+inline bool isWstring(const ucs2String& test)
+{
+    return isUcs2(test, kUtf16);
+}
+*/
+
+inline bool isWstring(const char16_t* test)
+{
+    return isUtf16(test, kUcs4);
+}
+
+inline bool isWstring(const ucs4String& test)
+{
+    return isUcs4(test, kUtf16);
+}
+
+inline bool isWstring(const char32_t* test)
+{
+    return isUcs4(test, kUtf16);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // toXxxxx for 32-bit wchar_t
@@ -890,7 +957,16 @@ inline ucs2String toUcs2(const std::wstring& src)
 { return toUcs2(src.c_str()); }
 
 inline ucs4String toUcs4(const wchar_t* src)
-{ return ucs4String(reinterpret_cast<const char32_t*>(src)); }
+{
+    if (isUcs4(reinterpret_cast<const char32_t*>(src), kUtf16))
+    {
+        return ucs4String(reinterpret_cast<const char32_t*>(src));
+    }
+    else
+    {
+        return ucs4String();
+    }
+}
 
 inline ucs4String toUcs4(const std::wstring& src)
 { return toUcs4(src.c_str()); }
@@ -921,8 +997,16 @@ inline std::wstring toWstring(const ucs2String& src)
 
 inline std::wstring toWstring(const char32_t* src)
 {
-    return std::wstring(reinterpret_cast<const wchar_t*>(src));
+    if (isUcs4(src, kUtf16))
+    {
+        return std::wstring(reinterpret_cast<const wchar_t*>(src));
+    }
+    else
+    {
+        return std::wstring();
+    }
 }
+
 inline std::wstring toWstring(const ucs4String& src)
 {
     return toWstring(src.c_str());
