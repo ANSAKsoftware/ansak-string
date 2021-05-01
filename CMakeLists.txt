@@ -204,6 +204,8 @@ if( _useUnitTests )
                                   test/unit/string_splitjoin_test.cxx
                                   test/unit/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
                                   test/unit/string_with_predicate_test.cxx
+                                  test/unit/string_wchar_tchar.cxx
+                                  test/unit/string_wide_tchar.cxx
                                   test/unit/char_is_unicode_test.cxx
                                   "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
                 )
