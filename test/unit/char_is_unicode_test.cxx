@@ -52,6 +52,13 @@ using namespace ansak::internal;
 using namespace std;
 using namespace testing;
 
+TEST(IsUnicodeTest, displayVersion)
+{
+    auto version = getUnicodeVersionSupported();
+    ASSERT_FALSE(version.empty());
+    cout << "ansak-string supports unicode version " << version << endl;
+}
+
 TEST(IsUnicodeTest, testIsControl)
 {
     // all the control characters are U+0000 .. U+001F and U+0080 to U+009F
