@@ -36,7 +36,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 // char_is_unicode.cxx -- Code to check if a code-point value is inside
-//                        Unicode, locally Unicode 11.0
+//                        Unicode, locally Unicode 12.0
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -49,14 +49,14 @@ namespace ansak {
 
 namespace internal {
 
-const utf8String supportedUnicodeVersion = "11.0.0";
+const utf8String supportedUnicodeVersion = "12.0.0";
 
 namespace
 {
 
 // "isInTheGap" routines for sub-ranges of Unicode domain values. Numbers after isInTheGap
 // gives most significant digits of the 21-bit Unicode values. Values less than U+0300 are
-// all in the Unicode 11.0 standard
+// all in the Unicode 12.0 standard
 
 bool isInTheGap0003(char16_t c)
 {
