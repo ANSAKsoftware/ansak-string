@@ -32,6 +32,8 @@
 #
 ###########################################################################
 
+message("Looking for ANSAK components...")
+
 #[[
 FindANSAK
 ---------
@@ -90,7 +92,8 @@ For DevStudio Generators, the picture is slightly murkier. See following comment
 #                                          +--Debug                        +--Win32 or x64 or ARM or ARM64
 #                                          +--Release                           +--Debug
 #                                          +--RelWithDebInfo                    +--Release
-#                                                                               +--RelWithDebInfo
+#                                          +--MinSizeRel                        +--RelWithDebInfo
+#                                                                               +--MinSizeRel
 # synonyms for Win32: x86, i386, X86
 # synonyms for x64: Win64, x86_64, x86-64, X64, X86_64, X86-64, amd64
 # synonyms for ARM: Arm, arm
@@ -248,7 +251,7 @@ else()
 endif()
 
 if(_platform_string_lib STREQUAL "_platform_string_lib-NOTFOUND")
-    message(STATUS "ANSAK_STRING_LIB not found.")
+    message(SEND_ERROR "ANSAK_STRING_LIB not found.")
     return()
 endif()
 #
@@ -346,7 +349,7 @@ find_file(ANSAK_SQLITE_HEADER "sqlite_exception.hxx" HINTS "${_include_dir}")
 # if no string.hxx file, there's nothing more to find
 if(ANSAK_STRING_HEADER STREQUAL "ANSAK_STRING_HEADER-NOTFOUND")
     set(ANSAK_FOUND False CACHE BOOL "ANSAK components not found.")
-    message(STATUS "ANSAK string header not found. Giving up.")
+    message(SEND_ERROR "ANSAK string header not found. Giving up.")
     return()
     # early exit
     ########################################################################
@@ -426,6 +429,7 @@ endif()
 # ANSAK_FOUND determined
 ############################################################################
 
+message("Looking for ANSAK components... done")
 if (ANSAK_DEBUG)
     set(_comp_found "")
     if(ANSAK_FOUND)
