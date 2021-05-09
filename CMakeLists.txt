@@ -203,6 +203,7 @@ if( _useUnitTests )
                                   test/unit/encode_predicate_test.cxx
                                   test/unit/string_splitjoin_test.cxx
                                   test/unit/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
+                                  test/unit/string_trim_test.cxx
                                   test/unit/string_with_predicate_test.cxx
                                   test/unit/string_wchar_tchar.cxx
                                   test/unit/string_wide_tchar.cxx
