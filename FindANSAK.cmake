@@ -33,6 +33,19 @@
 ###########################################################################
 
 message("Looking for ANSAK components...")
+string(REGEX MATCH "^Visual Studio" _vs_match ${CMAKE_GENERATOR})
+if (_vs_match)
+    message("... for a Visual Studio generator")
+    if (NOT CMAKE_GENERATOR_PLATFORM)
+        message(FATAL_ERROR "Searching for Windows libraries without a generator platform. Please choose one (-A).")
+    elseif (CMAKE_GENERATOR_PLATFORM STREQUAL "ARM" OR CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64" OR
+            CMAKE_GENERATOR_PLATFORM STREQUAL "Win32" OR CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+        message("Searching for Windows libraries using generator platform, ${CMAKE_GENERATOR_PLATFORM}")
+    else()
+        message("Searching for Windows libraries without an unknown generator platform, ${CMAKE_GENERATOR_PLATFORM}.")
+        message(WARNING "FindANSAK.cmake may need to be updated to accomodate it.")
+    endif ()
+endif()
 
 #[[
 FindANSAK
@@ -128,9 +141,26 @@ else()
 endif()
 
 if (ANSAK_DEBUG)
-    message("ANSAK_DIR=\"$ENV{ANSAK_DIR}/${ANSAK_DIR}\"")
-    message("PROGRAM_DATA=\"$ENV{PROGRAM_DATA}/${PROGRAM_DATA}\"")
-    message("ANSAK_NO_GENERATOR_LIBS=$ENV{ANSAK_NO_GENERATOR_LIBS}/${ANSAK_NO_GENERATOR_LIBS}")
+    if (ANSAK_DIR OR NOT "$ENV{ANSAK_DIR}" STREQUAL "")
+        message("ANSAK_DIR=\"$ENV{ANSAK_DIR}/${ANSAK_DIR}\"")
+    endif()
+    if (PROGRAM_DATA OR NOT "$ENV{PROGRAM_DATA}" STREQUAL "")
+        message("PROGRAM_DATA=\"$ENV{PROGRAM_DATA}/${PROGRAM_DATA}\"")
+    endif()
+    if (ANSAK_NO_GENERATOR_LIBS OR NOT "$ENV{ANSAK_NO_GENERATOR_LIBS}" STREQUAL "")
+        message("ANSAK_NO_GENERATOR_LIBS=$ENV{ANSAK_NO_GENERATOR_LIBS}/${ANSAK_NO_GENERATOR_LIBS}")
+    endif()
+    IF (WIN32)
+        IF (IS_DIRECTORY C:/ProgramData)
+            message("C:/ProgramData exists")
+        endif()
+        IF (IS_DIRECTORY C:/ProgramData/include)
+            message("C:/ProgramData/include exists")
+        endif()
+        IF (IS_DIRECTORY C:/ProgramData/lib)
+            message("C:/ProgramData/lib exists")
+        endif()
+    endif()
 endif()
 #
 ############################################################################
@@ -149,8 +179,7 @@ function(platform_matches_dirname dirname result)
     elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
         set(theList ${win64Dirs})
     else()
-        message(WARNING "Did not find ${dirname} -- do you need to pass in its contents (dollar-curly-brace)?")
-        set(${result} False PARENT_SCOPE)
+        set(theList "${CMAKE_GENERATOR_PLATFORM}")
     endif()
 
     list(FIND theList ${dirname} index)
@@ -171,29 +200,30 @@ function(find_win_lib find_var signal_library doc_string)
         list(GET ARGN 0 cand)
         if (ANSAK_DEBUG)
             message("Provided extra value, ${cand} to be searched for ${signal_library}, to be noted in ${find_var}")
+            message("CMAKE_GENERATOR_PLATFORM is ${CMAKE_GENERATOR_PLATFORM}")
         endif()
         find_library(${find_var} ${signal_library}
                                 HINTS "${cand}/lib"
                                       "${cand}/lib/Debug"
                                   DOC "${doc_string}"
-                     REQUIRED NO_DEFAULT_PATH)
+                              NO_DEFAULT_PATH)
         if(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM")
             find_library(${find_var} ${signal_library}
                                     HINTS "${cand}/lib/ARM/Debug"       # other options are case insensitive
                                       DOC "${doc_string}"
-                          REQUIRED NO_DEFAULT_PATH)
+                                   NO_DEFAULT_PATH)
         elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
             find_library(${find_var} ${signal_library}
                                     HINTS "${cand}/lib/ARM64/Debug"     # other options are case insensitive
                                       DOC "${doc_string}"
-                         REQUIRED NO_DEFAULT_PATH)
+                                  NO_DEFAULT_PATH)
         elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
             find_library(${find_var} ${signal_library}
                                     HINTS "${cand}/lib/Win32/Debug"
                                           "${cand}/lib/x86/Debug"       # windows, matches X86 as well
                                           "${cand}/lib/i386/Debug"
                                       DOC "${doc_string}"
-                         REQUIRED NO_DEFAULT_PATH)
+                                  NO_DEFAULT_PATH)
         elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
             find_library(${find_var} ${signal_library}
                                     HINTS "${cand}/lib/x64/Debug"       # windows, matches X64 as well
@@ -202,7 +232,12 @@ function(find_win_lib find_var signal_library doc_string)
                                           "${cand}/lib/x86-64/Debug"    # windows, matches X86-64 as well
                                           "${cand}/lib/amd64/Debug"
                                       DOC "${doc_string}"
-                         REQUIRED NO_DEFAULT_PATH)
+                                  NO_DEFAULT_PATH)
+        else()
+            find_library(${find_var} ${signal_library}                  # windows, try to match the platform
+                                    HINTS "${cand}/lib/${CMAKE_GENERATOR_PLATFORM}/Debug"
+                                      DOC "${doc_string}"
+                                  NO_DEFAULT_PATH)
         endif()
         if (ANSAK_DEBUG)
             message("${find_var} searched for in ${cand} sub-directories. Result: ${${find_var}}")
@@ -308,7 +343,10 @@ if(_locator_dirname STREQUAL "Debug")
         endif()
     endif()
     if (_vs_match)
-        set(ANSAK_STRING_LIB "${_libs_grandparent_dirname}/$<CONFIG>/${_srch_string_lib}" CACHE FILEPATH "ANSAK String Library")
+        message(VERBOSE "Setting ANSAK_STRING_LIB to "
+            "${_ansak_root}/lib/${_libs_grandparent_dirname}/<generator-config>/${_srch_string_lib}")
+        set(ANSAK_STRING_LIB "${_ansak_root}/lib/${_libs_grandparent_dirname}/$<CONFIG>/${_srch_string_lib}"
+            CACHE FILEPATH "ANSAK String Library")
     else()
         set(ANSAK_STRING_LIB "${_platform_string_lib}" CACHE FILEPATH "ANSAK String Library")
     endif()
@@ -362,6 +400,9 @@ get_filename_component(_include_path "${_file_dir}" DIRECTORY)        # location
 # for standard Unix-style locations, ANSAK_INCLUDE is blank and won't add -I elements
 if(_include_path STREQUAL "/usr/include" OR _include_path STREQUAL "/usr/local/include")
     message(VERBOSE "Derived include path, ${_include_path}, is a standard location, leaving ANSAK_INCLUDE unset")
+    if (CMAKE_GENERATOR STREQUAL "Xcode")
+        message(WARNING "Derived path, ${_include_path}, will be assumed by ${CMAKE_GENERATOR} to be from a MacOSX SDK.")
+    endif()
 else()
     message(VERBOSE "Derived include path is a non-standard location, setting ANSAK_INCLUDE to \"${_include_path}\"")
     set(ANSAK_INCLUDE "${_include_path}" CACHE PATH "ANSAK include root")
@@ -429,7 +470,6 @@ endif()
 # ANSAK_FOUND determined
 ############################################################################
 
-message("Looking for ANSAK components... done")
 if (ANSAK_DEBUG)
     set(_comp_found "")
     if(ANSAK_FOUND)
@@ -446,3 +486,4 @@ if (ANSAK_DEBUG)
     endif()
     message(STATUS "ANSAK components found: ${_comp}")
 endif()
+message("Looking for ANSAK components... done")
