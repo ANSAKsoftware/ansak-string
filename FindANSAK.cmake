@@ -33,19 +33,6 @@
 ###########################################################################
 
 message( "Looking for ANSAK components..." )
-string( REGEX MATCH "^Visual Studio" _vs_match ${CMAKE_GENERATOR} )
-if( _vs_match )
-    message( "... for a Visual Studio generator" )
-    if( NOT CMAKE_GENERATOR_PLATFORM )
-        message( FATAL_ERROR "Searching for Windows libraries without a generator platform. Please choose one (-A)." )
-    elseif( CMAKE_GENERATOR_PLATFORM STREQUAL "ARM" OR CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64" OR
-            CMAKE_GENERATOR_PLATFORM STREQUAL "Win32" OR CMAKE_GENERATOR_PLATFORM STREQUAL "x64" )
-        message( "Searching for Windows libraries using generator platform, ${CMAKE_GENERATOR_PLATFORM}" )
-    else()
-        message( "Searching for Windows libraries without an unknown generator platform, ${CMAKE_GENERATOR_PLATFORM}." )
-        message( WARNING "FindANSAK.cmake may need to be updated to accomodate it." )
-    endif()
-endif()
 
 #[[
 FindANSAK
@@ -140,27 +127,10 @@ else()
     set( _no_generator_libs False )
 endif()
 
-if( ANSAK_DEBUG)
-    if( ANSAK_DIR OR NOT "$ENV{ANSAK_DIR}" STREQUAL "" )
-        message( "ANSAK_DIR=\"$ENV{ANSAK_DIR}/${ANSAK_DIR}\"" )
-    endif()
-    if( PROGRAM_DATA OR NOT "$ENV{PROGRAM_DATA}" STREQUAL "" )
-        message( "PROGRAM_DATA=\"$ENV{PROGRAM_DATA}/${PROGRAM_DATA}\"" )
-    endif()
-    if( ANSAK_NO_GENERATOR_LIBS OR NOT "$ENV{ANSAK_NO_GENERATOR_LIBS}" STREQUAL "" )
-        message( "ANSAK_NO_GENERATOR_LIBS=$ENV{ANSAK_NO_GENERATOR_LIBS}/${ANSAK_NO_GENERATOR_LIBS}" )
-    endif()
-    if( WIN32 )
-        if( IS_DIRECTORY C:/ProgramData )
-            message( "C:/ProgramData exists" )
-        endif()
-        if( IS_DIRECTORY C:/ProgramData/include )
-            message( "C:/ProgramData/include exists" )
-        endif()
-        if( IS_DIRECTORY C:/ProgramData/lib )
-            message( "C:/ProgramData/lib exists" )
-        endif()
-    endif()
+if ( ANSAK_DEBUG )
+    message( "ANSAK_DIR=\"$ENV{ANSAK_DIR}/${ANSAK_DIR}\"" )
+    message( "PROGRAM_DATA=\"$ENV{PROGRAM_DATA}/${PROGRAM_DATA}\"" )
+    message( "ANSAK_NO_GENERATOR_LIBS=$ENV{ANSAK_NO_GENERATOR_LIBS}/${ANSAK_NO_GENERATOR_LIBS}" )
 endif()
 #
 ############################################################################
@@ -179,7 +149,8 @@ function( platform_matches_dirname dirname result )
     elseif( CMAKE_GENERATOR_PLATFORM STREQUAL "x64" )
         set( theList ${win64Dirs} )
     else()
-        set( theList "${CMAKE_GENERATOR_PLATFORM}" )
+        message( WARNING "Did not find ${dirname} -- do you need to pass in its contents (dollar-curly-brace)?" )
+        set( ${result} False PARENT_SCOPE )
     endif()
 
     list( FIND theList ${dirname} index )
@@ -198,48 +169,42 @@ endfunction()
 function( find_win_lib find_var signal_library doc_string )
     if( ARGN )
         list( GET ARGN 0 cand )
-        if( ANSAK_DEBUG )
-            message( "Provided extra value, ${cand} to be searched for ${signal_library}, to be noted in ${find_var}" )
-            message( "CMAKE_GENERATOR_PLATFORM is ${CMAKE_GENERATOR_PLATFORM}" )
+        if ( ANSAK_DEBUG )
+            message( "Candidate, ${cand}, to be searched for ${signal_library}, to be noted in ${find_var}" )
         endif()
         find_library( ${find_var} ${signal_library}
                                  HINTS "${cand}/lib"
                                        "${cand}/lib/Debug"
                                    DOC "${doc_string}"
-                               NO_DEFAULT_PATH )
+                      REQUIRED NO_DEFAULT_PATH )
         if( CMAKE_GENERATOR_PLATFORM STREQUAL "ARM" )
             find_library( ${find_var} ${signal_library}
-                                     HINTS "${cand}/lib/ARM/Debug"       # other options are case insensitive
+                                     HINTS "${cand}/lib/ARM/Debug"      # other options are case insensitive
                                        DOC "${doc_string}"
-                                    NO_DEFAULT_PATH )
+                           REQUIRED NO_DEFAULT_PATH )
         elseif( CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64" )
             find_library( ${find_var} ${signal_library}
-                                     HINTS "${cand}/lib/ARM64/Debug"     # other options are case insensitive
+                                     HINTS "${cand}/lib/ARM64/Debug"    # other options are case insensitive
                                        DOC "${doc_string}"
-                                   NO_DEFAULT_PATH )
+                          REQUIRED NO_DEFAULT_PATH )
         elseif( CMAKE_GENERATOR_PLATFORM STREQUAL "Win32" )
             find_library( ${find_var} ${signal_library}
                                      HINTS "${cand}/lib/Win32/Debug"
-                                           "${cand}/lib/x86/Debug"       # windows, matches X86 as well
+                                           "${cand}/lib/x86/Debug"      # windows, matches X86 as well
                                            "${cand}/lib/i386/Debug"
                                        DOC "${doc_string}"
-                                   NO_DEFAULT_PATH )
+                          REQUIRED NO_DEFAULT_PATH )
         elseif( CMAKE_GENERATOR_PLATFORM STREQUAL "x64" )
             find_library( ${find_var} ${signal_library}
-                                     HINTS "${cand}/lib/x64/Debug"       # windows, matches X64 as well
+                                     HINTS "${cand}/lib/x64/Debug"      # windows, matches X64 as well
                                            "${cand}/lib/Win64/Debug"
-                                           "${cand}/lib/x86_64/Debug"    # windows, matches X86_64 as well
-                                           "${cand}/lib/x86-64/Debug"    # windows, matches X86-64 as well
+                                           "${cand}/lib/x86_64/Debug"   # windows, matches X86_64 as well
+                                           "${cand}/lib/x86-64/Debug"   # windows, matches X86-64 as well
                                            "${cand}/lib/amd64/Debug"
                                        DOC "${doc_string}"
-                                   NO_DEFAULT_PATH )
-        else()
-            find_library( ${find_var} ${signal_library}                  # windows, try to match the platform
-                                     HINTS "${cand}/lib/${CMAKE_GENERATOR_PLATFORM}/Debug"
-                                       DOC "${doc_string}"
-                                   NO_DEFAULT_PATH )
+                          REQUIRED NO_DEFAULT_PATH )
         endif()
-        if( ANSAK_DEBUG )
+        if ( ANSAK_DEBUG )
             message( "${find_var} searched for in ${cand} sub-directories. Result: ${${find_var}}" )
         endif()
     endif()
@@ -249,35 +214,35 @@ endfunction()
 # search for ansak-string library, by variable, by environment by default places
 if( UNIX OR MINGW OR CYGWIN )
     set( _srch_string_lib libansakString.a )
-    if( ANSAK_DEBUG )
+    if ( ANSAK_DEBUG )
         message( "looking for ${_srch_string_lib}" )
     endif()
     if( ANSAK_DIR )
-      find_library( _platform_string_lib ${_srch_string_lib} HINTS "${ANSAK_DIR}/lib"
-                                                             DOC "ANSAK string library"
-                                                             REQUIRED )
+        find_library( _locator ${_srch_string_lib} HINTS "${ANSAK_DIR}/lib"
+                                                   DOC "ANSAK string library"
+                                                   REQUIRED )
     elseif( NOT "$ENV{ANSAK_DIR}" STREQUAL "" )
-      find_library( _platform_string_lib ${_srch_string_lib} HINTS "$ENV{ANSAK_DIR}/lib"
-                                                             DOC "ANSAK string library"
-                                                             REQUIRED )
+        find_library( _loctaor ${_srch_string_lib} HINTS "$ENV{ANSAK_DIR}/lib"
+                                                   DOC "ANSAK string library"
+                                                   REQUIRED )
     else()
-      # searches in places like /usr/... and /usr/local/... as last resort
-      find_library( _platform_string_lib ${_srch_string_lib} DOC "ANSAK string library" REQUIRED )
+        # searches in places like /usr/... and /usr/local/... as last resort
+        find_library( _locator ${_srch_string_lib} DOC "ANSAK string library" REQUIRED )
     endif()
     set( _srch_lib libansak.a )
     set( _srch_sqlite_lib libansakSqlite.a )
 else()
     set( _srch_string_lib ansakString.lib )
-    if( ANSAK_DEBUG )
+    if ( ANSAK_DEBUG )
         message( "looking for ${_srch_string_lib}" )
     endif()
-    find_win_lib( _platform_string_lib ${_srch_string_lib} "ANSAK string library" "${ANSAK_DIR}" )
-    find_win_lib( _platform_string_lib ${_srch_string_lib} "ANSAK string library" "$ENV{ANSAK_DIR}" )
-    find_win_lib( _platform_string_lib ${_srch_string_lib} "ANSAK string library" "${PROGRAM_DATA}" )
-    find_win_lib( _platform_string_lib ${_srch_string_lib} "ANSAK string library" "$ENV{PROGRAM_DATA}" )
-    find_win_lib( _platform_string_lib ${_srch_string_lib} "ANSAK string library" C:/ProgramData )
+    find_win_lib( _locator ${_srch_string_lib} "ANSAK string library" "${ANSAK_DIR}" )
+    find_win_lib( _locator ${_srch_string_lib} "ANSAK string library" "$ENV{ANSAK_DIR}" )
+    find_win_lib( _locator ${_srch_string_lib} "ANSAK string library" "${PROGRAM_DATA}" )
+    find_win_lib( _locator ${_srch_string_lib} "ANSAK string library" "$ENV{PROGRAM_DATA}" )
+    find_win_lib( _locator ${_srch_string_lib} "ANSAK string library" C:/ProgramData )
 
-    if( NOT _srch_string_lib AND NOT CMAKE_GENERATOR_PLATFORM )
+    if ( NOT _locator AND NOT CMAKE_GENERATOR_PLATFORM )
         message( SEND_ERROR "${_srch_string_lib} was not found with no platform specified. Should you have set the platform? -A ..." )
     endif()
 
@@ -285,7 +250,7 @@ else()
     set( _srch_sqlite_lib ansakSqlite.lib )
 endif()
 
-if( _platform_string_lib STREQUAL "_platform_string_lib-NOTFOUND" )
+if( _locator STREQUAL "_locator-NOTFOUND" )
     message( SEND_ERROR "ANSAK_STRING_LIB not found." )
     return()
 endif()
@@ -294,72 +259,101 @@ endif()
 
 ############################################################################
 # develop the location of _ansak_root -- it'll be some parent of the locator
-get_filename_component( _ansak_locator_dir "${_platform_string_lib}" DIRECTORY )
-set( _ansak_root "${_ansak_locator_dir}" )
+
+get_filename_component( _locator_dir "${_locator}" DIRECTORY )
+set( _dirpath "${_locator_dir}" )
+if( ANSAK_DEBUG )
+    message( "location development: _locator='${_locator}';_locator_dir='${_locator_dir}'" )
+    message( "location development: path='${_dirpath}'" )
+endif()
 
 # Case I, II, III?
-get_filename_component( _locator_dirname "${_ansak_root}" NAME )
-if( _locator_dirname STREQUAL "Debug" )
-    # Case II or III -- directory of _platform_string_lib is .../lib/Debug or .../lib/<arch>/Debug
+get_filename_component( _dirname "${_dirpath}" NAME )
+if( ANSAK_DEBUG )
+    message( "location development: path='${_dirpath}';name='${_dirname}'" )
+endif()
+
+if( NOT _dirname STREQUAL "Debug" )
+    # Case I, regardless of platform, if not './lib', mention that
+    set( _split_libs 0 )
+    # traverse up level
+    get_filename_component( _dirpath "${_dirpath}" DIRECTORY )
+    if( NOT _dirname STREQUAL "lib" )
+        message( STATUS "ANSAK component location may be wrong: libraries are not in a ./lib directory: ${_locator}" )
+        message( STATUS "using ${_dirpath} to search for include-headers" )
+    endif()
+    set( ANSAK_STRING_LIB "${_locator}" CACHE FILEPATH "ANSAK String Library" )
+    set( _ansak_root "${_dirpath}" )
+    if( ANSAK_DEBUG )
+        message( "location development (I): root='${_ansak_root}'" )
+    endif()
+else() # _dirname STREQUAL "Debug"
+    # Case II or III -- directory of _locator is .../lib/Debug or .../lib/<arch>/Debug
     set( _split_libs 1 )
     string( REGEX MATCH "^Visual Studio" _vs_match ${CMAKE_GENERATOR} )
-    if( _vs_match AND NOT _no_generator_libs )
+    if ( _vs_match AND NOT _no_generator_libs )
         set( ANSAK_LIB_BY_GENERATOR True
-          CACHE BOOL "ANSAK library variables will be set by generator expressions." )
+            CACHE BOOL "ANSAK library variables will be set by generator expressions." )
+        if( ANSAK_DEBUG )
+            message( "Matching for visual studio." )
+        endif()
     endif()
+
     # traverse up level, save that point for finding libraries later
-    get_filename_component( _ansak_root "${_ansak_root}" DIRECTORY )
-    set( _split_root_dir "${_ansak_root}" )
-    get_filename_component( _libs_grandparent_dirname "${_ansak_root}" NAME )
-    # _ansak_locator_dir is .../lib or .../lib/<arch>
+    get_filename_component( _dirpath "${_dirpath}" DIRECTORY )
+    set( _locator_parent_dir "${_dirpath}" )
+    get_filename_component( _locator_parentdir_name "${_locator_parent_dir}" NAME )
+    if( _vs_match )
+        set( _gen_root "${_locator_parent_dir}" )
+    endif()
+
+    # _dirpath is .../lib or .../lib/<arch>
     # Windows: is it lib
-    if( _libs_grandparent_dirname STREQUAL "lib" )
+    if( _locator_parentdir_name STREQUAL "lib" )
         # Case II
-        # _ansak_root is .../lib, one more parent gives us _ansak_root
+        # _dirpath is .../lib, one more parent gives us _ansak_root
         # traverse up one more for _ansak_root
-        get_filename_component( _ansak_root "${_ansak_root}" DIRECTORY )
+        get_filename_component( _ansak_root "${_locator_parent_dir}" DIRECTORY )
+        if( ANSAK_DEBUG )
+            message( "location development (II): path='${_dirpath}'" )
+        endif()
     # Windows: it'll be conditioned to the generator architecture
     else()
         # _up_one_lib_name is an <arch> tag, maybe?
-        platform_matches_dirname( ${_libs_grandparent_dirname} itsMyPlatform )
+        platform_matches_dirname( ${_locator_parentdir_name} itsMyPlatform )
         if( itsMyPlatform )
             # yes it is
-            # Case III -- _ansak_locator_dir points to ${_ansak_root}/../<arch>/Debug
-            set( _arch_tag ${_libs_grandparent_dirname} )
-            get_filename_component( _ansak_root "${_ansak_root}" DIRECTORY )
-            get_filename_component( _locator_grandparent_dirname "${_ansak_root}" NAME )
-            # _ansak_locator_dir is now ./lib/<arch>/Debug, right?
-            if( NOT _locator_grandparent_dirname STREQUAL "lib" )
+            # Case III -- _locator_dir points to ${_ansak_root}/../<arch>/Debug
+            set( _arch_tag ${_locator_parentdir_name} )
+            get_filename_component( _dirpath "${_dirpath}" DIRECTORY )
+            set( _locator_grandparent_dir "${_dirpath}" )
+            get_filename_component( _locator_grandparentdir_name "${_locator_grandparent_dir}" NAME )
+            # _locator_dir is .../lib/<arch>/Debug, so _locator_grandparentdir_name is "lib", right?
+            if( NOT _locator_grandparentdir_name STREQUAL "lib" )
                 # grudgingly accepting the ambiguity
-                message( STATUS "ANSAK build-type component doubtful from the found library: ${_platform_string_lib}" )
+                message( STATUS "ANSAK build-type component doubtful from the found library: ${_locator}" )
             endif()
             # traverse up one more for _ansak_root
-            get_filename_component( _ansak_root "${_ansak_root}" DIRECTORY )
+            get_filename_component( _ansak_root "${_dirpath}" DIRECTORY )
+            if( ANSAK_DEBUG )
+                message( "location development (III): root='${_ansak_root}'" )
+            endif()
         else()
-            # _ansak_root is now .../lib, right? if not, warn
+            # Case II (mis-named)
             # grudgingly accepting the ambiguity
+            set( _ansak_root "${_locator_parent_dir}" )
+            if( ANSAK_DEBUG )
+                message( "location development (mis-named II): root='${_ansak_root}'" )
+            endif()
             message( STATUS "ANSAK component location in doubt, libraries are not in a ./lib, ./lib/Debug, ./lib/<arch>/Debug Directory" )
             message( STATUS "using ${_ansak_root} to search for include-headers" )
         endif()
     endif()
-    if( _vs_match )
-        message( VERBOSE "Setting ANSAK_STRING_LIB to "
-            "${_ansak_root}/lib/${_libs_grandparent_dirname}/<generator-config>/${_srch_string_lib}" )
-        set( ANSAK_STRING_LIB "${_ansak_root}/lib/${_libs_grandparent_dirname}/$<CONFIG>/${_srch_string_lib}"
-            CACHE FILEPATH "ANSAK String Library" )
+    if (_vs_match)
+        set( ANSAK_STRING_LIB "${_locator_parent_dir}/$<CONFIG>/ansakString.lib" CACHE FILEPATH "ANSAK String Library" )
     else()
-        set( ANSAK_STRING_LIB "${_platform_string_lib}" CACHE FILEPATH "ANSAK String Library" )
+        set( ANSAK_STRING_LIB "${_locator}" CACHE FILEPATH "ANSAK String Library" )
     endif()
-else()
-    # Case I, regardless of platform, if not './lib', mention that
-    set( _split_libs 0 )
-    # traverse up level
-    get_filename_component( _ansak_root "${_ansak_root}" DIRECTORY )
-    if( NOT _locator_dirname STREQUAL "lib" )
-        message( STATUS "ANSAK component location may be wrong: libraries are not in a ./lib directory: ${_platform_string_lib}" )
-        message( STATUS "using ${_ansak_root} to search for include-headers" )
-    endif()
-    set( ANSAK_STRING_LIB "${_platform_string_lib}" CACHE FILEPATH "ANSAK String Library" )
 endif()
 # _ansak_root points to ${ANSAK_DIR}, $ENV{ANSAK_DIR}, /usr, /usr/local on Linux
 # _ansak_root points to ${ANSAK_DIR}, $ENV{ANSAK_DIR}, ${PROGRAM_DATA}, $ENV{PROGRAM_DATA} or C:/ProgramData on Windows
@@ -371,6 +365,10 @@ endif()
 #      ${_ansak_root}/lib/Debug, ${_ansak_root}/lib/${_arch tag}/Debug on Windows
 #      or some other variant
 ############################################################################
+
+if( ANSAK_DEBUG )
+    message( "location development done, _ansak_root='${_ansak_root}'" )
+endif()
 
 ############################################################################
 # how many "ansak" components to we have?
@@ -400,9 +398,6 @@ get_filename_component( _include_path "${_file_dir}" DIRECTORY )        # locati
 # for standard Unix-style locations, ANSAK_INCLUDE is blank and won't add -I elements
 if( _include_path STREQUAL "/usr/include" OR _include_path STREQUAL "/usr/local/include" )
     message( VERBOSE "Derived include path, ${_include_path}, is a standard location, leaving ANSAK_INCLUDE unset" )
-    if( CMAKE_GENERATOR STREQUAL "Xcode" )
-        message( WARNING "Derived path, ${_include_path}, will be assumed by ${CMAKE_GENERATOR} to be from a MacOSX SDK." )
-    endif()
 else()
     message( VERBOSE "Derived include path is a non-standard location, setting ANSAK_INCLUDE to \"${_include_path}\"" )
     set( ANSAK_INCLUDE "${_include_path}" CACHE PATH "ANSAK include root" )
@@ -411,7 +406,7 @@ endif()
 # we assume that runtime_exception.hxx and sqlite_exception.hxx, if they exist,
 # are in the same directory
 
-# we have the main library's header, do we have the lib?
+#  we have the main library's header, do we have the lib?
 if( NOT ANSAK_LIB_HEADER STREQUAL "ANSAK_LIB_HEADER-NOTFOUND" )
     find_library( _platform_ansak_lib _srch_lib PATHS _ansak_locator_dir DOC "ANSAK general library" )
     if( _platform_ansak_lib STREQUAL "_platform_ansak_lib-NOTFOUND" )
@@ -421,8 +416,8 @@ if( NOT ANSAK_LIB_HEADER STREQUAL "ANSAK_LIB_HEADER-NOTFOUND" )
         ####################################################################
     else()
         set( ANSAK_LIB_FOUND True CACHE BOOL "ANSAK library found." )
-        if( _vs_match AND _split_libs )
-            set( ANSAK_LIB "${_libs_grandparent_dirname}/$<CONFIG>/${_srch_lib}" CACHE FILEPATH "ANSAK general Library" )
+        if ( _vs_match AND _split_libs )
+            set( ANSAK_LIB "${_locator_parent_dir}/$<CONFIG>/ansak.lib" CACHE FILEPATH "ANSAK general Library" )
         else()
             set( ANSAK_LIB "${_platform_ansak_lib}" CACHE FILEPATH "ANSAK general Library" )
         endif()
@@ -442,8 +437,8 @@ if( SQLite3_FOUND )
             ################################################################
         else()
             set( ANSAK_SQLITE_FOUND True CACHE  BOOL "ANSAK SQLite library found." )
-            if( _vs_match AND _split_libs )
-                set( ANSAK_SQLITE_LIB "${_libs_grandparent_dirname}/$<CONFIG>/${_srch_sqlite_lib}" CACHE FILEPATH "ANSAK SQLite Library" )
+            if ( _vs_match AND _split_libs )
+              set( ANSAK_SQLITE_LIB "${_locator_parent_dir}/$<CONFIG>/ansakSqlite.lib" CACHE FILEPATH "ANSAK SQLite Library" )
             else()
                 set( ANSAK_SQLITE_LIB "${_platform_ansak_sqlite_lib}" CACHE FILEPATH "ANSAK SQLite Library" )
             endif()
@@ -470,7 +465,8 @@ endif()
 # ANSAK_FOUND determined
 ############################################################################
 
-if( ANSAK_DEBUG )
+message( "Looking for ANSAK components... done" )
+if ( ANSAK_DEBUG )
     set( _comp_found "" )
     if( ANSAK_FOUND )
         list( APPEND _comp "ansak-string" )
@@ -486,4 +482,3 @@ if( ANSAK_DEBUG )
     endif()
     message( STATUS "ANSAK components found: ${_comp}" )
 endif()
-message( "Looking for ANSAK components... done" )
