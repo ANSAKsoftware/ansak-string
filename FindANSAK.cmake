@@ -33,6 +33,9 @@
 ###########################################################################
 
 message( "Looking for ANSAK components..." )
+if( SQLite3_FOUND )
+    message( " ... SQLite3 found, including SQLite interface components" )
+endif()
 
 #[[
 FindANSAK
@@ -359,8 +362,8 @@ endif()
 # _ansak_root points to ${ANSAK_DIR}, $ENV{ANSAK_DIR}, ${PROGRAM_DATA}, $ENV{PROGRAM_DATA} or C:/ProgramData on Windows
 #      .... single value wherever it started
 # ANSAK_STRING_LIB points to libansakString.a / ansakString.lib in its directory
-# _ansak_locator_dir points to ${_ansak_root}/lib on Linux
-# _ansak_locator_dir points to whatever dir ANSAK_STRING_LIB is in, probably
+# _locator_dir points to ${_ansak_root}/lib on Linux
+# _locator_dir points to whatever dir ANSAK_STRING_LIB is in, probably
 #      ${_ansak_root}/lib on Linux, some Windows
 #      ${_ansak_root}/lib/Debug, ${_ansak_root}/lib/${_arch tag}/Debug on Windows
 #      or some other variant
@@ -397,7 +400,11 @@ get_filename_component( _file_dir "${ANSAK_STRING_HEADER}" DIRECTORY )  # ".../a
 get_filename_component( _include_path "${_file_dir}" DIRECTORY )        # location that has ansak dir in it
 # for standard Unix-style locations, ANSAK_INCLUDE is blank and won't add -I elements
 if( _include_path STREQUAL "/usr/include" OR _include_path STREQUAL "/usr/local/include" )
-    message( VERBOSE "Derived include path, ${_include_path}, is a standard location, leaving ANSAK_INCLUDE unset" )
+    if( APPLE )
+        message( WARNING "Derived path, ${_include_path}, will be assumed by macOS-clang to be from a MacOSX SDK." )
+    else()
+        message( VERBOSE "Derived include path, ${_include_path}, is a standard location, leaving ANSAK_INCLUDE unset" )
+    endif()
 else()
     message( VERBOSE "Derived include path is a non-standard location, setting ANSAK_INCLUDE to \"${_include_path}\"" )
     set( ANSAK_INCLUDE "${_include_path}" CACHE PATH "ANSAK include root" )
@@ -408,7 +415,7 @@ endif()
 
 #  we have the main library's header, do we have the lib?
 if( NOT ANSAK_LIB_HEADER STREQUAL "ANSAK_LIB_HEADER-NOTFOUND" )
-    find_library( _platform_ansak_lib _srch_lib PATHS _ansak_locator_dir DOC "ANSAK general library" )
+    find_library( _platform_ansak_lib ${_srch_lib} HINTS "${_locator_dir}" DOC "ANSAK general library" )
     if( _platform_ansak_lib STREQUAL "_platform_ansak_lib-NOTFOUND" )
         set( ANSAK_LIB_HEADER "ANSAK_LIB_HEADER-NOTFOUND" CACHE STRING "Library not present, ignoring header" FORCE )
         set( ANSAK_LIB_FOUND False CACHE BOOL "ANSAK library not found." )
@@ -429,7 +436,7 @@ endif()
 # if we have the sqlite library header, do we have SQLite3 and the lib?
 if( SQLite3_FOUND )
     if( NOT ANSAK_SQLITE_HEADER STREQUAL "ANSAK_SQLITE_HEADER-NOTFOUND" )
-        find_library( _platform_ansak_sqlite_lib _srch_sqlite_lib PATHS _ansak_locator_dir DOC "ANSAK SQLite library" )
+        find_library( _platform_ansak_sqlite_lib ${_srch_sqlite_lib} HINTS "${_locator_dir}" DOC "ANSAK SQLite library" )
         if( _platform_ansak_sqlite_lib STREQUAL "_platform_ansak_sqlite_lib-NOTFOUND" )
             set( ANSAK_SQLITE_HEADER "ANSAK_SQLITE_HEADER-NOTFOUND" CACHE STRING "SQLite library not present, ignoring header" FORCE )
             set( ANSAK_SQLITE_FOUND False CACHE  BOOL "ANSAK SQLite library not found." )
