@@ -1,7 +1,7 @@
 ansak-string
 ============
 
-Copyright 2015, Arthur N. Klassen; see LICENSE for usage guidelines (BSD 2-clause)
+Copyright 2015, 2021 Arthur N. Klassen; see LICENSE for usage guidelines (BSD 2-clause)
 
 This library started as the first piece of a larger project. It's a simple string library. With the release of version 2.0, I am returning to work on the larger project now, and the results will be available under an **ansak-lib** repository.
 
@@ -91,11 +91,12 @@ tracking program that I plan to release under an appropriate open source
 license, probably using Qt for User Interface, sqlite3 for storage and
 implemented with the best that C++11/14/7 can supply.
 
-For the moment, in one change to facilitate that goal, I have added
-`FindANSAK.cmake` to **ansak-string**, to be mirrored and kept up to date in
-any upcoming libraries.
+I have added `FindANSAK.cmake` to **ansak-string**, to be mirrored and kept up
+to date in on-going releases of **ansak-lib**.
 
-I will be taking **ansak-lib** out of the branch where it currently rests to be
-its own repo, dependent on **ansak-string**, but using `find_package` to locate and
-incorporate that dependency, at an arm's length, regardless of Unicode version
-being used, rather than the integral connection it has had so far.
+The contents of the `ansak-lib` branch of **ansak-string** have been pulled out into
+their own repository, [ansak-lib](https://github.com/ANSAKsoftware/ansak-lib), which
+allows their release cycle to be completely independent of that of **ansak-string**,
+appropriate because Unicode release cycles are on their own time-table, and outside
+of changes there, **ansak-string** doesn't have a lot of outstanding tasks waiting
+for attention.
