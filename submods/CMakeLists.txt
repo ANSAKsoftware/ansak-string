@@ -35,8 +35,10 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-if( UNIX )
-    set_directory_properties(PROPERTIES COMPILE_FLAGS -Wno-error)
+if( APPLE )
+    add_compile_options( -Wno-error -Wno-uninitialized )
+elseif( UNIX )
+    add_compile_options( -Wno-error -Wno-maybe-uninitialized )
 endif()
 
 # bring in google_test
