@@ -45,8 +45,8 @@ This is also how to do it under `Cygwin` and `MinGW`.
    as the Makefile generator is the default on many platforms:
 
 ```
-cd source\build
-cmake ..\ansak-string
+cd source/build
+cmake ../ansak-string
 ```
 
    You can select any version of unicode from version 7 through 13 (except
