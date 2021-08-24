@@ -91,13 +91,15 @@ enum EncodingTypeFlags : int {
 // A utility functor for appending encoded characters to a growing string
 
 template <typename C>
-class CharacterAdder : public std::unary_function<void, C>
+class CharacterAdder
 {
     static_assert(std::is_integral<C>::value, "CharacterAdder needs an integral type.");
 
 public:
-    CharacterAdder(std::basic_string<C>& result) : std::unary_function<void, C>(),
-                                                     m_destination(result) {}
+    using argument_type = void;
+    using result_type = C;
+
+    CharacterAdder(std::basic_string<C>& result) : m_destination(result) {}
     void operator()(C c) { m_destination.push_back(c); }
 private:
     std::basic_string<C>& m_destination;
