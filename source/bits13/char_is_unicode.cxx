@@ -5,7 +5,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
@@ -1219,7 +1219,7 @@ bool isInTheGap010F(char32_t c)
     case 1:
     case 3:
     case 4:
-    case 11:    
+    case 11:
     case 14:    return false;
 
     case 2:     return row >= 8;
@@ -2141,7 +2141,7 @@ bool isInTheGap01F9(char32_t c)
     auto row = c & 0xF;
     switch (column)
     {
-    default:    return false; 
+    default:    return false;
     case 7:     return row == 9;
     case 12:    return row == 12;
     }

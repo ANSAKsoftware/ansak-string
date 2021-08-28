@@ -71,8 +71,10 @@ Deploying:
 Using:
 ------
 
-When you want to use **ansak-string** (or later, other ANSAK Software components), copy `FindANSAK.cmake`
-from the `source/` into a `cmake/modules` directory at the root of your project. 
+When you want to use **ansak-string** (or later, other ANSAK Software
+components), copy `FindANSAK.cmake` from the `source/` into a `cmake/modules`
+directory at the root of your project.
+
 Add a section like this, early, to your root `CMakeLists.txt` file:
 ```
 if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")`
