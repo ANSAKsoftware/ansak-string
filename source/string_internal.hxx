@@ -96,9 +96,6 @@ class CharacterAdder
     static_assert(std::is_integral<C>::value, "CharacterAdder needs an integral type.");
 
 public:
-    using argument_type = void;
-    using result_type = C;
-
     CharacterAdder(std::basic_string<C>& result) : m_destination(result) {}
     void operator()(C c) { m_destination.push_back(c); }
 private:
