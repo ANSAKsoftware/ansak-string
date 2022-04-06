@@ -33,8 +33,7 @@
 #
 ###########################################################################
 
-cmake_minimum_required(VERSION 3.1)
-
+set( INSTALL_GTEST OFF )
 if( APPLE )
     add_compile_options( -Wno-error -Wno-uninitialized )
 elseif( UNIX )
