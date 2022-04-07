@@ -1,6 +1,21 @@
 CHANGES
 
-2.0 -- Complete the use of Unicode 9.0 (make that the default), make ansak-string suitable for sub-moduling, and bring Windows support for the latest version up to par.
+2.0.1 -- Removing unary_function dependency (not needed post C++11), added string_trim.hxx and draft of FindANSAK.cmake
+         * reflects state-of-play after spinning out ansak-lib as a separate library
+
+2.0 -- Unicode 13 support, support for wchar_t (16 and 32-bit), TCHAR on windows
+
+1.5.5 -- Unicode 12.0, 12.1, 11.0, 10.0 support
+
+1.5.4 -- running unit tests in a more limited way
+
+1.5.3 -- restoring 64-bit Windows-build compatibility, better -Wall/-Werror compatibility
+
+1.5.2 -- Keeping some "internal-to-library" stuff internal
+
+1.5.1 -- Address-Sanity, early-compiler compatibility
+
+1.5 -- Complete the use of Unicode 9.0 (make that the default), make ansak-string suitable for sub-moduling, and bring Windows support for the latest version up to par.
 
 1.4 -- converted project to use 2-clause BSD license
 

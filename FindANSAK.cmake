@@ -44,8 +44,10 @@ FindANSAK
 Find ANSAK library elements ansak-string, ansak-lib, ansak-sqlite
 
 For Linux or MacOS:
-  * search will be by command-line variable, then environment variable, then /usr/include and /usr/lib
-  * these files will be called libansakString.a, libansak.a and libansakSqlite.a
+  * search will be by command-line variable, then environment variable, then
+    /usr/include and /usr/lib
+  * these files will be called libansakString.a, libansak.a and
+    libansakSqlite.a
 
 For Windows:
   * search will be by command-line variable, then environment variable
@@ -53,20 +55,38 @@ For Windows:
 
 The environment variable or command line variable referred to is ANSAK_DIR
 
-ANSAK_FOUND -- set true if any ANSAK components are found; only the string parts are standalone
+ANSAK_FOUND -- set true if any ANSAK components are found; only the string
+<output>       parts are standalone
                if false other variables listed here will be meaningless
 
-ANSAK_LIB_FOUND -- set true if ANSAK string and generic library components are found
-ANSAK_SQLITE_FOUND -- set true if ANSAK SQLite interface components are found
+ANSAK_LIB_FOUND -- set true if ANSAK string and generic library components are
+<output>           found
 
-ANSAK_INCLUDE -- set to path containing an ansak/ sub-directory with ansak namespace headers inside it
+ANSAK_SQLITE_FOUND -- set true if ANSAK SQLite interface components are found
+<output>
+
+ANSAK_INCLUDE -- set to path containing an ansak/ sub-directory with ansak
+<output>         namespace headers inside it.
+                 On platforms that standardize /usr/include or
+                 /usr/local/include, if that's where the ansak/sub-directory
+                 is, ANSAK_INCLUDE is left unset.
+ANSAK_ISOLATE -- if False or unset, then ANSAK_INCLUDE if non-blank will be
+<input>          passed into include_directories();
+                 if True, then the user of a library will have to check and
+                 include ANSAK_INCLUDE where necessary.
 
 Full paths of libraries:
-ANSAK_STRING_LIB -- ANSAK string library (static link), where one library does it all
-ANSAK_LIB -- ANSAK library (static link), where one library does it all
-ANSAK_SQLITE_LIB -- ANSAK SQLite library (static link), where one library does it all
+ANSAK_STRING_LIB -- ANSAK string library (static link), where one library does
+<output>            it all
 
-For DevStudio Generators, the picture is slightly murkier. See following comments.
+ANSAK_LIB -- ANSAK library (static link), where one library does it all
+<output>
+
+ANSAK_SQLITE_LIB -- ANSAK SQLite library (static link), where one library does
+<output>            it all
+
+For DevStudio Generators, the picture is slightly murkier. See following
+comments.
 ]]#
 
 ############################################################################
@@ -406,7 +426,7 @@ if( _include_path STREQUAL "/usr/include" OR _include_path STREQUAL "/usr/local/
         message( VERBOSE "Derived include path, ${_include_path}, is a standard location, leaving ANSAK_INCLUDE unset" )
     endif()
 else()
-    message( VERBOSE "Derived include path is a non-standard location, setting ANSAK_INCLUDE to \"${_include_path}\"" )
+    message( VERBOSE "Derived include path is a non-standard (for OS) location, setting ANSAK_INCLUDE to \"${_include_path}\"" )
     set( ANSAK_INCLUDE "${_include_path}" CACHE PATH "ANSAK include root" )
 endif()
 
@@ -473,6 +493,9 @@ endif()
 ############################################################################
 
 message( "Looking for ANSAK components... done" )
+if ( ANSAK_INCLUDE AND NOT ANSAK_ISOLATE )
+    include_directories( ANSAK_INCLUDE )
+endif()
 if ( ANSAK_DEBUG )
     set( _comp_found "" )
     if( ANSAK_FOUND )
