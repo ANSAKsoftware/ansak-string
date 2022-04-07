@@ -1,0 +1,229 @@
+#!/bin/sh
+
+###########################################################################
+##
+## Copyright (c) 2022, Arthur N. Klassen
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted provided that the following conditions are met:
+##
+## 1. Redistributions of source code must retain the above copyright
+##    notice, this list of conditions and the following disclaimer.
+##
+## 2. Redistributions in binary form must reproduce the above copyright
+##    notice, this list of conditions and the following disclaimer in the
+##    documentation and/or other materials provided with the distribution.
+##
+## THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+## AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+## IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+## ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+## LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+## CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+## SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+## INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+## CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+## POSSIBILITY OF SUCH DAMAGE.
+##
+###########################################################################
+##
+## 2022.02.20 - First version
+##
+##    May you do good and not evil.
+##    May you find forgiveness for yourself and forgive others.
+##    May you share freely, never taking more than you give.
+##
+###########################################################################
+##
+## configure -- Implement a minimal autoconf/automake-like behaviour to support
+##              the Makefile in Linux / MinGW/Cygwin, macOS. For more, see
+##
+##              ./configure --help
+##
+###########################################################################
+
+verbose=0
+popit=0
+if [ `dirname $0` != . ]; then
+	popit=1
+	pushd `dirname $0` >/dev/null
+fi
+git submodule update --init
+
+apple=0
+builds_deb=0
+builds_rpm=0
+builds_arch=0
+if [ `uname` = "Darwin" ]; then
+	defPrefix=$HOME
+	defCxx=clang++
+	sudoIfPriv=1
+	apple=1
+elif [ `uname | sed 's/\(.....\).*/\1/'` = "MINGW" ] || [ `uname | sed 's/\(......\).*/\1/'` = "CYGWIN" ]; then
+	defPrefix=/usr/local
+	defCxx=g++
+	sudoIfPriv=0
+else
+    if dpkg-deb --version >/dev/null 2>&1 ; then
+        builds_deb=1
+    fi
+    if rpm --version >/dev/null 2>&1 ; then
+        builds_rpm=1
+    fi
+    if debtap --version >/dev/null 2>&1 ; then
+        builds_arch=1
+    fi
+	defPrefix=/usr
+	defCxx=g++
+	sudoIfPriv=1
+	apple=0
+fi
+defUnicode=13
+
+usage() {
+   cwd=`pwd`
+   printf "%s: configure for %s (requires compilers and cmake)\n" $0 `basename $cwd`
+   printf "    -h, --help:         this message\n"
+   printf "    --prefix:           where to install results (default %s)\n" $defPrefix
+   printf "    --compiler:         where to install results (default %s)\n" $defCxx
+   printf "    --unicode-version:  what unicode version to support (default %s)\n" $defUnicode
+   printf "    -v, --verbose:      emit more messages about process\n"
+   printf "\nWrites configure.mk for building/installing\n"
+   printf "Note that --prefix does not affect the package target (also, rpm, deb, arch on Linux.\n\n"
+}
+
+_exit() {
+   if [ $popit -ne 0 ]; then
+           popd >/dev/null
+   fi
+   exit $1
+}
+
+verbose=0
+
+while [ $# -ne 0 ];
+	do
+	case "$1" in
+		-h|--help )
+			usage; _exit 0 ;;
+		--prefix )
+			prefix=$2
+			shift
+			if [ "$prefix" = "" ]; then
+				usage
+				_exit 1
+			fi ;;
+		--compiler )
+			compiler=$2
+			shift
+			if [ "$compiler" = "" ]; then
+				usage
+				_exit 1
+			fi ;;
+		--unicode-version )
+			unicodeVersion=$2
+			shift
+			if [ "$unicodeVersion" = "" ]; then
+				usage
+				_exit 1
+			fi ;;
+		-v|--verbose )
+			verbose=1 ;;
+		* )
+			usage
+			_exit 1
+	esac
+	shift
+done
+
+if [ ! `which cmake` ]; then
+    usage
+    _exit 1
+fi
+
+if [ "$prefix" = "" ]; then
+	prefix=$defPrefix
+	if [ $verbose -ne 0 ]; then
+		printf "No --prefix supplied, using default value, %s\n" "$prefix"
+	fi
+else
+	if [ $verbose -ne 0 ]; then
+		printf "Using provided prefix, %s\n" "$prefix"
+	fi
+fi
+
+if [ ! -d "$prefix" ]; then
+	echo "WARNING: The prefix value, $prefix, does not exist, will be created if possible before using."
+	mkdir -p "$prefix"
+fi
+
+if [ "$compiler" = "" ]; then
+	compiler=$defCxx
+elif [ ! `which "$compiler"` ]; then
+	if [ $verbose -ne 0 ]; then
+		echo "WARNING: The selected compiler, $compiler, is not on the path"
+	fi
+fi
+
+if [ "$unicodeVersion" = "" ]; then
+	unicodeVersion=$defUnicode
+fi
+
+# detect if prefix starts with /usr or /Applications; if so, and if on Darwin or not-MING/CYG
+# set sudo=su else to nothing
+sudo=
+if [ $sudoIfPriv -ne 0 ]; then
+	firstpart=`echo $prefix | cut -d/ -f 1`
+	secondpart=`echo $prefix | cut -d/ -f 2`
+	if [ "$firstpart" = "" ] && [ "$secondpart" != 0 ]; then
+		if [ $apple -eq 1 ] && [ "$secondpart" = "Applications" ]; then
+			sudo=sudo
+		elif [ "$second" = "usr" ]; then
+			sudo=sudo
+		fi
+		if [ "$sudo" = "" ] && [ "$prefix" != "$HOME" ]; then
+			sudo=sudo
+		fi
+	fi
+fi
+
+config=
+if [ $apple -eq 1 ]; then
+    config=Release
+    generator=Xcode
+else
+    generator="Unix Makefiles"
+fi
+
+# output config.make
+rm -f config.make
+if [ $verbose -ne 0 ]; then
+	printf "Writing config.make file:\n"
+	printf "    SUDO = %s\n" $sudo
+	printf "    PREFIX = %s\n" "$prefix"
+    printf "    CXX = %s\n" $compiler
+    printf "    CONFIG = %s\n" $config
+    printf "    GENERATOR = %s\n" $generator
+    printf "    UNICODE_VERSION = %s\n" $unicodeVersion
+    printf "    BUILDS_DEB = %s\n" $builds_deb
+    printf "    BUILDS_RPM = %s\n" $builds_rpm
+    printf "    BUILDS_ARCH = %s\n" $builds_arch
+fi
+echo SUDO = $sudo >> config.make
+echo PREFIX = $prefix >> config.make
+echo CXX = $compiler >> config.make
+echo CONFIG = $config >> config.make
+echo GENERATOR = $generator >> config.make
+echo UNICODE_VERSION = $unicodeVersion >> config.make
+echo BUILDS_DEB = $builds_deb >> config.make
+echo BUILDS_RPM = $builds_rpm >> config.make
+echo BUILDS_ARCH = $builds_arch >> config.make
+
+mkdir -p build
+find . -name submods -prune -o \( -name '*.[ch]xx' -o -name 'CMakeLists.txt' \) -type f -print | xargs echo SRCS = packaging.cmake > build/deps
+
+if [ $popit -ne 0 ]; then
+	popd >/dev/null
+fi
