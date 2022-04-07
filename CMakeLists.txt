@@ -49,9 +49,9 @@
 # Unit tests will be suppressed for VS2012 (some C++11 features used for those unit tests
 # are incompatible with the VS2012 compiler).
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.10)
 
-project(ansakString)
+project(ansakString VERSION 2.0.1)
 
 ## part of ansak multi-part project? ####
 
@@ -187,42 +187,42 @@ target_include_directories( ansakString PRIVATE ${ansakString_privIncludes} PUBL
 
 ##############################################################################################################
 if( _useUnitTests )
-  add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
-  target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
+    add_executable( mkUnicodeTestData mkUnicodeTestData/mkUnicodeTestData.cxx )
+    target_link_libraries( mkUnicodeTestData PRIVATE ansakString )
 
-  add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-              COMMAND "mkUnicodeTestData"
-                      "${absBitsDir}/UnicodeData.txt"
-                      "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                      COMMENT "Generating test data for charIsUnicode test"
-                      DEPENDS "${absBitsDir}/UnicodeData.txt" mkUnicodeTestData
-                      VERBATIM )
+    add_custom_command( OUTPUT "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
+                COMMAND "mkUnicodeTestData"
+                        "${absBitsDir}/UnicodeData.txt"
+                        "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
+                        COMMENT "Generating test data for charIsUnicode test"
+                        DEPENDS "${absBitsDir}/UnicodeData.txt" mkUnicodeTestData
+                        VERBATIM )
 
-  add_executable( ansakStringTest test/unit/string_test.cxx
-                                  test/unit/string_decode_utf8_test.cxx
-                                  test/unit/encode_predicate_test.cxx
-                                  test/unit/string_splitjoin_test.cxx
-                                  test/unit/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
-                                  test/unit/string_trim_test.cxx
-                                  test/unit/string_with_predicate_test.cxx
-                                  test/unit/string_wchar_tchar.cxx
-                                  test/unit/string_wide_tchar.cxx
-                                  test/unit/char_is_unicode_test.cxx
-                                  "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
-                )
-  target_include_directories( ansakStringTest PRIVATE "$<TARGET_PROPERTY:ansakString,INCLUDE_DIRECTORIES>"
-                                                      "${PROJECT_BINARY_DIR}")
-  target_link_libraries( ansakStringTest PRIVATE ansakString gtest_main )
-  if( WIN32 )
-      add_custom_command( TARGET ansakStringTest POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR})
-  endif()
+    add_executable( ansakStringTest test/unit/string_test.cxx
+                                    test/unit/string_decode_utf8_test.cxx
+                                    test/unit/encode_predicate_test.cxx
+                                    test/unit/string_splitjoin_test.cxx
+                                    test/unit/string_tolower_test${ANSAK_UNICODE_SUPPORT}.cxx
+                                    test/unit/string_trim_test.cxx
+                                    test/unit/string_with_predicate_test.cxx
+                                    test/unit/string_wchar_tchar.cxx
+                                    test/unit/string_wide_tchar.cxx
+                                    test/unit/char_is_unicode_test.cxx
+                                    "${PROJECT_BINARY_DIR}/char_is_unicode_test_data.hxx"
+                  )
+    target_include_directories( ansakStringTest PRIVATE "$<TARGET_PROPERTY:ansakString,INCLUDE_DIRECTORIES>"
+                                                        "${PROJECT_BINARY_DIR}")
+    target_link_libraries( ansakStringTest PRIVATE ansakString gtest_main )
+    if( WIN32 )
+        add_custom_command( TARGET ansakStringTest POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest>      ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}
+          COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:gtest_main> ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR})
+    endif()
 
-  add_test( NAME ansakStringTest COMMAND ansakStringTest )
+    add_test( NAME ansakStringTest COMMAND ansakStringTest )
 
-  if( _ansakBuildType STREQUAL coverage )
-      SETUP_TARGET_FOR_COVERAGE( ansak-string-coverage ansakStringTest ansakStringCoverage )
-  endif()
+    if( _ansakBuildType STREQUAL coverage )
+        SETUP_TARGET_FOR_COVERAGE( ansak-string-coverage ansakStringTest ansakStringCoverage )
+    endif()
 endif()
 ##############################################################################################################
