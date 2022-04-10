@@ -195,11 +195,6 @@ function( find_win_lib find_var signal_library doc_string )
         if ( ANSAK_DEBUG )
             message( "Candidate, ${cand}, to be searched for ${signal_library}, to be noted in ${find_var}" )
         endif()
-        find_library( ${find_var} ${signal_library}
-                                 HINTS "${cand}/lib"
-                                       "${cand}/lib/Debug"
-                                   DOC "${doc_string}"
-                      REQUIRED NO_DEFAULT_PATH )
         if( CMAKE_GENERATOR_PLATFORM STREQUAL "ARM" )
             find_library( ${find_var} ${signal_library}
                                      HINTS "${cand}/lib/ARM/Debug"      # other options are case insensitive
@@ -227,6 +222,11 @@ function( find_win_lib find_var signal_library doc_string )
                                        DOC "${doc_string}"
                           REQUIRED NO_DEFAULT_PATH )
         endif()
+        # even if there's a generator, libraries may not be partitioned like this
+        find_library( ${find_var} ${signal_library}
+                                 HINTS "${cand}/lib"
+                                   DOC "${doc_string}"
+                      REQUIRED NO_DEFAULT_PATH )
         if ( ANSAK_DEBUG )
             message( "${find_var} searched for in ${cand} sub-directories. Result: ${${find_var}}" )
         endif()

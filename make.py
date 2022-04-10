@@ -259,7 +259,7 @@ class Maker:
         def cmake_gen(build_dir, arch):
             if not os.path.isfile('CMakeCache.txt'):
                 return Proc(CMD, C, CMAKE, GRANDPARENT, unicode_choice, GEN,
-                            GENERATOR, ARCH, 'Win32', cwd=build_dir, env=env
+                            GENERATOR, ARCH, arch, cwd=build_dir, env=env
                             ).run()
             return 0
 
