@@ -50,8 +50,9 @@ if [ `dirname $0` != . ]; then
 	popit=1
 	pushd `dirname $0` >/dev/null
 fi
-git submodule update --init
-
+if [ ! -d ./submods/googletest ]; then
+    git submodule update --init
+fi
 apple=0
 builds_deb=0
 builds_rpm=0
