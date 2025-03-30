@@ -37,7 +37,7 @@
 
 # Select your desired version of unicode with the ANSAK_UNICODE_SUPPORT variable, e.g.:
 #   cmake -DANSAK_UNICODE_SUPPORT=11      # to use the 11.0.0 version of Unicode
-# ANSAK_UNICODE_SUPPORT defaults to 15 (denoting Unicode 15).
+# ANSAK_UNICODE_SUPPORT defaults to 16 (denoting Unicode 16).
 
 # Be sure to update the gtest sub-module so the unit tests will work!
 
@@ -131,7 +131,7 @@ if( UNIX )
 endif()
 
 ##############################################################################################################
-set( DEFAULT_SUPPORTED_UNICODE_VERSION "15" )
+set( DEFAULT_SUPPORTED_UNICODE_VERSION "16" )
 if( ANSAK_UNICODE_SUPPORT )
     if( NOT ( ( ANSAK_UNICODE_SUPPORT STREQUAL 7 ) OR
                ( ANSAK_UNICODE_SUPPORT STREQUAL 8 ) OR
@@ -141,7 +141,8 @@ if( ANSAK_UNICODE_SUPPORT )
                ( ANSAK_UNICODE_SUPPORT STREQUAL 12 ) OR
                ( ANSAK_UNICODE_SUPPORT STREQUAL 13 ) OR
                ( ANSAK_UNICODE_SUPPORT STREQUAL 14 ) OR
-               ( ANSAK_UNICODE_SUPPORT STREQUAL 15 ) ) )
+               ( ANSAK_UNICODE_SUPPORT STREQUAL 15 ) OR
+               ( ANSAK_UNICODE_SUPPORT STREQUAL 16 ) ) )
         message( "Unicode version, ${ANSAK_UNICODE_SUPPORT}, is not supported. Reverting to ${DEFAULT_SUPPORTED_UNICODE_VERSION}" )
         set( ANSAK_UNICODE_SUPPORT ${DEFAULT_SUPPORTED_UNICODE_VERSION} )
     endif()
