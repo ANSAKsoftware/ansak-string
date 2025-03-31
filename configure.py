@@ -61,7 +61,7 @@ v = False
 
 DEFAULT_PREFIX = 'C:\\ProgramData'
 DEFAULT_MAKENSIS_LOCATION = 'C:\\Program Files (x86)\\NSIS\\makensis.exe'
-DEFAULT_UNICODE_VERSION = 13
+DEFAULT_UNICODE_VERSION = 14
 
 
 def run_it(*args):

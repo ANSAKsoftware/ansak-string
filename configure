@@ -81,7 +81,7 @@ else
 	sudoIfPriv=1
 	apple=0
 fi
-defUnicode=13
+defUnicode=14
 
 usage() {
    cwd=`pwd`
